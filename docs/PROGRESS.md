@@ -13,7 +13,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                   |
 | API contract        | 🟡 Draft (`docs/api/frontend-contract.md`)          |
 | Frontend            | 🟡 Dashboard UI on mock data                        |
-| Backend             | ⬜ Not started                                      |
+| Backend             | 🟡 FastAPI serving mock data                        |
 | CI/CD               | ⬜ Not started                                      |
 | Docker / Infra      | ⬜ Not started                                      |
 | Terraform / Cloud   | ⬜ Not started                                      |
@@ -27,6 +27,14 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-10-22 — Backend API (`feature/backend-api`) — Tirth
+
+- Created `backend/` with Python + FastAPI, serving every endpoint in the API contract under `/api`
+- Pydantic models in `app/schemas.py` output camelCase JSON to match frontend types
+- `/health` endpoint for Docker / load balancer checks; CORS configurable via `CORS_ORIGINS`
+- Mock data in `app/mock_data.py` matches `frontend/src/mock/`
+- 7 pytest tests checking every endpoint's shape; see `backend/README.md` to run
 
 ### 2026-10-22 — Dashboard UI (`feature/dashboard-ui`) — Tirth
 
