@@ -10,10 +10,44 @@ through a unified interface.
 
 ## Project Status
 
-🚧 Planning / Architecture Phase
+🛠️ Proof of Concept / Development Phase
 
 CloudOps Hub is currently being developed as a capstone project
 for the Cloud Architecture and Administration program at Seneca.
+
+👉 See [`docs/PROGRESS.md`](docs/PROGRESS.md) for what has been done,
+what is in progress, and what is next.
+
+👉 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to set up the
+project and how we use branches and pull requests.
+
+## Repository Structure
+
+```
+CloudOpsHub/
+├── frontend/          React + TypeScript dashboard (Vite)
+├── backend/           REST API (Python / FastAPI)
+├── infra/             Docker, docker-compose, and future Terraform
+├── .github/workflows/ CI pipelines (GitHub Actions)
+└── docs/
+    ├── api/           API contract shared by frontend and backend
+    ├── architecture/  Design documents
+    ├── planning/      Risk register, SWOT, mind map, workflow
+    └── PROGRESS.md    Running log of team progress
+```
+
+Each top-level folder has its own `README.md` explaining how to run it.
+
+## Quick Start
+
+```bash
+# Frontend (http://localhost:5173)
+cd frontend
+npm install
+npm run dev
+```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for backend and Docker setup.
 
 ## Objectives
 
@@ -83,15 +117,13 @@ Project planning documentation can be found in:
 
 ## Technology Stack
 
-The final technology stack is currently under evaluation.
-
-Expected technologies include:
-
-- Terraform
-- Docker
-- GitHub Actions
-- Cloud infrastructure
-- Centralized monitoring and logging
+| Layer          | Technology                                   |
+| -------------- | -------------------------------------------- |
+| Frontend       | React 19, TypeScript, Vite, Recharts, Axios  |
+| Backend        | Python, FastAPI                              |
+| Containers     | Docker, docker-compose                       |
+| CI/CD          | GitHub Actions                               |
+| Infrastructure | Terraform (planned), cloud provider TBD      |
 
 ## Roadmap
 
