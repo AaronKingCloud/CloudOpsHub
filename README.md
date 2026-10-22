@@ -51,7 +51,7 @@ npm run dev
 # Backend (http://localhost:8000/docs)
 cd backend
 python -m venv .venv
-.venv\Scriptsctivate         # macOS/Linux: source .venv/bin/activate
+.venv\Scripts\activate         # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
 fastapi dev app/main.py
 ```
