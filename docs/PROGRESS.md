@@ -28,6 +28,15 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Log
 
+### 2026-10-22 — Frontend API service layer (`feature/api-service`) — Tirth
+
+- Added `src/services/` (axios client + `dashboardService`) so components never import mock data directly
+- Mock mode controlled by `VITE_USE_MOCK` (default on); see `frontend/.env.example`
+- Added `useApi` hook for loading / error / data state
+- Added types + mock data for devices, alerts, summary; CPU mock now matches the contract (`timestamp`, `value`)
+- Updated API contract: added endpoint paths, base URL, and `GET /accounts`
+- Replaced the Vite template `frontend/README.md` with project-specific instructions
+
 ### 2026-10-22 — Repository cleanup (`chore/repo-cleanup`) — Tirth
 
 - Removed accidentally committed root `node_modules/`, `package.json`, `package-lock.json`

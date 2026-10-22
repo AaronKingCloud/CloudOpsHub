@@ -1,8 +1,10 @@
-export const cpuData = [
-  { time: "10:00", usage: 20 },
-  { time: "10:05", usage: 35 },
-  { time: "10:10", usage: 50 },
-  { time: "10:15", usage: 42 },
-  { time: "10:20", usage: 65 },
-  { time: "10:25", usage: 58 },
+import type { MetricPoint } from "../types/Dashboard";
+
+export const cpuData: MetricPoint[] = [
+  { timestamp: "10:00", value: 20 },
+  { timestamp: "10:05", value: 35 },
+  { timestamp: "10:10", value: 50 },
+  { timestamp: "10:15", value: 42 },
+  { timestamp: "10:20", value: 65 },
+  { timestamp: "10:25", value: 58 },
 ];
