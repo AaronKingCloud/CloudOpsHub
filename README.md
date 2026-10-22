@@ -47,7 +47,22 @@ npm install
 npm run dev
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for backend and Docker setup.
+```bash
+# Backend (http://localhost:8000/docs)
+cd backend
+python -m venv .venv
+.venv\Scriptsctivate          # macOS/Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+fastapi dev app/main.py
+```
+
+```bash
+# Everything in Docker (frontend http://localhost:8080)
+cd infra
+docker compose up --build
+```
+
+More detail in each folder's `README.md` and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Objectives
 
