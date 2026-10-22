@@ -12,7 +12,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)   |
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                   |
 | API contract        | 🟡 Draft (`docs/api/frontend-contract.md`)          |
-| Frontend            | 🟡 Prototype                                        |
+| Frontend            | 🟡 Dashboard UI on mock data                        |
 | Backend             | ⬜ Not started                                      |
 | CI/CD               | ⬜ Not started                                      |
 | Docker / Infra      | ⬜ Not started                                      |
@@ -27,6 +27,15 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-10-22 — Dashboard UI (`feature/dashboard-ui`) — Tirth
+
+- Built the dashboard layout from `docs/architecture/dashboard-design.md`:
+  summary stat cards, CPU utilization chart (Recharts), "Attention Required" alerts panel,
+  device status table with CPU/memory/storage usage bars, connected accounts table
+- New components: `StatCard`, `SummaryCards`, `CpuChart`, `AlertsPanel`, `DeviceTable`, `StatusBadge`
+- `src/utils/status.ts` maps statuses to colours; usage thresholds are 70% (warning) and 90% (critical)
+- Replaced Vite template styles with dashboard styles (light + dark mode); removed unused template assets
 
 ### 2026-10-22 — Frontend API service layer (`feature/api-service`) — Tirth
 
