@@ -14,7 +14,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | API contract        | 🟡 Draft (`docs/api/frontend-contract.md`)          |
 | Frontend            | 🟡 Dashboard UI on mock data                        |
 | Backend             | 🟡 FastAPI serving mock data                        |
-| CI/CD               | ⬜ Not started                                      |
+| CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
 | Docker / Infra      | ⬜ Not started                                      |
 | Terraform / Cloud   | ⬜ Not started                                      |
 
@@ -27,6 +27,13 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-10-22 — CI pipelines (`ci/github-actions`) — Tirth
+
+- `.github/workflows/frontend.yml`: lint + type-check + build on PRs touching `frontend/`
+- `.github/workflows/backend.yml`: pytest on PRs touching `backend/`
+- Added `.gitattributes` to normalize line endings (stops CRLF/LF noise between Windows and Mac)
+- Documented CI in `CONTRIBUTING.md`
 
 ### 2026-10-22 — Backend API (`feature/backend-api`) — Tirth
 
