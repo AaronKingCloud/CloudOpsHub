@@ -1,75 +1,52 @@
-# React + TypeScript + Vite
+# CloudOps Hub — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript dashboard built with Vite.
 
-Currently, two official plugins are available:
+## Run it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+| Command           | What it does                         |
+| ----------------- | ------------------------------------ |
+| `npm run dev`     | Start dev server with hot reload     |
+| `npm run build`   | Type-check and build to `dist/`      |
+| `npm run lint`    | Run ESLint                           |
+| `npm run preview` | Serve the production build locally   |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Mock data vs real backend
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+By default the app uses **mock data** so it runs without the backend.
+
+To use the real backend, copy `.env.example` to `.env.local` and set:
 
 ```
+VITE_USE_MOCK=false
+VITE_API_URL=http://localhost:8000/api
+```
+
+Restart `npm run dev` after changing env files.
+
+## Folder layout
+
+```
+src/
+├── components/   UI components (StatCard, CpuChart, AccountList, ...)
+├── hooks/        Reusable hooks (useApi: loading / error / data)
+├── mock/         Mock data used when VITE_USE_MOCK is not "false"
+├── services/     API calls — components fetch data ONLY through here
+├── types/        TypeScript types matching docs/api/frontend-contract.md
+├── App.tsx       Page layout
+└── main.tsx      Entry point
+```
+
+## Adding a new data source
+
+1. Add the type in `src/types/`
+2. Add mock data in `src/mock/`
+3. Add a function in `src/services/dashboardService.ts`
+4. Use it in a component: `const { data, loading, error } = useApi(getSomething);`
+5. Document the endpoint in `docs/api/frontend-contract.md`
