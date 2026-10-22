@@ -87,6 +87,18 @@ update api contract for alerts endpoint
 - [ ] If you changed an API response shape, you updated
       [`docs/api/frontend-contract.md`](docs/api/frontend-contract.md)
 
+### Automated checks (CI)
+
+GitHub Actions runs automatically on every Pull Request:
+
+| Workflow      | Runs when you change | What it checks                 |
+| ------------- | -------------------- | ------------------------------ |
+| Frontend CI   | `frontend/**`        | `npm run lint`, `npm run build` |
+| Backend CI    | `backend/**`         | `pytest`                        |
+
+A red ❌ on your PR means a check failed. Click **Details** to see the log, fix it,
+and push again. Please don't merge PRs with failing checks.
+
 ## 6. Where things live
 
 | I want to...                         | Go to                         |
