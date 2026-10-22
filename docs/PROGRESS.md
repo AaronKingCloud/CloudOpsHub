@@ -15,7 +15,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Frontend            | 🟡 Dashboard UI on mock data                        |
 | Backend             | 🟡 FastAPI serving mock data                        |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
-| Docker / Infra      | ⬜ Not started                                      |
+| Docker / Infra      | 🟡 Dockerfiles + compose written, needs test run    |
 | Terraform / Cloud   | ⬜ Not started                                      |
 
 ## Next Up
@@ -27,6 +27,15 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-10-22 — Docker setup (`infra/docker`) — Tirth
+
+- Added `infra/docker/` with backend and frontend Dockerfiles, nginx config, per-Dockerfile ignore files
+- Added `infra/docker-compose.yml`: run the whole stack with `docker compose up --build`
+  (frontend http://localhost:8080, backend http://localhost:8000)
+- nginx proxies `/api` to the backend, so the containerized frontend uses live data
+- Added `infra/terraform/README.md` placeholder listing open cloud decisions
+- ⚠️ Compose file validated, but images not yet built/run (Docker wasn't available on my machine). Needs a test run.
 
 ### 2026-10-22 — CI pipelines (`ci/github-actions`) — Tirth
 
