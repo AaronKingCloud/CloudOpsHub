@@ -140,6 +140,23 @@ Project planning documentation can be found in:
 | CI/CD          | GitHub Actions                               |
 | Infrastructure | Terraform (planned), cloud provider TBD      |
 
+## AWS Integration
+
+CloudOps Hub now includes initial AWS integration through a dedicated IAM
+service account and FastAPI endpoint.
+
+### Current AWS Features
+
+- IAM service account (`cloudopshub-service`)
+- AWS SDK for Python (boto3) integration
+- Live AWS account information retrieval
+- FastAPI AWS endpoint documentation through Swagger/OpenAPI
+
+### Available Endpoint
+
+```http
+GET /api/aws/account
+
 ## Roadmap
 
 - [x] Project concept
@@ -147,6 +164,10 @@ Project planning documentation can be found in:
 - [x] Project charter
 - [x] Risk register
 - [x] SWOT analysis
+- [x] Initial AWS IAM integration
+- [x] Live AWS account endpoint
+- [ ] Monitoring and observability
+- [ ] Security validation
 - [ ] Requirements specification
 - [ ] Architecture design
 - [ ] Proof of concept

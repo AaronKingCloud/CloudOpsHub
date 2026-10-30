@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import dashboard, resources
+from app.routers import dashboard, resources, aws
 
 app = FastAPI(
     title="CloudOps Hub API",
@@ -23,6 +23,7 @@ app.add_middleware(
 
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(resources.router, prefix="/api")
+app.include_router(aws.router, prefix="/api")
 
 
 @app.get("/health", tags=["health"])

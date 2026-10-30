@@ -49,3 +49,8 @@ class Account(CamelModel):
     status: Literal["Healthy", "Warning", "Critical"]
     alert_count: int
     last_updated: str
+
+class AwsAccount(CamelModel):
+    account_id: str
+    user_name: str
+    arn: str
