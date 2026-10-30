@@ -11,9 +11,10 @@ A running log of what the team has done, what is in progress, and what is next.
 | ------------------- | --------------------------------------------------- |
 | Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)   |
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                   |
-| API contract        | 🟡 Draft (`docs/api/frontend-contract.md`)          |
+| API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)        |
 | Frontend            | 🟡 Dashboard UI on mock data                        |
 | Backend             | 🟡 FastAPI serving mock data                        |
+| Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)    |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
 | Docker / Infra      | 🟡 Dockerfiles + compose written, needs test run    |
 | Terraform / Cloud   | ⬜ Not started                                      |
@@ -27,6 +28,23 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-10-30 — Authentication & RBAC (`feature/auth-jwt-rbac`)
+
+- Added backend JWT authentication system (`backend/app/auth/`):
+  - SQLite database for user storage with automatic table creation & default role seeding (`admin`, `operator`, `viewer`)
+  - Password hashing with bcrypt + salt; token generation and validation with PyJWT (access + refresh tokens)
+  - Endpoints: `POST /api/auth/login`, `POST /api/auth/register` (admin-only), `POST /api/auth/refresh`, `GET /api/auth/me`, `GET /api/auth/users` (admin-only)
+  - 12 comprehensive pytest unit and integration tests covering positive and negative scenarios (all 19 backend tests passing)
+- Added frontend authentication layer (`frontend/src/`):
+  - `LoginPage` component with custom design token styling, dark/light theme support, error handling, and 1-click Quick Demo logins for `Admin`, `Operator`, and `Viewer`
+  - `AuthProvider` and `useAuth` hook managing user session, token storage in `localStorage`, and role-based permissions (`hasRole`)
+  - Axios interceptor in `apiClient.ts` to automatically attach Bearer token to all outgoing requests
+  - Header user greeting, role badge, and sign-out button (`UserNav.tsx`)
+  - Informative `RoleBanner` component displaying active role permissions and scope
+  - Both live backend and mock mode supported seamlessly (`USE_MOCK`)
+- Updated API contract (`docs/api/frontend-contract.md`) with the new auth endpoints and JSON payload shapes
+
 
 ### 2026-10-22 — Docker setup (`infra/docker`) — Tirth
 
