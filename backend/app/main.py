@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.database import init_db
-from app.routers import dashboard, resources, aws, auth
+from app.routers import dashboard, resources, aws, auth, billing
 
 
 @asynccontextmanager
@@ -35,6 +35,7 @@ app.include_router(dashboard.router, prefix="/api")
 app.include_router(resources.router, prefix="/api")
 app.include_router(aws.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(billing.router, prefix="/api")
 
 
 @app.get("/health", tags=["health"])
