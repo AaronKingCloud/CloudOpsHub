@@ -152,10 +152,16 @@ service account and FastAPI endpoint.
 - Live AWS account information retrieval
 - FastAPI AWS endpoint documentation through Swagger/OpenAPI
 
-### Available Endpoint
+### Available Endpoints
+
+All require login. See `docs/api/frontend-contract.md` for response shapes.
 
 ```http
 GET /api/aws/account
+GET /api/aws/ec2
+GET /api/aws/ec2/{instanceId}/cpu?hours=3
+```
+
 
 ## Roadmap
 
