@@ -40,7 +40,7 @@ A running log of what the team has done, what is in progress, and what is next.
 - Service account `cloudopshub-service` moved to a least-privilege inline policy (`CloudOpsHubReadOnly`); removed `ReadOnlyAccess`
 - Fixed unclosed code block in README that broke the Roadmap section
 - ⚠️ Found that AWS Free plan accounts block programmatic `ec2:DescribeInstances` via an AWS-managed SCP. See `docs/architecture/aws-integration.md`
-
+- Added `*.db` to `.gitignore` so local auth databases (user accounts, password hashes) are never committed
 ### 2026-10-30 — Authentication & RBAC (`feature/auth-jwt-rbac`)
 
 - Added backend JWT authentication system (`backend/app/auth/`):
