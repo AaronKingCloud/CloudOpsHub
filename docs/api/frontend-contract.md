@@ -91,3 +91,43 @@ Cloud accounts / subscriptions being monitored (see `docs/architecture/account-m
   }
 ]
 ```
+
+## AWS (live)
+
+All `/aws/*` routes require a logged-in user (`Authorization: Bearer <accessToken>`).
+If AWS rejects a call (missing permissions, restricted account), the API returns
+`502` with AWS's error message in `detail`.
+
+### EC2 Instances
+
+`GET /aws/ec2`
+
+```json
+[
+  {
+    "instanceId": "i-0abc123def4567890",
+    "name": "web-01",
+    "state": "running",
+    "instanceType": "t3.micro",
+    "availabilityZone": "us-east-1a",
+    "privateIp": "172.31.20.15",
+    "launchTime": "2026-11-11T22:14:03+00:00"
+  }
+]
+```
+
+`privateIp` may be `null` (e.g. stopped instances).
+
+### EC2 CPU Utilization
+
+`GET /aws/ec2/{instanceId}/cpu?hours=3`
+
+CloudWatch `CPUUtilization` averaged over 5-minute periods. `hours` is 1–24 (default 3).
+Same shape as `GET /metrics/cpu`, so it can feed the existing CPU chart.
+
+```json
+[
+  { "timestamp": "21:05", "value": 4.2 },
+  { "timestamp": "21:10", "value": 3.8 }
+]
+```

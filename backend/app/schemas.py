@@ -54,3 +54,13 @@ class AwsAccount(CamelModel):
     account_id: str
     user_name: str
     arn: str
+
+# Additional models for AWS EC2 instances
+class Ec2Instance(CamelModel):
+    instance_id: str
+    name: str
+    state: str
+    instance_type: str
+    availability_zone: str
+    private_ip: str | None = None
+    launch_time: str

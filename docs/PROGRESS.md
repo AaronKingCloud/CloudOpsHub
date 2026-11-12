@@ -29,6 +29,18 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Log
 
+### 2026-11-11 — AWS EC2 inventory + CloudWatch CPU (`feature/aws-ec2-cloudwatch`) — Aaron
+
+- Cleaned up `backend/app/routers/aws.py`: removed duplicated `/aws/ec2` route
+- All `/aws/*` routes now require login (previously public, exposing account ID and ARN)
+- `GET /aws/ec2` now returns a typed `Ec2Instance` model (type, AZ, private IP, launch time) and paginates
+- New `GET /aws/ec2/{instanceId}/cpu` pulls CloudWatch CPU in the same shape as `/metrics/cpu`
+- AWS failures return a clean `502` with AWS's message instead of a 500 stack trace
+- 5 new tests in `tests/test_aws.py` using `moto` (fake AWS), so CI needs no credentials (24 backend tests passing)
+- Service account `cloudopshub-service` moved to a least-privilege inline policy (`CloudOpsHubReadOnly`); removed `ReadOnlyAccess`
+- Fixed unclosed code block in README that broke the Roadmap section
+- ⚠️ Found that AWS Free plan accounts block programmatic `ec2:DescribeInstances` via an AWS-managed SCP. See `docs/architecture/aws-integration.md`
+- Added `*.db` to `.gitignore` so local auth databases (user accounts, password hashes) are never committed
 ### 2026-10-30 — Authentication & RBAC (`feature/auth-jwt-rbac`)
 
 - Added backend JWT authentication system (`backend/app/auth/`):
