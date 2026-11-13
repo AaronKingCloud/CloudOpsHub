@@ -3,10 +3,12 @@
 
 import { accounts } from "../mock/accounts";
 import { alerts } from "../mock/alerts";
+import { billingSummary } from "../mock/billing";
 import { cpuData } from "../mock/cpuData";
 import { devices } from "../mock/devices";
 import { summary } from "../mock/summary";
 import type { Account } from "../types/Account";
+import type { BillingSummary } from "../types/Billing";
 import type { Alert, DashboardSummary, Device, MetricPoint } from "../types/Dashboard";
 import { apiClient, USE_MOCK } from "./apiClient";
 
@@ -23,3 +25,4 @@ export const getDevices = () => get<Device[]>("/devices", devices);
 export const getCpuMetrics = () => get<MetricPoint[]>("/metrics/cpu", cpuData);
 export const getAlerts = () => get<Alert[]>("/alerts", alerts);
 export const getAccounts = () => get<Account[]>("/accounts", accounts);
+export const getBillingSummary = () => get<BillingSummary>("/billing/summary", billingSummary);

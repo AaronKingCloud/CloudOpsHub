@@ -64,3 +64,20 @@ class Ec2Instance(CamelModel):
     availability_zone: str
     private_ip: str | None = None
     launch_time: str
+
+
+class ServiceCost(CamelModel):
+    service: str
+    amount: float
+    currency: str = "USD"
+    percentage: float
+
+
+class BillingSummary(CamelModel):
+    current_month_spend: float
+    forecasted_spend: float
+    currency: str = "USD"
+    period_start: str
+    period_end: str
+    service_breakdown: list[ServiceCost]
+    source: Literal["aws", "mock"]

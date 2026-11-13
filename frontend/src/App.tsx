@@ -1,5 +1,6 @@
 import AccountList from "./components/AccountList";
 import AlertsPanel from "./components/AlertsPanel";
+import CostMonitorPanel from "./components/CostMonitorPanel";
 import CpuChart from "./components/CpuChart";
 import DeviceTable from "./components/DeviceTable";
 import RoleBanner from "./components/RoleBanner";
@@ -31,6 +32,7 @@ function App() {
 
         <DeviceTable />
         <AccountList />
+        <CostMonitorPanel />
       </main>
     </AuthProvider>
   );
