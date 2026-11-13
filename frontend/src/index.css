@@ -28,8 +28,10 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark theme: follows the OS setting unless the user picked a theme in the top bar
+   (useTheme sets data-theme="light" | "dark" on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #12141a;
     --surface: #1b1e26;
     --border: #2c303b;
@@ -47,6 +49,30 @@
     --info: #60a5fa;
     --info-bg: rgba(96, 165, 250, 0.12);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #12141a;
+  --surface: #1b1e26;
+  --border: #2c303b;
+  --text: #b4b9c6;
+  --text-h: #f1f3f7;
+  --muted: #7d8394;
+  --accent: #818cf8;
+
+  --ok: #4ade80;
+  --ok-bg: rgba(74, 222, 128, 0.12);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.12);
+  --crit: #f87171;
+  --crit-bg: rgba(248, 113, 113, 0.12);
+  --info: #60a5fa;
+  --info-bg: rgba(96, 165, 250, 0.12);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 body {
@@ -74,30 +100,7 @@ p {
   margin: 0;
 }
 
-/* ---------- Layout ---------- */
-
-.app-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-
-.app-header .subtitle {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-  display: grid;
-  gap: 20px;
-}
+/* ---------- Layout (page frame lives in styles/shell.css) ---------- */
 
 .grid-2 {
   display: grid;
@@ -108,9 +111,6 @@ p {
 @media (max-width: 860px) {
   .grid-2 {
     grid-template-columns: 1fr;
-  }
-  .dashboard {
-    padding: 16px;
   }
 }
 
@@ -252,13 +252,7 @@ tr:last-child td {
   color: var(--text-h);
 }
 
-/* ---------- User Nav & Header ---------- */
-
-.header-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
+/* ---------- User Nav ---------- */
 
 .user-nav {
   display: flex;

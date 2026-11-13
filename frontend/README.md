@@ -34,14 +34,32 @@ Restart `npm run dev` after changing env files.
 
 ```
 src/
-├── components/   UI components (StatCard, CpuChart, AccountList, ...)
-├── hooks/        Reusable hooks (useApi: loading / error / data)
+├── App.tsx       Routes (which URL shows which page)
+├── pages/        One file per page: Overview, Devices, Alerts, Accounts, ...
+├── components/
+│   ├── layout/   App shell: sidebar, top bar, page header, icons, navItems.ts
+│   └── *.tsx     Dashboard widgets (StatCard, CpuChart, DeviceTable, ...)
+├── context/      AuthProvider (signed-in user, roles)
+├── hooks/        useApi (loading / error / data), useAuth, useTheme
 ├── mock/         Mock data used when VITE_USE_MOCK is not "false"
 ├── services/     API calls — components fetch data ONLY through here
+├── styles/       shell.css (layout); global tokens and widgets are in index.css
 ├── types/        TypeScript types matching docs/api/frontend-contract.md
-├── App.tsx       Page layout
 └── main.tsx      Entry point
 ```
+
+## Adding a new page
+
+1. Create `src/pages/MyPage.tsx` (start with `<PageHeader />`, then panels)
+2. Add a `<Route path="my-page" element={<MyPage />} />` in `src/App.tsx`
+3. Add an entry to `src/components/layout/navItems.ts` (label, icon, description;
+   set `roles` to hide it from some users)
+
+## Theme
+
+The moon/sun button in the top bar cycles **System → Light → Dark**. The choice is saved
+in the browser. Colours are CSS variables in `index.css`, so new components should use
+`var(--surface)`, `var(--text-h)`, `var(--ok)`, etc. instead of hard-coded colours.
 
 ## Adding a new data source
 

@@ -34,6 +34,21 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Log
 
+### 2026-11-12 — Frontend app shell + pages (`feature/frontend-app-shell`) — Tirth
+
+- Added routing (`react-router` 7) with real pages and URLs: Overview `/`, Devices `/devices`,
+  Alerts `/alerts`, Accounts `/accounts`, plus a "Page not found" page
+- New app shell: sidebar navigation, sticky top bar with page title, theme button and sign-in.
+  On phones the sidebar becomes a slide-in menu (☰)
+- Light / dark / system theme toggle, remembered per browser, no flash on reload
+- Fixed: CPU chart was blank because its reveal animation got stuck; animation turned off
+- Fixed: wide tables no longer push the page sideways on small screens
+- Layout styles in new `src/styles/shell.css`; removed unused header CSS from `index.css`
+- Checked with screenshots: desktop, phone width, light and dark mode
+- ⚠️ **Merging with `feature-cost`:** `App.tsx` is now just routes. When merging, put
+  `<CostMonitorPanel />` in `src/pages/OverviewPage.tsx` (or give it its own page) instead of `App.tsx`
+- Builds on `fix/auth-and-docs-cleanup`; merge that PR first
+
 ### 2026-11-12 — Auth fixes + docs cleanup (`fix/auth-and-docs-cleanup`) — Tirth
 
 - **Stay signed in:** the frontend now saves the refresh token and, when a request gets a 401

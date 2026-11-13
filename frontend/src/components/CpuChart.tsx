@@ -26,6 +26,9 @@ function CpuChart() {
               fill={LINE_COLOR}
               fillOpacity={0.15}
               strokeWidth={2}
+              // The reveal animation can get stuck at zero width (e.g. under React StrictMode),
+              // leaving the chart blank. A monitoring chart should just show the data.
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
