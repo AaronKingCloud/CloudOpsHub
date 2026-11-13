@@ -1,6 +1,7 @@
 // Maps domain statuses to the CSS tone classes (ok / warn / crit / info / muted) used by badges.
 
 import type { AccountStatus } from "../types/Account";
+import type { UserRole } from "../types/Auth";
 import type { AlertSeverity, DeviceStatus } from "../types/Dashboard";
 
 export type Tone = "ok" | "warn" | "crit" | "info" | "muted";
@@ -36,4 +37,9 @@ export function ec2StateTone(state: string): Tone {
   if (state === "stopped") return "muted";
   if (state === "terminated") return "crit";
   return "info"; // pending, stopping, shutting-down
+}
+
+// Same colours as the role badge in the top bar (UserNav).
+export function roleTone(role: UserRole): Tone {
+  return { admin: "crit", operator: "ok", viewer: "info" }[role] as Tone;
 }

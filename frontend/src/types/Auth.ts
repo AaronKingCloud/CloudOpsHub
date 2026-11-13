@@ -29,3 +29,17 @@ export interface AccessTokenResponse {
   tokenType: string;
 }
 
+
+// Body of POST /auth/register (admin only). Limits match UserCreate in backend/app/auth/schemas.py.
+export interface NewUser {
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
+export const USER_LIMITS = {
+  username: { min: 3, max: 50 },
+  email: { min: 5, max: 255 },
+  password: { min: 8, max: 128 },
+} as const;

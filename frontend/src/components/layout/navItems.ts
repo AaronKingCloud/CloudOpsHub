@@ -17,4 +17,5 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/alerts", label: "Alerts", icon: "alerts", description: "Active alerts across your infrastructure" },
   { to: "/accounts", label: "Accounts", icon: "accounts", description: "Connected cloud accounts and subscriptions" },
   { to: "/cloud", label: "AWS Cloud", icon: "cloud", description: "Live EC2 instances and CloudWatch CPU from the connected AWS account" },
+  { to: "/admin/users", label: "Users", icon: "users", description: "Who can sign in to CloudOps Hub, and with which role", roles: ["admin"] },
 ];

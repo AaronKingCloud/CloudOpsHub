@@ -35,15 +35,17 @@ Restart `npm run dev` after changing env files.
 ```
 src/
 ├── App.tsx       Routes (which URL shows which page)
-├── pages/        One file per page: Overview, Devices, Alerts, Accounts, ...
+├── pages/        One file per page: Overview, Devices, Alerts, Accounts, AWS Cloud, Users
 ├── components/
 │   ├── layout/   App shell: sidebar, top bar, page header, icons, navItems.ts
-│   └── *.tsx     Dashboard widgets (StatCard, CpuChart, DeviceTable, ...)
+│   ├── aws/      AWS Cloud page pieces (account card, EC2 table, CPU panel)
+│   ├── users/    Admin user management (Add user dialog)
+│   └── *.tsx     Dashboard widgets (StatCard, CpuChart, MetricChart, DeviceTable, ...)
 ├── context/      AuthProvider (signed-in user, roles)
-├── hooks/        useApi (loading / error / data), useAuth, useTheme
+├── hooks/        useApi (loading / error / data / reload), useAuth, useTheme
 ├── mock/         Mock data used when VITE_USE_MOCK is not "false"
-├── services/     API calls — components fetch data ONLY through here
-├── styles/       shell.css (layout); global tokens and widgets are in index.css
+├── services/     API calls (dashboard, aws, auth, users) — components fetch data ONLY through here
+├── styles/       shell.css (layout), cloud.css, users.css; global tokens and widgets are in index.css
 ├── types/        TypeScript types matching docs/api/frontend-contract.md
 └── main.tsx      Entry point
 ```

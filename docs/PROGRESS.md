@@ -34,6 +34,22 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Log
 
+### 2026-11-12 — Admin user management (`feature/frontend-admin-users`) — Tirth
+
+- New **Users** page (`/admin/users`), visible to admins only: lists every account with role,
+  status, created and last sign-in time
+- **Add user** dialog: username, email, temporary password and role (with a short description of
+  each role). Checks the same limits as the backend before sending; shows the backend's message
+  for duplicates. Closes with Esc
+- Non-admins don't see the menu link, and opening the URL directly shows "Admins only"
+  (the backend also returns 403)
+- `useApi` gained `reload()` and `refreshing`, so lists can update without flashing "Loading"
+- Validation errors (`422`) now show which field is wrong
+- Documented all auth endpoints in `docs/api/frontend-contract.md` (they were missing)
+- Tested against a running backend: viewer blocked, admin created a user, the new user could sign in,
+  duplicate rejected; dialog checked at phone width
+- Not included (backend has no endpoints yet): editing users, changing roles, disabling accounts
+
 ### 2026-11-12 — AWS Cloud page (`feature/frontend-aws-page`) — Tirth
 
 - New **AWS Cloud** page (`/cloud`) that finally puts Aaron's AWS endpoints on screen:

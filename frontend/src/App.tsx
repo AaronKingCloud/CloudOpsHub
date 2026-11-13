@@ -7,6 +7,7 @@ import CloudPage from "./pages/CloudPage";
 import DevicesPage from "./pages/DevicesPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import OverviewPage from "./pages/OverviewPage";
+import UsersPage from "./pages/UsersPage";
 
 // Every page renders inside AppLayout (sidebar + top bar).
 // To add a page: create it in src/pages/, add a <Route> here and an entry in
@@ -22,6 +23,7 @@ function App() {
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="accounts" element={<AccountsPage />} />
             <Route path="cloud" element={<CloudPage />} />
+            <Route path="admin/users" element={<UsersPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
