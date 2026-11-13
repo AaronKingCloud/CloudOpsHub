@@ -1,7 +1,7 @@
 """Authentication endpoints: register, login, token refresh, and profile.
 
-All endpoints live under ``/api/auth/``.  Existing dashboard / resource /
-AWS endpoints are **not** protected so other team members are unaffected.
+All endpoints live under ``/api/auth/``.  The ``/api/aws/*`` endpoints require
+login; dashboard / resource endpoints are still public for now.
 """
 
 import uuid

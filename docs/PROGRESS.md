@@ -12,8 +12,8 @@ A running log of what the team has done, what is in progress, and what is next.
 | Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)   |
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                   |
 | API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)        |
-| Frontend            | 🟡 Dashboard UI on mock data                        |
-| Backend             | 🟡 FastAPI serving mock data                        |
+| Frontend            | 🟡 Dashboard UI + login; mock or live backend       |
+| Backend             | 🟡 FastAPI: auth + live AWS; dashboard data still mock |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)    |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
 | Docker / Infra      | 🟡 Dockerfiles + compose written, needs test run    |
@@ -24,10 +24,30 @@ A running log of what the team has done, what is in progress, and what is next.
 - Decide on target cloud provider (AWS vs Azure) for Terraform
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
+- Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
+  requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
+  and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
+- `backend/seed.py` crashes on Windows when its output is redirected (emoji in `print`).
+  Workaround: set `PYTHONIOENCODING=utf-8`.
 
 ---
 
 ## Log
+
+### 2026-11-12 — Auth fixes + docs cleanup (`fix/auth-and-docs-cleanup`) — Tirth
+
+- **Stay signed in:** the frontend now saves the refresh token and, when a request gets a 401
+  (access token expired after 30 min), silently gets a new access token and retries. If the refresh
+  token is also invalid, the user is signed out cleanly. Before, users were logged out every 30 minutes.
+- **Demo passwords:** the quick-login buttons now only appear in `npm run dev` or mock mode.
+  A production build against a real backend no longer contains the passwords at all (verified in the bundle).
+- **JWT secret:** with `APP_ENV=production`, the backend refuses to start unless `JWT_SECRET`
+  is set to a real value. Local dev and tests are unchanged. Documented in `backend/README.md`.
+- 5 new tests in `tests/test_jwt_secret.py` (29 backend tests passing); refresh flow checked end to end
+  against a running backend
+- Docs: fixed outdated comment in `routers/auth.py`, removed duplicate roadmap items in `README.md`,
+  ticked off completed roadmap items, updated the status table above
+- No changes to files touched by the open `feature-cost` branch
 
 ### 2026-11-11 — AWS EC2 inventory + CloudWatch CPU (`feature/aws-ec2-cloudwatch`) — Aaron
 
