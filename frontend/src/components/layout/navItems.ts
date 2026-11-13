@@ -16,4 +16,5 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/devices", label: "Devices", icon: "devices", description: "Health and resource usage of every monitored device" },
   { to: "/alerts", label: "Alerts", icon: "alerts", description: "Active alerts across your infrastructure" },
   { to: "/accounts", label: "Accounts", icon: "accounts", description: "Connected cloud accounts and subscriptions" },
+  { to: "/cloud", label: "AWS Cloud", icon: "cloud", description: "Live EC2 instances and CloudWatch CPU from the connected AWS account" },
 ];

@@ -98,6 +98,20 @@ All `/aws/*` routes require a logged-in user (`Authorization: Bearer <accessToke
 If AWS rejects a call (missing permissions, restricted account), the API returns
 `502` with AWS's error message in `detail`.
 
+### Account
+
+`GET /aws/account`
+
+The AWS identity the backend is connected as (`sts:GetCallerIdentity`).
+
+```json
+{
+  "accountId": "123456789012",
+  "userName": "cloudopshub-service",
+  "arn": "arn:aws:iam::123456789012:user/cloudopshub-service"
+}
+```
+
 ### EC2 Instances
 
 `GET /aws/ec2`

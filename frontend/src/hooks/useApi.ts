@@ -1,28 +1,48 @@
 import { useEffect, useState } from "react";
+import { getErrorMessage, getErrorStatus } from "../utils/errors";
 
 interface ApiState<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
+  // HTTP status of a failed request (e.g. 401, 502), if there was one.
+  errorStatus?: number;
 }
 
-// Runs an async fetcher once on mount and tracks loading / error state.
-// Usage: const { data, loading, error } = useApi(getDevices);
+interface Result<T> {
+  source: () => Promise<T>;
+  data: T | null;
+  error: string | null;
+  errorStatus?: number;
+}
+
+// Runs an async fetcher and tracks loading / error state. Re-runs when the fetcher changes,
+// so for parameterised calls wrap it in useCallback:
+//   const { data, loading, error } = useApi(getDevices);
+//   const fetchCpu = useCallback(() => getEc2Cpu(id, hours), [id, hours]);
+//   const cpu = useApi(fetchCpu);
 export function useApi<T>(fetcher: () => Promise<T>): ApiState<T> {
-  const [state, setState] = useState<ApiState<T>>({ data: null, loading: true, error: null });
+  const [result, setResult] = useState<Result<T> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetcher()
-      .then((data) => !cancelled && setState({ data, loading: false, error: null }))
+      .then((data) => {
+        if (!cancelled) setResult({ source: fetcher, data, error: null });
+      })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : "Request failed";
-        if (!cancelled) setState({ data: null, loading: false, error: message });
+        if (!cancelled) {
+          setResult({ source: fetcher, data: null, error: getErrorMessage(err), errorStatus: getErrorStatus(err) });
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [fetcher]);
 
-  return state;
+  // Still loading until the result belongs to the current fetcher (avoids showing stale data).
+  if (!result || result.source !== fetcher) {
+    return { data: null, loading: true, error: null };
+  }
+  return { data: result.data, loading: false, error: result.error, errorStatus: result.errorStatus };
 }

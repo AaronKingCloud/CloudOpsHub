@@ -34,6 +34,22 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Log
 
+### 2026-11-12 — AWS Cloud page (`feature/frontend-aws-page`) — Tirth
+
+- New **AWS Cloud** page (`/cloud`) that finally puts Aaron's AWS endpoints on screen:
+  connected account (ID, user, ARN), EC2 instance table (state, type, zone, IP, launched),
+  and a CloudWatch CPU chart for the selected instance with 1h–24h ranges and average / peak / latest
+- Click an instance to see its CPU. Stopped instances show "no data" instead of an empty chart
+- Signed-out users see "Sign in to view AWS resources" (the backend requires login for `/aws/*`)
+- AWS errors are explained in plain words (Free plan SCP block, missing IAM permission,
+  no credentials) with AWS's raw message underneath
+- Mock data for the whole page, so it works without AWS (`src/mock/aws.ts`)
+- `useApi` now shows the backend's error message (`detail`) instead of "Request failed with status code 502"
+- CPU chart drawing moved into a reusable `MetricChart` component
+- Added `GET /aws/account` to `docs/api/frontend-contract.md` (it existed but wasn't documented)
+- Tested in mock mode, live mode signed out, and live mode signed in with **no AWS credentials**
+  (so no real AWS calls were made); phone width checked
+
 ### 2026-11-12 — Frontend app shell + pages (`feature/frontend-app-shell`) — Tirth
 
 - Added routing (`react-router` 7) with real pages and URLs: Overview `/`, Devices `/devices`,

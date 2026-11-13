@@ -1,9 +1,9 @@
-// Maps domain statuses to the CSS tone classes defined in index.css (ok / warn / crit / info).
+// Maps domain statuses to the CSS tone classes (ok / warn / crit / info / muted) used by badges.
 
 import type { AccountStatus } from "../types/Account";
 import type { AlertSeverity, DeviceStatus } from "../types/Dashboard";
 
-export type Tone = "ok" | "warn" | "crit" | "info";
+export type Tone = "ok" | "warn" | "crit" | "info" | "muted";
 
 const ACCOUNT_TONES: Record<AccountStatus, Tone> = {
   Healthy: "ok",
@@ -28,4 +28,12 @@ export function usageTone(percent: number): Tone {
   if (percent >= 90) return "crit";
   if (percent >= 70) return "warn";
   return "ok";
+}
+
+// EC2 instance state -> badge colour. Stopped is normal (not an error), so it's muted.
+export function ec2StateTone(state: string): Tone {
+  if (state === "running") return "ok";
+  if (state === "stopped") return "muted";
+  if (state === "terminated") return "crit";
+  return "info"; // pending, stopping, shutting-down
 }
