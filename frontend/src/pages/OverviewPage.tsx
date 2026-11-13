@@ -3,6 +3,8 @@ import AlertsPanel from "../components/AlertsPanel";
 import CpuChart from "../components/CpuChart";
 import DeviceTable from "../components/DeviceTable";
 import PageHeader from "../components/layout/PageHeader";
+import RefreshControl from "../components/RefreshControl";
+import ResourceUsageChart from "../components/ResourceUsageChart";
 import RoleBanner from "../components/RoleBanner";
 import SummaryCards from "../components/SummaryCards";
 
@@ -10,7 +12,7 @@ import SummaryCards from "../components/SummaryCards";
 function OverviewPage() {
   return (
     <>
-      <PageHeader />
+      <PageHeader actions={<RefreshControl />} />
       <RoleBanner />
       <SummaryCards />
 
@@ -19,6 +21,7 @@ function OverviewPage() {
         <AlertsPanel />
       </div>
 
+      <ResourceUsageChart />
       <DeviceTable />
       <AccountList />
     </>

@@ -34,6 +34,24 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Log
 
+### 2026-11-13 — Dashboard polish (`feature/frontend-dashboard-polish`) — Tirth
+
+- **New chart: Memory & Storage by Device** (the memory / storage charts from `dashboard-design.md`).
+  Shows current values per device with a 90% critical line and a hover tooltip; offline devices
+  show "no data" for memory instead of a misleading 0%. Colours checked for colour-blind
+  separation and contrast in light and dark mode. (No history yet: the backend only has CPU over time.)
+- **Auto-refresh every 30s** on Overview, Devices, Alerts and Accounts, paused while the tab is hidden.
+  Control at the top right: last update time, on/off toggle, refresh now
+- **AWS data is never auto-refreshed** (quotas, and billing calls cost money once `feature-cost` lands);
+  the EC2 panel has a manual refresh button instead
+- Loading skeletons instead of "Loading..." text, and every panel shows a clear error with **Retry**
+- Click column headers to **sort** devices, accounts and EC2 instances (accounts default to most severe first)
+- Devices page: **search** by hostname and **filter** online / offline. Alerts page: **filter by severity**
+  with counts; alerts are always listed most severe first
+- Tested in the browser: sorting, search, filters, tooltip, light and dark mode, auto-refresh request count
+  (devices re-fetched after 30s, AWS calls unchanged), and all panels with the backend stopped
+- Known: in dev mode React StrictMode fetches each panel twice on load; production builds fetch once
+
 ### 2026-11-12 — Admin user management (`feature/frontend-admin-users`) — Tirth
 
 - New **Users** page (`/admin/users`), visible to admins only: lists every account with role,

@@ -3,7 +3,9 @@ import AwsAccountCard from "../components/aws/AwsAccountCard";
 import AwsErrorMessage from "../components/aws/AwsErrorMessage";
 import Ec2CpuPanel from "../components/aws/Ec2CpuPanel";
 import Ec2Table from "../components/aws/Ec2Table";
+import Icon from "../components/layout/Icon";
 import PageHeader from "../components/layout/PageHeader";
+import { Skeleton } from "../components/PanelStatus";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../hooks/useAuth";
 import { USE_MOCK } from "../services/apiClient";
@@ -39,7 +41,8 @@ function CloudPage() {
 }
 
 function Ec2Section() {
-  const { data: instances, loading, error, errorStatus } = useApi(getEc2Instances);
+  // Not auto-refreshed (AWS API quotas); the refresh button reloads on demand.
+  const { data: instances, loading, error, errorStatus, refreshing, reload } = useApi(getEc2Instances);
   const [chosenId, setChosenId] = useState<string | null>(null);
 
   // Default to the first running instance until the user picks one.
@@ -56,14 +59,19 @@ function Ec2Section() {
       <section className="panel">
         <div className="panel-header">
           <h2>EC2 Instances</h2>
-          {instances && (
-            <span className="panel-subtitle">
-              {running} running · {instances.length} total
-            </span>
-          )}
+          <div className="panel-tools">
+            {instances && (
+              <span className="panel-subtitle">
+                {refreshing ? "Refreshing…" : `${running} running · ${instances.length} total`}
+              </span>
+            )}
+            <button type="button" className="icon-btn" onClick={reload} title="Refresh instances" aria-label="Refresh instances">
+              <Icon name="refresh" size={16} />
+            </button>
+          </div>
         </div>
-        {loading && <p className="state-message">Loading EC2 instances...</p>}
-        {error && <AwsErrorMessage error={error} status={errorStatus} />}
+        {loading && <Skeleton rows={3} />}
+        {error && <AwsErrorMessage error={error} status={errorStatus} onRetry={reload} />}
         {instances && (
           <Ec2Table instances={instances} selectedId={selected?.instanceId ?? null} onSelect={setChosenId} />
         )}

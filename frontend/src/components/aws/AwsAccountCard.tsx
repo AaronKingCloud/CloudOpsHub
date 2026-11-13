@@ -1,15 +1,16 @@
 import { useApi } from "../../hooks/useApi";
 import { getAwsAccount } from "../../services/awsService";
+import { Skeleton } from "../PanelStatus";
 import AwsErrorMessage from "./AwsErrorMessage";
 
 function AwsAccountCard() {
-  const { data: account, loading, error, errorStatus } = useApi(getAwsAccount);
+  const { data: account, loading, error, errorStatus, reload } = useApi(getAwsAccount);
 
   return (
     <section className="panel">
       <h2>Connected AWS Account</h2>
-      {loading && <p className="state-message">Checking AWS connection...</p>}
-      {error && <AwsErrorMessage error={error} status={errorStatus} />}
+      {loading && <Skeleton rows={2} />}
+      {error && <AwsErrorMessage error={error} status={errorStatus} onRetry={reload} />}
       {account && (
         <dl className="kv-grid">
           <div>

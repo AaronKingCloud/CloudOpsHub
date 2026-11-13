@@ -1,7 +1,23 @@
+import { useSort } from "../../hooks/useSort";
 import type { Ec2Instance } from "../../types/Aws";
 import { ec2StateTone } from "../../utils/status";
 import { timeAgo } from "../../utils/time";
+import SortableTh from "../SortableTh";
 import StatusBadge from "../StatusBadge";
+
+type Ec2Column = "name" | "state" | "instanceType" | "availabilityZone" | "privateIp" | "launchTime";
+
+const COLUMNS: { key: Ec2Column; label: string }[] = [
+  { key: "name", label: "Name" },
+  { key: "state", label: "State" },
+  { key: "instanceType", label: "Type" },
+  { key: "availabilityZone", label: "Zone" },
+  { key: "privateIp", label: "Private IP" },
+  { key: "launchTime", label: "Launched" },
+];
+
+const getValue = (inst: Ec2Instance, key: Ec2Column): string | number =>
+  key === "launchTime" ? new Date(inst.launchTime).getTime() : (inst[key] ?? "");
 
 interface Ec2TableProps {
   instances: Ec2Instance[];
@@ -10,7 +26,9 @@ interface Ec2TableProps {
 }
 
 function Ec2Table({ instances, selectedId, onSelect }: Ec2TableProps) {
-  if (instances.length === 0) {
+  const { sorted, sort, toggle } = useSort(instances, getValue, { key: "name", dir: "asc" });
+
+  if (!sorted || sorted.length === 0) {
     return <p className="state-message">No EC2 instances in this account and region.</p>;
   }
 
@@ -19,16 +37,19 @@ function Ec2Table({ instances, selectedId, onSelect }: Ec2TableProps) {
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>State</th>
-            <th>Type</th>
-            <th>Zone</th>
-            <th>Private IP</th>
-            <th>Launched</th>
+            {COLUMNS.map((c) => (
+              <SortableTh
+                key={c.key}
+                label={c.label}
+                active={sort.key === c.key}
+                dir={sort.dir}
+                onClick={() => toggle(c.key, getValue(sorted[0], c.key))}
+              />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {instances.map((inst) => (
+          {sorted.map((inst) => (
             <tr key={inst.instanceId} className={`selectable ${inst.instanceId === selectedId ? "selected" : ""}`}>
               <td>
                 <button
