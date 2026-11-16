@@ -21,6 +21,8 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Next Up
 
+Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
+
 - Decide on target cloud provider (AWS vs Azure) for Terraform
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
@@ -34,6 +36,14 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-11-15 — Remaining work plan (`feature/frontend-dashboard-polish`) — Tirth
+
+- Added `docs/REMAINING_WORK.md`: everything left to finish the project, split into three tracks
+  (Cloud & DevOps, Backend & data, Frontend/quality/docs) with suggested owners, sizes, dependencies
+  and a "done when" for each task, plus the critical path to the final demo
+- First step for everyone: merge the 5 open frontend PRs and hold one decisions meeting (cloud provider,
+  AWS account, hosting, database, how real metrics are collected)
 
 ### 2026-11-15 — Synced frontend branches with latest `main` (`feature/frontend-dashboard-polish`) — Tirth
 
