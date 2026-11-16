@@ -28,6 +28,24 @@ CPU_METRICS = [
     MetricPoint(timestamp="10:25", value=58),
 ]
 
+MEMORY_METRICS = [
+    MetricPoint(timestamp="10:00", value=41),
+    MetricPoint(timestamp="10:05", value=44),
+    MetricPoint(timestamp="10:10", value=49),
+    MetricPoint(timestamp="10:15", value=47),
+    MetricPoint(timestamp="10:20", value=53),
+    MetricPoint(timestamp="10:25", value=51),
+]
+
+STORAGE_METRICS = [
+    MetricPoint(timestamp="10:00", value=56),
+    MetricPoint(timestamp="10:05", value=56),
+    MetricPoint(timestamp="10:10", value=57),
+    MetricPoint(timestamp="10:15", value=58),
+    MetricPoint(timestamp="10:20", value=58),
+    MetricPoint(timestamp="10:25", value=59),
+]
+
 ACCOUNTS = [
     Account(id=1, provider="AWS", account_name="AWS Production", status="Critical",
             alert_count=2, last_updated="2026-10-15 13:00"),
