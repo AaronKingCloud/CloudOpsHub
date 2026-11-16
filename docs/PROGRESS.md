@@ -24,6 +24,7 @@ A running log of what the team has done, what is in progress, and what is next.
 - Decide on target cloud provider (AWS vs Azure) for Terraform
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
+- Cache `/api/billing/summary` (Cost Explorer costs ~$0.01 per call) and require login for it
 - Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
   requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
   and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
@@ -33,6 +34,36 @@ A running log of what the team has done, what is in progress, and what is next.
 ---
 
 ## Log
+
+### 2026-11-15 — Synced frontend branches with latest `main` (`feature/frontend-dashboard-polish`) — Tirth
+
+- Merged the latest `main` (PRs #12 and #13 below) into all five open frontend branches, in order, so their PRs merge cleanly
+- `App.tsx` is now only the page routes, so the Cost Monitoring panel and the Memory / Storage
+  charts moved into `pages/OverviewPage.tsx` (same order as before)
+- Connected Accounts: kept the account detail popup from #13 **and** the sortable columns, loading
+  skeleton and Retry from the polish branch. Rows can also be opened with the keyboard (Enter)
+- Fixed: the Memory and Storage charts from #13 rendered empty (same stuck-animation issue the CPU chart had).
+  `UtilizationChart` now uses the shared `MetricChart` and auto-refreshes like the other dashboard data
+- The per-device "Memory & Storage by Device" chart now appears only on the Devices page,
+  so Overview doesn't show two memory/storage charts
+- Checked: 35 backend tests pass, frontend lint + build pass on every branch, Overview checked in the browser
+- Also made a 15-page architecture guide (PDF with diagrams) explaining the whole project for the team;
+  shared separately, not in the repo yet
+
+### 2026-11-15 — Dashboard update (PR #13, `feature-dashboard-update`) — pshrestha49 *(logged by Tirth)*
+
+- New `GET /api/metrics/memory` and `GET /api/metrics/storage` (sample data) with tests
+- Memory and Storage Utilization charts (`ResourceCharts`, `UtilizationChart`)
+- Click a Connected Accounts row to open an account detail popup (`AccountDetailModal`)
+
+### 2026-11-12 — AWS cost monitoring (PR #12, `feature-cost`) — pshrestha49 *(logged by Tirth)*
+
+- New `GET /api/billing/summary`: month-to-date spend, per-service breakdown and month-end forecast
+  from AWS Cost Explorer; falls back to sample data when AWS isn't available (`BILLING_USE_MOCK`,
+  `BILLING_STRICT_AWS` env vars) — tests in `tests/test_billing.py`
+- Cost Monitoring panel on the dashboard (`CostMonitorPanel`)
+- ⚠️ Cost Explorer charges about $0.01 per call and the endpoint doesn't require login yet.
+  The panel is not auto-refreshed. Should be cached and put behind login (see Next Up)
 
 ### 2026-11-13 — Dashboard polish (`feature/frontend-dashboard-polish`) — Tirth
 
