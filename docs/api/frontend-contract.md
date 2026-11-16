@@ -98,6 +98,20 @@ All `/aws/*` routes require a logged-in user (`Authorization: Bearer <accessToke
 If AWS rejects a call (missing permissions, restricted account), the API returns
 `502` with AWS's error message in `detail`.
 
+### Account
+
+`GET /aws/account`
+
+The AWS identity the backend is connected as (`sts:GetCallerIdentity`).
+
+```json
+{
+  "accountId": "123456789012",
+  "userName": "cloudopshub-service",
+  "arn": "arn:aws:iam::123456789012:user/cloudopshub-service"
+}
+```
+
 ### EC2 Instances
 
 `GET /aws/ec2`
@@ -131,3 +145,37 @@ Same shape as `GET /metrics/cpu`, so it can feed the existing CPU chart.
   { "timestamp": "21:10", "value": 3.8 }
 ]
 ```
+
+## Auth
+
+Implemented in `backend/app/routers/auth.py`. Frontend: `frontend/src/services/authService.ts`
+and `userService.ts`. Protected endpoints need `Authorization: Bearer <accessToken>`.
+
+| Method | Path              | Who            | Body                                        | Returns |
+| ------ | ----------------- | -------------- | ------------------------------------------- | ------- |
+| POST   | `/auth/login`     | anyone         | `{ "username", "password" }`                | `{ accessToken, refreshToken, tokenType, user }` |
+| POST   | `/auth/refresh`   | anyone         | `{ "refreshToken" }`                        | `{ accessToken, tokenType }` |
+| GET    | `/auth/me`        | signed in      | —                                           | `User` |
+| GET    | `/auth/users`     | admin          | —                                           | `User[]` (newest first) |
+| POST   | `/auth/register`  | admin          | `{ "username", "email", "password", "role" }` | `User` (201); `409` if username/email exists |
+
+Access tokens last 30 minutes, refresh tokens 7 days. The frontend refreshes access tokens
+automatically on a `401`.
+
+`User`:
+
+```json
+{
+  "id": "6f1c…",
+  "username": "alice",
+  "email": "alice@example.com",
+  "role": "operator",
+  "isActive": true,
+  "createdAt": "2026-11-12T22:40:00+00:00",
+  "lastLogin": null
+}
+```
+
+`role` is `"admin"`, `"operator"`, or `"viewer"`. Register limits: username 3–50 chars,
+email 5–255, password 8–128. Validation failures return `422` with a `detail` list.
+

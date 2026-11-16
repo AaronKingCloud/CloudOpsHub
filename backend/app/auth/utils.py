@@ -1,7 +1,8 @@
 """Password hashing and JWT token helpers using standard bcrypt and PyJWT.
 
 Configuration (all via environment variables):
-    ``JWT_SECRET``                  – signing key (CHANGE in production)
+    ``APP_ENV``                     – set to ``production`` when deployed
+    ``JWT_SECRET``                  – signing key; required when ``APP_ENV=production``
     ``JWT_ALGORITHM``               – default ``HS256``
     ``ACCESS_TOKEN_EXPIRE_MINUTES`` – default ``30``
     ``REFRESH_TOKEN_EXPIRE_DAYS``   – default ``7``
@@ -13,7 +14,22 @@ from datetime import datetime, timedelta, timezone
 import bcrypt
 import jwt
 
-JWT_SECRET = os.getenv("JWT_SECRET", "cloudopshub-dev-secret-change-in-production")
+DEV_JWT_SECRET = "cloudopshub-dev-secret-change-in-production"
+
+
+def load_jwt_secret() -> str:
+    """Return the signing key, refusing to fall back to the dev key in production.
+
+    Local development and tests keep working with no setup; a deployed backend
+    must set a real ``JWT_SECRET`` (e.g. ``python -c "import secrets; print(secrets.token_hex(32))"``).
+    """
+    secret = os.getenv("JWT_SECRET")
+    if os.getenv("APP_ENV", "development").lower() == "production" and secret in (None, "", DEV_JWT_SECRET):
+        raise RuntimeError("JWT_SECRET must be set to a strong random value when APP_ENV=production")
+    return secret or DEV_JWT_SECRET
+
+
+JWT_SECRET = load_jwt_secret()
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))

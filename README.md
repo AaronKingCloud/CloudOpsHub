@@ -172,13 +172,14 @@ GET /api/aws/ec2/{instanceId}/cpu?hours=3
 - [x] SWOT analysis
 - [x] Initial AWS IAM integration
 - [x] Live AWS account endpoint
-- [ ] Monitoring and observability
-- [ ] Security validation
+- [x] EC2 inventory and CloudWatch CPU endpoints
+- [x] Authentication and role-based access (JWT, admin / operator / viewer)
+- [x] CI on pull requests (frontend lint and build, backend tests)
 - [ ] Requirements specification
 - [ ] Architecture design
 - [ ] Proof of concept
 - [ ] Infrastructure as Code
-- [ ] CI/CD
+- [ ] CD (automated deployment)
 - [ ] MVP deployment
 - [ ] Monitoring and observability
 - [ ] Security validation

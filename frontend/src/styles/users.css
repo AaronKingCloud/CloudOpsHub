@@ -1,0 +1,131 @@
+/* Users page + reusable form pieces (stack-form, role-picker, form-actions). */
+
+.notice.ok {
+  border-left-color: var(--ok);
+  background: var(--ok-bg);
+}
+
+td .row-title,
+td .row-sub {
+  display: block;
+}
+
+tr.highlight td {
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+}
+
+/* ---------- Dialog form ---------- */
+
+.form-dialog {
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+}
+
+.form-dialog .panel-header {
+  margin-bottom: 0;
+}
+
+.stack-form {
+  display: grid;
+  gap: 14px;
+}
+
+.stack-form > label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.stack-form input:not([type="radio"]) {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 14px;
+}
+
+.stack-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+.stack-form input[aria-invalid="true"] {
+  border-color: var(--crit);
+}
+
+.field-error {
+  color: var(--crit);
+  font-weight: 400;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ---------- Role picker ---------- */
+
+.role-picker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.role-picker legend {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-h);
+  margin-bottom: 4px;
+  padding: 0;
+}
+
+.role-picker label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.role-picker label.checked {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.role-picker input {
+  grid-row: span 2;
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+.role-picker .role-name {
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.role-picker small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}

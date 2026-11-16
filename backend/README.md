@@ -60,6 +60,17 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | Env var        | Default                 | Purpose                                   |
 | -------------- | ----------------------- | ----------------------------------------- |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated origins allowed to call the API |
+| `APP_ENV`      | `development`           | Set to `production` when deployed          |
+| `JWT_SECRET`   | dev-only placeholder    | Token signing key. **Required** when `APP_ENV=production`; the backend refuses to start without it |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30`     | Access token lifetime (the frontend refreshes it automatically) |
+| `REFRESH_TOKEN_EXPIRE_DAYS`   | `7`      | How long a user stays signed in        |
+| `AUTH_DB_PATH` | `cloudopshub_auth.db`   | SQLite file holding user accounts          |
+
+Generate a production secret with:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
 
 ## Folder layout
 

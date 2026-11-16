@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type { LoginCredentials, User, UserRole } from "../types/Auth";
 import { getCurrentUser, getStoredToken, getStoredUser, loginUser, logoutUser } from "../services/authService";
+import { SESSION_EXPIRED_EVENT } from "../services/apiClient";
 import { AuthContext } from "./authContextDef";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -27,6 +28,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     void initAuth();
+  }, []);
+
+  // apiClient fires this when the refresh token is also expired or invalid.
+  useEffect(() => {
+    const handleExpired = () => {
+      logoutUser();
+      setUser(null);
+      setToken(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired);
   }, []);
 
   const login = async (credentials: LoginCredentials) => {

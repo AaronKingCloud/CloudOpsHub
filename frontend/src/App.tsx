@@ -1,41 +1,33 @@
-import AccountList from "./components/AccountList";
-import AlertsPanel from "./components/AlertsPanel";
-import CostMonitorPanel from "./components/CostMonitorPanel";
-import CpuChart from "./components/CpuChart";
-import DeviceTable from "./components/DeviceTable";
-import ResourceCharts from "./components/ResourceCharts";
-import RoleBanner from "./components/RoleBanner";
-import SummaryCards from "./components/SummaryCards";
-import UserNav from "./components/UserNav";
+import { BrowserRouter, Route, Routes } from "react-router";
+import AppLayout from "./components/layout/AppLayout";
 import { AuthProvider } from "./context/AuthProvider";
-import { USE_MOCK } from "./services/apiClient";
+import AccountsPage from "./pages/AccountsPage";
+import AlertsPage from "./pages/AlertsPage";
+import CloudPage from "./pages/CloudPage";
+import DevicesPage from "./pages/DevicesPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import OverviewPage from "./pages/OverviewPage";
+import UsersPage from "./pages/UsersPage";
 
-// Layout follows docs/architecture/dashboard-design.md
+// Every page renders inside AppLayout (sidebar + top bar).
+// To add a page: create it in src/pages/, add a <Route> here and an entry in
+// src/components/layout/navItems.ts.
 function App() {
   return (
     <AuthProvider>
-      <header className="app-header">
-        <div className="header-brand">
-          <h1>CloudOps Hub</h1>
-          <span className="subtitle">{USE_MOCK ? "Mock data mode" : "Live data"}</span>
-        </div>
-        <UserNav />
-      </header>
-
-      <main className="dashboard">
-        <RoleBanner />
-        <SummaryCards />
-
-        <div className="grid-2">
-          <CpuChart />
-          <AlertsPanel />
-        </div>
-
-        <ResourceCharts />
-        <DeviceTable />
-        <AccountList />
-        <CostMonitorPanel />
-      </main>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route index element={<OverviewPage />} />
+            <Route path="devices" element={<DevicesPage />} />
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="accounts" element={<AccountsPage />} />
+            <Route path="cloud" element={<CloudPage />} />
+            <Route path="admin/users" element={<UsersPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

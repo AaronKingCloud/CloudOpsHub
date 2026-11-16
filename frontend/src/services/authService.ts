@@ -1,4 +1,4 @@
-import { apiClient, USE_MOCK, setStoredToken, getStoredToken } from "./apiClient";
+import { apiClient, USE_MOCK, setStoredToken, getStoredToken, setStoredRefreshToken } from "./apiClient";
 import type { LoginCredentials, TokenResponse, User } from "../types/Auth";
 import { getMockLoginResponse, MOCK_USERS } from "../mock/auth";
 
@@ -29,12 +29,14 @@ export async function loginUser(credentials: LoginCredentials): Promise<TokenRes
     // In mock mode, allow instant login for demo users or default viewer
     const response = getMockLoginResponse(credentials.username);
     setStoredToken(response.accessToken);
+    setStoredRefreshToken(response.refreshToken);
     setStoredUser(response.user);
     return response;
   }
 
   const res = await apiClient.post<TokenResponse>("/auth/login", credentials);
   setStoredToken(res.data.accessToken);
+  setStoredRefreshToken(res.data.refreshToken);
   setStoredUser(res.data.user);
   return res.data;
 }
@@ -53,5 +55,6 @@ export async function getCurrentUser(): Promise<User> {
 
 export function logoutUser(): void {
   setStoredToken(null);
+  setStoredRefreshToken(null);
   setStoredUser(null);
 }

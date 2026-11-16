@@ -12,8 +12,8 @@ A running log of what the team has done, what is in progress, and what is next.
 | Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)   |
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                   |
 | API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)        |
-| Frontend            | 🟡 Dashboard UI on mock data                        |
-| Backend             | 🟡 FastAPI serving mock data                        |
+| Frontend            | 🟡 Dashboard UI + login; mock or live backend       |
+| Backend             | 🟡 FastAPI: auth + live AWS; dashboard data still mock |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)    |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
 | Docker / Infra      | 🟡 Dockerfiles + compose written, needs test run    |
@@ -24,10 +24,77 @@ A running log of what the team has done, what is in progress, and what is next.
 - Decide on target cloud provider (AWS vs Azure) for Terraform
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
+- Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
+  requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
+  and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
+- `backend/seed.py` crashes on Windows when its output is redirected (emoji in `print`).
+  Workaround: set `PYTHONIOENCODING=utf-8`.
 
 ---
 
 ## Log
+
+### 2026-11-12 — Admin user management (`feature/frontend-admin-users`) — Tirth
+
+- New **Users** page (`/admin/users`), visible to admins only: lists every account with role,
+  status, created and last sign-in time
+- **Add user** dialog: username, email, temporary password and role (with a short description of
+  each role). Checks the same limits as the backend before sending; shows the backend's message
+  for duplicates. Closes with Esc
+- Non-admins don't see the menu link, and opening the URL directly shows "Admins only"
+  (the backend also returns 403)
+- `useApi` gained `reload()` and `refreshing`, so lists can update without flashing "Loading"
+- Validation errors (`422`) now show which field is wrong
+- Documented all auth endpoints in `docs/api/frontend-contract.md` (they were missing)
+- Tested against a running backend: viewer blocked, admin created a user, the new user could sign in,
+  duplicate rejected; dialog checked at phone width
+- Not included (backend has no endpoints yet): editing users, changing roles, disabling accounts
+
+### 2026-11-12 — AWS Cloud page (`feature/frontend-aws-page`) — Tirth
+
+- New **AWS Cloud** page (`/cloud`) that finally puts Aaron's AWS endpoints on screen:
+  connected account (ID, user, ARN), EC2 instance table (state, type, zone, IP, launched),
+  and a CloudWatch CPU chart for the selected instance with 1h–24h ranges and average / peak / latest
+- Click an instance to see its CPU. Stopped instances show "no data" instead of an empty chart
+- Signed-out users see "Sign in to view AWS resources" (the backend requires login for `/aws/*`)
+- AWS errors are explained in plain words (Free plan SCP block, missing IAM permission,
+  no credentials) with AWS's raw message underneath
+- Mock data for the whole page, so it works without AWS (`src/mock/aws.ts`)
+- `useApi` now shows the backend's error message (`detail`) instead of "Request failed with status code 502"
+- CPU chart drawing moved into a reusable `MetricChart` component
+- Added `GET /aws/account` to `docs/api/frontend-contract.md` (it existed but wasn't documented)
+- Tested in mock mode, live mode signed out, and live mode signed in with **no AWS credentials**
+  (so no real AWS calls were made); phone width checked
+
+### 2026-11-12 — Frontend app shell + pages (`feature/frontend-app-shell`) — Tirth
+
+- Added routing (`react-router` 7) with real pages and URLs: Overview `/`, Devices `/devices`,
+  Alerts `/alerts`, Accounts `/accounts`, plus a "Page not found" page
+- New app shell: sidebar navigation, sticky top bar with page title, theme button and sign-in.
+  On phones the sidebar becomes a slide-in menu (☰)
+- Light / dark / system theme toggle, remembered per browser, no flash on reload
+- Fixed: CPU chart was blank because its reveal animation got stuck; animation turned off
+- Fixed: wide tables no longer push the page sideways on small screens
+- Layout styles in new `src/styles/shell.css`; removed unused header CSS from `index.css`
+- Checked with screenshots: desktop, phone width, light and dark mode
+- ⚠️ **Merging with `feature-cost`:** `App.tsx` is now just routes. When merging, put
+  `<CostMonitorPanel />` in `src/pages/OverviewPage.tsx` (or give it its own page) instead of `App.tsx`
+- Builds on `fix/auth-and-docs-cleanup`; merge that PR first
+
+### 2026-11-12 — Auth fixes + docs cleanup (`fix/auth-and-docs-cleanup`) — Tirth
+
+- **Stay signed in:** the frontend now saves the refresh token and, when a request gets a 401
+  (access token expired after 30 min), silently gets a new access token and retries. If the refresh
+  token is also invalid, the user is signed out cleanly. Before, users were logged out every 30 minutes.
+- **Demo passwords:** the quick-login buttons now only appear in `npm run dev` or mock mode.
+  A production build against a real backend no longer contains the passwords at all (verified in the bundle).
+- **JWT secret:** with `APP_ENV=production`, the backend refuses to start unless `JWT_SECRET`
+  is set to a real value. Local dev and tests are unchanged. Documented in `backend/README.md`.
+- 5 new tests in `tests/test_jwt_secret.py` (29 backend tests passing); refresh flow checked end to end
+  against a running backend
+- Docs: fixed outdated comment in `routers/auth.py`, removed duplicate roadmap items in `README.md`,
+  ticked off completed roadmap items, updated the status table above
+- No changes to files touched by the open `feature-cost` branch
 
 ### 2026-11-11 — AWS EC2 inventory + CloudWatch CPU (`feature/aws-ec2-cloudwatch`) — Aaron
 

@@ -2,6 +2,12 @@ import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { USE_MOCK } from "../services/apiClient";
 
+// Demo accounts come from backend/seed.py. Show the shortcuts only in local dev or mock mode
+// so the demo passwords are never shipped in a production build that talks to a real backend.
+// Reads import.meta.env directly (not USE_MOCK) so Vite inlines the values and the build
+// drops the whole block, passwords included.
+const SHOW_DEMO_LOGINS = import.meta.env.DEV || import.meta.env.VITE_USE_MOCK !== "false";
+
 interface LoginPageProps {
   onClose?: () => void;
 }
@@ -111,38 +117,40 @@ export default function LoginPage({ onClose }: LoginPageProps) {
         </button>
       </form>
 
-      <div className="quick-login-section">
-        <span className="quick-login-title">Quick Demo Logins (Role-Based)</span>
-        <div className="quick-login-buttons">
-          <button
-            type="button"
-            className="quick-btn admin"
-            onClick={() => handleQuickLogin("admin", "Admin123!")}
-            title="Admin role: Full management & user controls"
-          >
-            <strong>Admin</strong>
-            <small>Full Access</small>
-          </button>
-          <button
-            type="button"
-            className="quick-btn operator"
-            onClick={() => handleQuickLogin("operator", "Operator123!")}
-            title="Operator role: Operational & resource controls"
-          >
-            <strong>Operator</strong>
-            <small>Operations</small>
-          </button>
-          <button
-            type="button"
-            className="quick-btn viewer"
-            onClick={() => handleQuickLogin("viewer", "Viewer123!")}
-            title="Viewer role: Read-only monitoring"
-          >
-            <strong>Viewer</strong>
-            <small>Read-only</small>
-          </button>
+      {SHOW_DEMO_LOGINS && (
+        <div className="quick-login-section">
+          <span className="quick-login-title">Quick Demo Logins (Role-Based)</span>
+          <div className="quick-login-buttons">
+            <button
+              type="button"
+              className="quick-btn admin"
+              onClick={() => handleQuickLogin("admin", "Admin123!")}
+              title="Admin role: Full management & user controls"
+            >
+              <strong>Admin</strong>
+              <small>Full Access</small>
+            </button>
+            <button
+              type="button"
+              className="quick-btn operator"
+              onClick={() => handleQuickLogin("operator", "Operator123!")}
+              title="Operator role: Operational & resource controls"
+            >
+              <strong>Operator</strong>
+              <small>Operations</small>
+            </button>
+            <button
+              type="button"
+              className="quick-btn viewer"
+              onClick={() => handleQuickLogin("viewer", "Viewer123!")}
+              title="Viewer role: Read-only monitoring"
+            >
+              <strong>Viewer</strong>
+              <small>Read-only</small>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
