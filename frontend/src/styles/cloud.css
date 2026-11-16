@@ -189,3 +189,14 @@ tr.selected td:first-child {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+
+.panel-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-tools .icon-btn {
+  width: 32px;
+  height: 32px;
+}

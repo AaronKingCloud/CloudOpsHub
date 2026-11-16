@@ -4,15 +4,17 @@ import CostMonitorPanel from "../components/CostMonitorPanel";
 import CpuChart from "../components/CpuChart";
 import DeviceTable from "../components/DeviceTable";
 import PageHeader from "../components/layout/PageHeader";
+import RefreshControl from "../components/RefreshControl";
 import ResourceCharts from "../components/ResourceCharts";
 import RoleBanner from "../components/RoleBanner";
 import SummaryCards from "../components/SummaryCards";
 
 // Layout follows docs/architecture/dashboard-design.md
+// (the per-device memory/storage comparison lives on the Devices page)
 function OverviewPage() {
   return (
     <>
-      <PageHeader />
+      <PageHeader actions={<RefreshControl />} />
       <RoleBanner />
       <SummaryCards />
 

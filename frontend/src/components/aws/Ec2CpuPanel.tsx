@@ -3,6 +3,7 @@ import { useApi } from "../../hooks/useApi";
 import { getEc2Cpu } from "../../services/awsService";
 import type { Ec2Instance } from "../../types/Aws";
 import MetricChart from "../MetricChart";
+import { Skeleton } from "../PanelStatus";
 import AwsErrorMessage from "./AwsErrorMessage";
 
 const RANGES = [1, 3, 6, 12, 24];
@@ -14,7 +15,7 @@ interface Ec2CpuPanelProps {
 function Ec2CpuPanel({ instance }: Ec2CpuPanelProps) {
   const [hours, setHours] = useState(3);
   const fetchCpu = useCallback(() => getEc2Cpu(instance.instanceId, hours), [instance.instanceId, hours]);
-  const { data, loading, error, errorStatus } = useApi(fetchCpu);
+  const { data, loading, error, errorStatus, reload } = useApi(fetchCpu);
 
   const values = data?.map((p) => p.value) ?? [];
   const stats = values.length
@@ -46,8 +47,8 @@ function Ec2CpuPanel({ instance }: Ec2CpuPanelProps) {
         </div>
       </div>
 
-      {loading && <p className="state-message">Loading CloudWatch metrics...</p>}
-      {error && <AwsErrorMessage error={error} status={errorStatus} />}
+      {loading && <Skeleton height={240} />}
+      {error && <AwsErrorMessage error={error} status={errorStatus} onRetry={reload} />}
 
       {data && data.length === 0 && (
         <p className="state-message">

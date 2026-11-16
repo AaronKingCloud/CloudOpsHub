@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PageHeader from "../components/layout/PageHeader";
+import { ErrorState, Skeleton } from "../components/PanelStatus";
 import StatusBadge from "../components/StatusBadge";
 import AddUserDialog from "../components/users/AddUserDialog";
 import { useApi } from "../hooks/useApi";
@@ -65,8 +66,8 @@ function UserManagement() {
             </span>
           )}
         </div>
-        {loading && <p className="state-message">Loading users...</p>}
-        {error && <p className="state-message">Could not load users: {error}</p>}
+        {loading && <Skeleton rows={4} />}
+        {error && <ErrorState what="users" message={error} onRetry={reload} />}
         {users && (
           <div className="table-wrap">
             <table>

@@ -1,11 +1,12 @@
 interface AwsErrorMessageProps {
   error: string;
   status?: number;
+  onRetry?: () => void;
 }
 
 // Explains the AWS failures we already know about (see docs/architecture/aws-integration.md)
 // instead of only showing AWS's raw error text.
-function AwsErrorMessage({ error, status }: AwsErrorMessageProps) {
+function AwsErrorMessage({ error, status, onRetry }: AwsErrorMessageProps) {
   let hint: string | null = null;
   if (status === 401) {
     hint = "Sign in (top right) to view AWS resources.";
@@ -25,6 +26,13 @@ function AwsErrorMessage({ error, status }: AwsErrorMessageProps) {
     <div className="notice warn" role="alert">
       {hint && <p className="notice-title">{hint}</p>}
       <p className="notice-detail">{error}</p>
+      {onRetry && status !== 401 && (
+        <div>
+          <button type="button" className="btn" onClick={onRetry}>
+            Retry
+          </button>
+        </div>
+      )}
     </div>
   );
 }

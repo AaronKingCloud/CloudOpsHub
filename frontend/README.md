@@ -41,11 +41,12 @@ src/
 │   ├── aws/      AWS Cloud page pieces (account card, EC2 table, CPU panel)
 │   ├── users/    Admin user management (Add user dialog)
 │   └── *.tsx     Dashboard widgets (StatCard, CpuChart, MetricChart, DeviceTable, ...)
-├── context/      AuthProvider (signed-in user, roles)
-├── hooks/        useApi (loading / error / data / reload), useAuth, useTheme
+├── context/      AuthProvider (signed-in user, roles), RefreshProvider (auto-refresh)
+├── hooks/        useApi (loading / error / data / reload), useSort, useAuth, useTheme
 ├── mock/         Mock data used when VITE_USE_MOCK is not "false"
 ├── services/     API calls (dashboard, aws, auth, users) — components fetch data ONLY through here
-├── styles/       shell.css (layout), cloud.css, users.css; global tokens and widgets are in index.css
+├── styles/       shell.css (layout), widgets.css (states, charts, sorting), cloud.css, users.css;
+│                 global colour tokens are in index.css
 ├── types/        TypeScript types matching docs/api/frontend-contract.md
 └── main.tsx      Entry point
 ```
@@ -56,6 +57,22 @@ src/
 2. Add a `<Route path="my-page" element={<MyPage />} />` in `src/App.tsx`
 3. Add an entry to `src/components/layout/navItems.ts` (label, icon, description;
    set `roles` to hide it from some users)
+
+## Auto-refresh
+
+Pages with live data (Overview, Devices, Alerts, Accounts) refresh every 30 seconds while the tab
+is visible. The control at the top right of those pages shows the last update, turns auto-refresh
+off, or refreshes now.
+
+A component opts in with `useApi(fetcher, { live: true })`. **Don't** use `live` for calls that cost
+money or have tight quotas (AWS, billing / Cost Explorer): give those a manual refresh button that
+calls `reload()` instead, like the EC2 panel does.
+
+## Loading and errors
+
+Use the shared pieces in `components/PanelStatus.tsx`:
+`<Skeleton rows={3} />` (or `height={240}` for charts) while loading, and
+`<ErrorState what="devices" message={error} onRetry={reload} />` on failure.
 
 ## Theme
 

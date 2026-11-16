@@ -1,13 +1,31 @@
 import { useState } from "react";
 import { useApi } from "../hooks/useApi";
+import { useSort } from "../hooks/useSort";
 import { getAccounts } from "../services/dashboardService";
-import type { Account } from "../types/Account";
+import type { Account, AccountStatus } from "../types/Account";
 import { accountTone } from "../utils/status";
 import AccountDetailModal from "./AccountDetailModal";
+import { ErrorState, Skeleton } from "./PanelStatus";
+import SortableTh from "./SortableTh";
 import StatusBadge from "./StatusBadge";
 
+type AccountColumn = "accountName" | "provider" | "status" | "alertCount" | "lastUpdated";
+
+const COLUMNS: { key: AccountColumn; label: string }[] = [
+  { key: "accountName", label: "Account" },
+  { key: "provider", label: "Provider" },
+  { key: "status", label: "Status" },
+  { key: "alertCount", label: "Alerts" },
+  { key: "lastUpdated", label: "Last Updated" },
+];
+
+// Sort status by severity (Critical > Warning > Healthy), not alphabetically.
+const STATUS_RANK: Record<AccountStatus, number> = { Critical: 2, Warning: 1, Healthy: 0 };
+const getValue = (a: Account, key: AccountColumn) => (key === "status" ? STATUS_RANK[a.status] : a[key]);
+
 function AccountList() {
-  const { data: accounts, loading, error } = useApi(getAccounts);
+  const { data: accounts, loading, error, reload } = useApi(getAccounts, { live: true });
+  const { sorted, sort, toggle } = useSort(accounts, getValue, { key: "status", dir: "desc" });
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   return (
@@ -16,26 +34,38 @@ function AccountList() {
         <h2>Connected Accounts</h2>
         <span className="billing-period">Click an account to inspect details</span>
       </div>
-      {loading && <p className="state-message">Loading accounts...</p>}
-      {error && <p className="state-message">Could not load accounts: {error}</p>}
-      {accounts && (
+      {loading && <Skeleton rows={4} />}
+      {error && <ErrorState what="accounts" message={error} onRetry={reload} />}
+      {sorted && (
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Account</th>
-                <th>Provider</th>
-                <th>Status</th>
-                <th>Alerts</th>
-                <th>Last Updated</th>
+                {COLUMNS.map((c) => (
+                  <SortableTh
+                    key={c.key}
+                    label={c.label}
+                    active={sort.key === c.key}
+                    dir={sort.dir}
+                    onClick={() => toggle(c.key, sorted[0] ? getValue(sorted[0], c.key) : undefined)}
+                  />
+                ))}
               </tr>
             </thead>
             <tbody>
-              {accounts.map((account) => (
+              {sorted.map((account) => (
                 <tr
                   key={account.id}
                   className="clickable-row"
+                  tabIndex={0}
                   onClick={() => setSelectedAccount(account)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedAccount(account);
+                    }
+                  }}
+                  aria-label={`Show details for ${account.accountName}`}
                 >
                   <td>{account.accountName}</td>
                   <td>{account.provider}</td>
@@ -52,10 +82,7 @@ function AccountList() {
       )}
 
       {selectedAccount && (
-        <AccountDetailModal
-          account={selectedAccount}
-          onClose={() => setSelectedAccount(null)}
-        />
+        <AccountDetailModal account={selectedAccount} onClose={() => setSelectedAccount(null)} />
       )}
     </section>
   );

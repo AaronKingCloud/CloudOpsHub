@@ -1,15 +1,16 @@
 import { useApi } from "../hooks/useApi";
 import { getCpuMetrics } from "../services/dashboardService";
 import MetricChart from "./MetricChart";
+import { ErrorState, Skeleton } from "./PanelStatus";
 
 function CpuChart() {
-  const { data, loading, error } = useApi(getCpuMetrics);
+  const { data, loading, error, reload } = useApi(getCpuMetrics, { live: true });
 
   return (
     <section className="panel">
       <h2>CPU Utilization</h2>
-      {loading && <p className="state-message">Loading metrics...</p>}
-      {error && <p className="state-message">Could not load metrics: {error}</p>}
+      {loading && <Skeleton height={240} />}
+      {error && <ErrorState what="metrics" message={error} onRetry={reload} />}
       {data && <MetricChart data={data} label="CPU" />}
     </section>
   );

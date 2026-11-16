@@ -1,12 +1,30 @@
 import { useApi } from "../hooks/useApi";
 import { getDashboardSummary } from "../services/dashboardService";
+import { ErrorState } from "./PanelStatus";
 import StatCard from "./StatCard";
 
 function SummaryCards() {
-  const { data: summary, loading, error } = useApi(getDashboardSummary);
+  const { data: summary, loading, error, reload } = useApi(getDashboardSummary, { live: true });
 
-  if (loading) return <p className="state-message">Loading summary...</p>;
-  if (error || !summary) return <p className="state-message">Could not load summary: {error}</p>;
+  if (loading) {
+    return (
+      <section className="stat-cards" aria-label="Loading summary">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="stat-card skeleton-card">
+            <div className="skeleton skeleton-row short" />
+            <div className="skeleton skeleton-row tall" />
+          </div>
+        ))}
+      </section>
+    );
+  }
+  if (error || !summary) {
+    return (
+      <section className="panel">
+        <ErrorState what="summary" message={error ?? ""} onRetry={reload} />
+      </section>
+    );
+  }
 
   return (
     <section className="stat-cards">
