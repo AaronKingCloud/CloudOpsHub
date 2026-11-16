@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { useApi } from "../hooks/useApi";
 import { getAccounts } from "../services/dashboardService";
+import type { Account } from "../types/Account";
 import { accountTone } from "../utils/status";
+import AccountDetailModal from "./AccountDetailModal";
 import StatusBadge from "./StatusBadge";
 
 function AccountList() {
   const { data: accounts, loading, error } = useApi(getAccounts);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   return (
     <section className="panel">
-      <h2>Connected Accounts</h2>
+      <div className="billing-header">
+        <h2>Connected Accounts</h2>
+        <span className="billing-period">Click an account to inspect details</span>
+      </div>
       {loading && <p className="state-message">Loading accounts...</p>}
       {error && <p className="state-message">Could not load accounts: {error}</p>}
       {accounts && (
@@ -25,7 +32,11 @@ function AccountList() {
             </thead>
             <tbody>
               {accounts.map((account) => (
-                <tr key={account.id}>
+                <tr
+                  key={account.id}
+                  className="clickable-row"
+                  onClick={() => setSelectedAccount(account)}
+                >
                   <td>{account.accountName}</td>
                   <td>{account.provider}</td>
                   <td>
@@ -38,6 +49,13 @@ function AccountList() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedAccount && (
+        <AccountDetailModal
+          account={selectedAccount}
+          onClose={() => setSelectedAccount(null)}
+        />
       )}
     </section>
   );

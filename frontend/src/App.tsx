@@ -1,7 +1,9 @@
 import AccountList from "./components/AccountList";
 import AlertsPanel from "./components/AlertsPanel";
+import CostMonitorPanel from "./components/CostMonitorPanel";
 import CpuChart from "./components/CpuChart";
 import DeviceTable from "./components/DeviceTable";
+import ResourceCharts from "./components/ResourceCharts";
 import RoleBanner from "./components/RoleBanner";
 import SummaryCards from "./components/SummaryCards";
 import UserNav from "./components/UserNav";
@@ -29,8 +31,10 @@ function App() {
           <AlertsPanel />
         </div>
 
+        <ResourceCharts />
         <DeviceTable />
         <AccountList />
+        <CostMonitorPanel />
       </main>
     </AuthProvider>
   );
