@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useApi } from "../hooks/useApi";
 import { useSort } from "../hooks/useSort";
 import { getAccounts } from "../services/dashboardService";
 import type { Account, AccountStatus } from "../types/Account";
 import { accountTone } from "../utils/status";
+import AccountDetailModal from "./AccountDetailModal";
 import { ErrorState, Skeleton } from "./PanelStatus";
 import SortableTh from "./SortableTh";
 import StatusBadge from "./StatusBadge";
@@ -24,10 +26,14 @@ const getValue = (a: Account, key: AccountColumn) => (key === "status" ? STATUS_
 function AccountList() {
   const { data: accounts, loading, error, reload } = useApi(getAccounts, { live: true });
   const { sorted, sort, toggle } = useSort(accounts, getValue, { key: "status", dir: "desc" });
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   return (
     <section className="panel">
-      <h2>Connected Accounts</h2>
+      <div className="billing-header">
+        <h2>Connected Accounts</h2>
+        <span className="billing-period">Click an account to inspect details</span>
+      </div>
       {loading && <Skeleton rows={4} />}
       {error && <ErrorState what="accounts" message={error} onRetry={reload} />}
       {sorted && (
@@ -48,7 +54,19 @@ function AccountList() {
             </thead>
             <tbody>
               {sorted.map((account) => (
-                <tr key={account.id}>
+                <tr
+                  key={account.id}
+                  className="clickable-row"
+                  tabIndex={0}
+                  onClick={() => setSelectedAccount(account)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedAccount(account);
+                    }
+                  }}
+                  aria-label={`Show details for ${account.accountName}`}
+                >
                   <td>{account.accountName}</td>
                   <td>{account.provider}</td>
                   <td>
@@ -61,6 +79,10 @@ function AccountList() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedAccount && (
+        <AccountDetailModal account={selectedAccount} onClose={() => setSelectedAccount(null)} />
       )}
     </section>
   );
