@@ -37,6 +37,17 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-20 — Dependabot updates merged (PRs #18–#30) — Tirth
+
+- First batch of Dependabot PRs merged: frontend minor/patch group, react-router 7 → 8, @types/node 26, fastapi, uvicorn,
+  pyjwt, boto3, pytest 9, moto, and GitHub Actions checkout / setup-node / setup-python v7
+- Merge conflicts in `backend/requirements-dev.txt` (#26) and `.github/workflows/security.yml` (#19) resolved by keeping both upgrades
+- **Skipped TypeScript 7 (#27):** `typescript-eslint` 8.73 only supports TypeScript < 6.1, so the install fails.
+  Closed with `@dependabot ignore this major version`; upgrade both together once typescript-eslint supports TS 7
+- Checked `main` afterwards: lint, 58 frontend tests, build and 49 backend tests pass; clicked through every page in the
+  browser (menu, device links, back button, direct URLs, phone menu) to confirm react-router 8 works
+- Tip for future Dependabot PRs: merge one at a time; if one shows a conflict, comment `@dependabot rebase`
+
 ### 2026-11-20 — Backups, recovery drill and architecture guide (`ops/dr-and-docs`) — Tirth
 
 - Track C tasks **C7** (local part) and **C8** from `docs/REMAINING_WORK.md`
