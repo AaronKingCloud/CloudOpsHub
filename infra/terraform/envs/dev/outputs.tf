@@ -12,6 +12,11 @@ output "ssm_shell" {
   value       = "aws ssm start-session --target ${aws_instance.app.id} --region ${var.region}"
 }
 
+output "github_deploy_role_arn" {
+  description = "Role for GitHub Actions CD (A4)"
+  value       = module.iam.github_deploy_role_arn
+}
+
 output "setup_log" {
   description = "Run inside the SSM shell to watch first-boot setup"
   value       = "sudo tail -f /var/log/cloudopshub-setup.log"

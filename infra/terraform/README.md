@@ -2,26 +2,39 @@
 
 Infrastructure as Code for deploying CloudOps Hub to AWS. Owner: Aaron.
 
-## Decisions
+## Decisions (task 0.2)
 
-- [x] Cloud provider: **AWS**, region **us-east-2** (Console Dot Dream only allows EC2 there; see `docs/architecture/aws-integration.md`)
-- [x] Hosting model (phase 1): **one EC2 instance running Docker Compose**. Cheapest path to a working deployment; ECS Fargate is a possible phase 2.
-- [x] Remote state: **S3 with native locking** (`use_lockfile`, no DynamoDB)
-- [ ] Database: SQLite on the instance's disk for now. Revisit if we move to RDS.
+Proposed by Aaron on 2026-11-20 (see `docs/PROGRESS.md`). Raise objections on the PR or in the team chat.
+
+| Decision | Choice | Why |
+| --- | --- | --- |
+| Cloud provider | **AWS** | Everything built so far is AWS-based |
+| Account / region | **Console Dot Dream, us-east-2** | That account only allows EC2 in us-east-2 (`docs/architecture/aws-integration.md`) |
+| Hosting (phase 1) | **One EC2 instance running Docker Compose** | Cheapest working deployment, reuses `infra/docker-compose.yml`; ECS Fargate is a possible phase 2 |
+| Database | **SQLite on the instance for now** | Pending pshrestha49's B1 decision; RDS Postgres can be added without redoing this |
+| Remote state | **S3 with native locking** | `use_lockfile`, no DynamoDB table |
+| Cost control | **$10/month budget** | Emails the team at $5, $10 and on a forecast overrun |
 
 ## Layout
 
 ```
 terraform/
 ├── bootstrap/        One-time: S3 bucket for Terraform state
+├── modules/
+│   ├── budget/       Monthly cost budget + email alerts
+│   ├── network/      VPC, public subnets in 2 AZs, internet gateway
+│   └── iam/          App instance role + GitHub Actions OIDC deploy role
 └── envs/
-    └── dev/          EC2 + security group + IAM role + Elastic IP
+    └── dev/          Wires the modules together + EC2, security group, secret, Elastic IP
 ```
 
 ## What `envs/dev` creates
 
 | Resource | Why |
 | --- | --- |
+| Budget (`modules/budget`) | Created first so costs can't surprise anyone. Credits excluded so it tracks real usage |
+| VPC + 2 public subnets (`modules/network`) | Own network across 2 AZs; no NAT gateway (saves ~$32/month) |
+| GitHub OIDC deploy role (`modules/iam`) | For CD (A4): only `main` of this repo can assume it; no AWS keys in GitHub |
 | EC2 (Ubuntu 24.04, t3.micro) | Runs `infra/docker-compose.yml` plus production overrides |
 | Security group | Port 80 **only from `allowed_cidrs`**; no SSH |
 | IAM instance role | SSM Session Manager + the app's read-only AWS permissions (no access keys on the server) |
@@ -52,7 +65,7 @@ terraform apply
 
 ```bash
 cd ../envs/dev
-copy terraform.tfvars.example terraform.tfvars   # then set allowed_cidrs to your IP
+copy terraform.tfvars.example terraform.tfvars   # then set allowed_cidrs (your IP) and alert_emails
 terraform init
 terraform plan
 terraform apply
@@ -69,7 +82,6 @@ or `terraform destroy` to remove everything except the state bucket.
 
 ## Known limitations (phase 1)
 
-- Uses the default VPC; a dedicated VPC module is a later improvement.
 - SQLite lives on the instance's root disk: survives stop/start, **lost if the instance is replaced**.
 - HTTP only (no domain/TLS yet).
 - Deploys by building on the instance; CD (GitHub Actions + OIDC) is next.

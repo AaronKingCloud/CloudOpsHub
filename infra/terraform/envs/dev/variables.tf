@@ -32,6 +32,28 @@ variable "git_ref" {
   default     = "main"
 }
 
+variable "alert_emails" {
+  description = "Team emails for budget alerts. Set in terraform.tfvars (gitignored), not here."
+  type        = list(string)
+
+  validation {
+    condition     = length(var.alert_emails) > 0
+    error_message = "Add at least one email so budget alerts reach someone."
+  }
+}
+
+variable "monthly_budget_usd" {
+  description = "Monthly budget; emails go out at 50% and 100% (default: $5 and $10) and on a forecast overrun"
+  type        = number
+  default     = 10
+}
+
+variable "github_repo" {
+  description = "Repository whose main branch may assume the CD deploy role"
+  type        = string
+  default     = "AaronKingCloud/CloudOpsHub"
+}
+
 variable "root_volume_size_gb" {
   description = "Root disk size. Also holds the SQLite database volume while we're on SQLite."
   type        = number

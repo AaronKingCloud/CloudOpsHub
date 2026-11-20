@@ -1,37 +1,38 @@
 # Dev environment: one EC2 instance running the app with Docker Compose.
 #
-#   browser --:80--> [security group: allowed_cidrs only] --> EC2 (Ubuntu 24.04)
+#   browser --:80--> [security group: allowed_cidrs only] --> EC2 (Ubuntu 24.04, public subnet)
 #                                                              ├─ nginx (frontend container) :80
 #                                                              └─ FastAPI (backend container), internal only
 #
 # No SSH: shell access is through SSM Session Manager.
-# No AWS keys on the instance: the backend uses the instance role.
+# No AWS keys on the instance: the backend uses the instance role (modules/iam).
 
 locals {
   name = "cloudopshub-dev"
 }
 
-# ── Network: default VPC for now (a dedicated VPC module can replace this later) ──
+# ── Cost guardrail (created first so spending can't surprise anyone) ──
 
-data "aws_vpc" "default" {
-  default = true
+module "budget" {
+  source = "../../modules/budget"
+
+  name              = local.name
+  monthly_limit_usd = var.monthly_budget_usd
+  alert_emails      = var.alert_emails
 }
 
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-  filter {
-    name   = "default-for-az"
-    values = ["true"]
-  }
+# ── Network ──
+
+module "network" {
+  source = "../../modules/network"
+
+  name = local.name
 }
 
 resource "aws_security_group" "app" {
   name        = "${local.name}-app"
   description = "CloudOps Hub web access"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = module.network.vpc_id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "http" {
@@ -66,58 +67,35 @@ resource "aws_ssm_parameter" "jwt_secret" {
   value       = random_password.jwt_secret.result
 }
 
-# ── IAM: instance role (SSM access + the app's read-only AWS permissions) ──
+# ── IAM: app role + GitHub Actions OIDC role ──
 
-data "aws_iam_policy_document" "ec2_assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
+module "iam" {
+  source = "../../modules/iam"
+
+  name                  = local.name
+  secret_parameter_arns = [aws_ssm_parameter.jwt_secret.arn]
+  github_repo           = var.github_repo
 }
 
-resource "aws_iam_role" "instance" {
-  name               = "${local.name}-instance"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
+# IAM resources moved from this file into modules/iam: keep them, don't recreate
+moved {
+  from = aws_iam_role.instance
+  to   = module.iam.aws_iam_role.instance
 }
 
-resource "aws_iam_role_policy_attachment" "ssm_core" {
-  role       = aws_iam_role.instance.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+moved {
+  from = aws_iam_role_policy_attachment.ssm_core
+  to   = module.iam.aws_iam_role_policy_attachment.ssm_core
 }
 
-data "aws_iam_policy_document" "app" {
-  # Same actions as the cloudopshub-service user (docs/architecture/aws-integration.md)
-  statement {
-    sid = "AppReadOnly"
-    actions = [
-      "sts:GetCallerIdentity",
-      "ec2:DescribeInstances",
-      "cloudwatch:GetMetricStatistics",
-      "ce:GetCostAndUsage",
-      "ce:GetCostForecast",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid       = "ReadJwtSecret"
-    actions   = ["ssm:GetParameter"]
-    resources = [aws_ssm_parameter.jwt_secret.arn]
-  }
+moved {
+  from = aws_iam_role_policy.app
+  to   = module.iam.aws_iam_role_policy.app
 }
 
-resource "aws_iam_role_policy" "app" {
-  name   = "CloudOpsHubApp"
-  role   = aws_iam_role.instance.id
-  policy = data.aws_iam_policy_document.app.json
-}
-
-resource "aws_iam_instance_profile" "instance" {
-  name = "${local.name}-instance"
-  role = aws_iam_role.instance.name
+moved {
+  from = aws_iam_instance_profile.instance
+  to   = module.iam.aws_iam_instance_profile.instance
 }
 
 # ── Compute ──
@@ -129,9 +107,9 @@ data "aws_ssm_parameter" "ubuntu_ami" {
 resource "aws_instance" "app" {
   ami                    = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type          = var.instance_type
-  subnet_id              = data.aws_subnets.default.ids[0]
+  subnet_id              = module.network.public_subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.app.id]
-  iam_instance_profile   = aws_iam_instance_profile.instance.name
+  iam_instance_profile   = module.iam.instance_profile_name
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     repo_url  = var.repo_url
