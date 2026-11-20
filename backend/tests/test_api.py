@@ -50,3 +50,16 @@ def test_accounts_use_camel_case():
 def test_cors_allows_frontend_dev_server():
     response = client.get("/api/devices", headers={"Origin": "http://localhost:5173"})
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_security_headers_on_api_responses():
+    response = client.get("/api/devices")
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["referrer-policy"] == "no-referrer"
+
+
+def test_auth_responses_are_never_cached():
+    response = client.get("/api/auth/me")  # 401 without a token, and still must not be cached
+    assert response.status_code == 401
+    assert response.headers["cache-control"] == "no-store"

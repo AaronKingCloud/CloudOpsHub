@@ -81,7 +81,7 @@ update api contract for alerts endpoint
 
 ## 5. Before opening a Pull Request
 
-- [ ] Frontend: `npm run lint` and `npm run build` pass in `frontend/`
+- [ ] Frontend: `npm run lint`, `npm test` and `npm run build` pass in `frontend/`
 - [ ] Backend: `pytest` passes in `backend/`
 - [ ] You updated [`docs/PROGRESS.md`](docs/PROGRESS.md) with what you did
 - [ ] If you changed an API response shape, you updated
@@ -93,8 +93,9 @@ GitHub Actions runs automatically on every Pull Request:
 
 | Workflow      | Runs when you change | What it checks                 |
 | ------------- | -------------------- | ------------------------------ |
-| Frontend CI   | `frontend/**`        | `npm run lint`, `npm run build` |
+| Frontend CI   | `frontend/**`        | `npm run lint`, `npm test`, `npm run build` |
 | Backend CI    | `backend/**`         | `pytest`                        |
+| Security      | every push and PR    | `npm audit`, `pip-audit`, secret scan (gitleaks) |
 
 A red ❌ on your PR means a check failed. Click **Details** to see the log, fix it,
 and push again. Please don't merge PRs with failing checks.

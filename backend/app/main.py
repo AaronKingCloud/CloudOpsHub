@@ -1,7 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.database import init_db
@@ -23,6 +23,18 @@ app = FastAPI(
 
 # Comma-separated list of origins allowed to call the API (the frontend dev server by default).
 allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    """Browser security headers on every API response (see docs/security/SECURITY_CHECKLIST.md)."""
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    if request.url.path.startswith("/api/auth"):
+        response.headers.setdefault("Cache-Control", "no-store")  # never cache tokens or user data
+    return response
+
 
 app.add_middleware(
     CORSMiddleware,
