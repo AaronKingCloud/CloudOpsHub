@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+# Find your public IP: (Invoke-RestMethod https://checkip.amazonaws.com).Trim()
+allowed_cidrs = ["203.0.113.10/32"]
+
+# Optional overrides
+# instance_type = "t3.small"
+# git_ref       = "main"
