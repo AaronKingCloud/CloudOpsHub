@@ -79,8 +79,8 @@ These block almost everything else. Do them first.
 | C4 | 🟡 **Frontend + guide done 2026-11-20** (`docs/agent/INSTALL.md`; needs B3). Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
 | C5 | ✅ **Done 2026-11-20** (`test/frontend-tests`). Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
 | C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
-| C7 | Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
-| C8 | Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
+| C7 | 🟡 **Local part done 2026-11-20**: backup/restore tool + passed drill (`docs/operations/DISASTER_RECOVERY.md`); cloud drill needs A3, B1. Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
+| C8 | 🟡 **Guide added 2026-11-20** (`docs/architecture/CloudOps_Hub_Architecture_Guide.pdf`); deployment diagram needs A3. Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
 
 ---
 

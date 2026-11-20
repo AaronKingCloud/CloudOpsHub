@@ -74,6 +74,15 @@ Generate a production secret with:
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
+## Backups
+
+```bash
+python -m scripts.backup_db backup     # verified, timestamped copy of the user database in backups/
+python -m scripts.backup_db restore backups/<file>.db   # stop the backend first
+```
+
+Procedure, targets and drill results: [`docs/operations/DISASTER_RECOVERY.md`](../docs/operations/DISASTER_RECOVERY.md).
+
 ## Folder layout
 
 ```

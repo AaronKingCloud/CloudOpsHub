@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CloudOps Hub Architecture Guide</title>
+<style>
+  @page { size: Letter; margin: 0.55in 0.6in 0.6in; }
+  :root {
+    --ink: #1d2230; --muted: #5d6475; --line: #d9dce3; --soft: #f4f5f8;
+    --accent: #4f46e5;
+    --fe: #e8f0fe; --fe-b: #2a6fd6;
+    --be: #e6f6ee; --be-b: #1a8a5a;
+    --data: #f1f1f4; --data-b: #6b7080;
+    --aws: #fff2e5; --aws-b: #d9731a;
+    --dev: #f3ecfd; --dev-b: #7c4ddb;
+  }
+  * { box-sizing: border-box; }
+  body { font: 10.5pt/1.5 "Segoe UI", system-ui, sans-serif; color: var(--ink); margin: 0; }
+  h1 { font-size: 26pt; margin: 0 0 4px; letter-spacing: -0.5px; }
+  h2 { font-size: 16pt; margin: 0 0 8px; color: var(--accent); break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  code { font-family: Consolas, ui-monospace, monospace; font-size: 9pt; background: var(--soft); padding: 1px 4px; border-radius: 3px; }
+  section { margin-top: 26px; }
+  section.cover + section { break-before: page; margin-top: 0; }
+  h2 { break-before: auto; }
+  section > h2 { padding-top: 6px; border-top: 2px solid var(--line); }
+  section.first > h2, section.cover h1 { border: 0; }
+  .lead { font-size: 12pt; color: var(--muted); margin-bottom: 14px; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 10px 0; background: var(--soft); break-inside: avoid; }
+  .box.tip { border-left: 4px solid var(--accent); }
+  .box.warn { border-left: 4px solid var(--aws-b); background: var(--aws); }
+  .box strong:first-child { display: block; margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 10px; font-size: 9.5pt; break-inside: auto; }
+  th { text-align: left; background: var(--soft); font-weight: 600; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; }
+  tr { break-inside: avoid; }
+  figure { margin: 10px 0 12px; break-inside: avoid; }
+  figcaption { font-size: 9pt; color: var(--muted); text-align: center; margin-top: 4px; }
+  svg { width: 100%; height: auto; display: block; }
+  svg text { font-family: "Segoe UI", system-ui, sans-serif; fill: var(--ink); }
+  .cover { height: 9.6in; display: flex; flex-direction: column; justify-content: center; }
+  .cover .tag { color: var(--accent); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-size: 10pt; }
+  .toc { columns: 2; margin-top: 18px; font-size: 10.5pt; }
+  .toc li { break-inside: avoid; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 9pt; color: var(--muted); margin: 4px 0 0; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; border: 1.5px solid; }
+  .lg-fe::before { background: var(--fe); border-color: var(--fe-b) !important; }
+  .lg-be::before { background: var(--be); border-color: var(--be-b) !important; }
+  .lg-data::before { background: var(--data); border-color: var(--data-b) !important; }
+  .lg-aws::before { background: var(--aws); border-color: var(--aws-b) !important; }
+  .lg-dev::before { background: var(--dev); border-color: var(--dev-b) !important; }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps li { counter-increment: s; position: relative; padding: 6px 10px 6px 40px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; break-inside: avoid; }
+  .steps li::before { content: counter(s); position: absolute; left: 10px; top: 6px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 9pt; text-align: center; line-height: 20px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; break-inside: avoid; }
+  .small { font-size: 9pt; color: var(--muted); }
+  .status-real { color: var(--be-b); font-weight: 600; }
+  .status-mock { color: var(--aws-b); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- Reusable SVG arrow heads -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5d6475"/>
+    </marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/>
+    </marker>
+  </defs>
+</svg>
+
+<!-- ============================ COVER ============================ -->
+<section class="first cover" style="margin-top:0">
+  <div class="tag">CAA900 Capstone · Architecture Guide</div>
+  <h1>CloudOps Hub</h1>
+  <p class="lead">How the whole project works, explained simply, from the moment you open the website
+  to the code that answers it, with a diagram for each big idea.</p>
+  <div class="box tip">
+    <strong>Who this is for</strong>
+    Anyone on the team who wants to understand the project end to end. No prior knowledge of the
+    code is needed. File names are given so you can open the real code next to this guide.
+  </div>
+  <div class="box">
+    <strong>Snapshot</strong>
+    Describes the project as of 20 Nov 2026: everything on <code>main</code> (including the cost panel
+    and dashboard update, PRs #12–#15) plus the open branches from 20 Nov: frontend tests, security
+    hardening, device and alert screens, and disaster recovery. Things the backend doesn't do yet are
+    marked as planned. The source of this guide is <code>docs/architecture/guide/architecture-guide.html</code>.
+  </div>
+  <ol class="toc">
+    <li>What CloudOps Hub is</li>
+    <li>The big picture</li>
+    <li>Where everything lives (folders)</li>
+    <li>The frontend (what you see)</li>
+    <li>The backend (the API)</li>
+    <li>Login, tokens and roles</li>
+    <li>Following one request, step by step</li>
+    <li>AWS integration</li>
+    <li>Mock data vs real data</li>
+    <li>How the team works: Git, PRs and CI</li>
+    <li>Running it: locally and with Docker</li>
+    <li>What's done, what's next</li>
+    <li>Glossary</li>
+  </ol>
+</section>
+
+<!-- ============================ 1. WHAT ============================ -->
+<section>
+  <h2>1. What CloudOps Hub is</h2>
+  <p class="lead">A website that shows the health of your infrastructure (servers, VMs, cloud accounts)
+  in one place, and tells you what needs attention right now.</p>
+
+  <p>Think of it as a <strong>control room screen</strong>. Instead of logging in to every server, NAS
+  and cloud console separately, you open one dashboard and see:</p>
+  <ul>
+    <li><strong>Summary numbers:</strong> how many devices are online, offline, and how many alerts are active</li>
+    <li><strong>Charts:</strong> CPU over time, memory and storage per device</li>
+    <li><strong>Alerts:</strong> "nas-01 storage exceeds 90%", "backup-vm is offline"</li>
+    <li><strong>Devices and cloud accounts:</strong> tables with status and usage</li>
+    <li><strong>Live AWS data:</strong> your EC2 instances and their CPU from CloudWatch</li>
+  </ul>
+
+  <h3>Who it's for</h3>
+  <table>
+    <tr><th>Tier</th><th>Audience</th><th>Idea</th></tr>
+    <tr><td>Homelab</td><td>Self-hosters, enthusiasts</td><td>Monitor home servers, NAS, Pi-hole, Plex</td></tr>
+    <tr><td>Pro</td><td>Power users</td><td>History, backups, security insights</td></tr>
+    <tr><td>Business</td><td>Small teams</td><td>Roles (RBAC), cloud integrations, governance</td></tr>
+  </table>
+
+  <h3>The three building blocks</h3>
+  <p>Almost every web app has the same three parts, and so does this one:</p>
+  <div class="two">
+    <div class="box"><strong>Frontend</strong>The website you see in the browser. Built with <strong>React</strong>. Lives in <code>frontend/</code>.</div>
+    <div class="box"><strong>Backend</strong>A program on a server that answers questions like "list my devices". Built with <strong>Python + FastAPI</strong>. Lives in <code>backend/</code>.</div>
+  </div>
+  <div class="box"><strong>Data sources</strong>Where the answers come from: a small user database (SQLite), sample "mock" data, and <strong>AWS</strong> for real cloud data.</div>
+
+  <div class="box tip">
+    <strong>Restaurant analogy</strong>
+    The <em>frontend</em> is the dining room and menu. The <em>backend</em> is the kitchen.
+    The <em>API</em> is the waiter carrying orders (requests) and plates (JSON data) between them.
+    The <em>data sources</em> are the fridge and suppliers.
+  </div>
+</section>
+
+<!-- ============================ 2. BIG PICTURE ============================ -->
+<section>
+  <h2 style="break-before: page">2. The big picture</h2>
+  <p>This one diagram is the whole system. Everything else in this guide zooms into one of these boxes.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 380" role="img" aria-label="System overview diagram">
+      <!-- browser -->
+      <rect x="10" y="150" width="110" height="70" rx="10" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.5"/>
+      <text x="65" y="180" text-anchor="middle" font-size="13" font-weight="600">You</text>
+      <text x="65" y="198" text-anchor="middle" font-size="11" fill="#5d6475">web browser</text>
+
+      <!-- frontend -->
+      <rect x="170" y="120" width="160" height="130" rx="10" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="2"/>
+      <text x="250" y="148" text-anchor="middle" font-size="14" font-weight="700">Frontend</text>
+      <text x="250" y="168" text-anchor="middle" font-size="11">React + TypeScript</text>
+      <text x="250" y="184" text-anchor="middle" font-size="11">(Vite)</text>
+      <text x="250" y="206" text-anchor="middle" font-size="10" fill="#5d6475">pages, charts, tables,</text>
+      <text x="250" y="220" text-anchor="middle" font-size="10" fill="#5d6475">login screen</text>
+      <text x="250" y="240" text-anchor="middle" font-size="10" font-family="Consolas" fill="#2a6fd6">frontend/</text>
+
+      <!-- backend -->
+      <rect x="390" y="120" width="160" height="130" rx="10" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="2"/>
+      <text x="470" y="148" text-anchor="middle" font-size="14" font-weight="700">Backend API</text>
+      <text x="470" y="168" text-anchor="middle" font-size="11">Python + FastAPI</text>
+      <text x="470" y="190" text-anchor="middle" font-size="10" fill="#5d6475">checks login,</text>
+      <text x="470" y="204" text-anchor="middle" font-size="10" fill="#5d6475">fetches data,</text>
+      <text x="470" y="218" text-anchor="middle" font-size="10" fill="#5d6475">returns JSON</text>
+      <text x="470" y="240" text-anchor="middle" font-size="10" font-family="Consolas" fill="#1a8a5a">backend/</text>
+
+      <!-- data sources -->
+      <rect x="590" y="20" width="105" height="70" rx="10" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
+      <text x="642" y="46" text-anchor="middle" font-size="12" font-weight="600">Users DB</text>
+      <text x="642" y="62" text-anchor="middle" font-size="10" fill="#5d6475">SQLite file</text>
+      <text x="642" y="77" text-anchor="middle" font-size="10" fill="#5d6475">accounts, roles</text>
+
+      <rect x="590" y="150" width="105" height="70" rx="10" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
+      <text x="642" y="176" text-anchor="middle" font-size="12" font-weight="600">Mock data</text>
+      <text x="642" y="192" text-anchor="middle" font-size="10" fill="#5d6475">devices, alerts,</text>
+      <text x="642" y="207" text-anchor="middle" font-size="10" fill="#5d6475">metrics (sample)</text>
+
+      <rect x="590" y="280" width="105" height="80" rx="10" fill="#fff2e5" stroke="#d9731a" stroke-width="2"/>
+      <text x="642" y="306" text-anchor="middle" font-size="12" font-weight="700">AWS</text>
+      <text x="642" y="322" text-anchor="middle" font-size="10" fill="#5d6475">STS (who am I)</text>
+      <text x="642" y="336" text-anchor="middle" font-size="10" fill="#5d6475">EC2 (servers)</text>
+      <text x="642" y="350" text-anchor="middle" font-size="10" fill="#5d6475">CloudWatch (CPU)</text>
+
+      <!-- frontend mock -->
+      <rect x="170" y="290" width="160" height="62" rx="10" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="250" y="315" text-anchor="middle" font-size="11" font-weight="600">Frontend mock data</text>
+      <text x="250" y="333" text-anchor="middle" font-size="10" fill="#5d6475">used when no backend runs</text>
+
+      <!-- arrows -->
+      <line x1="120" y1="185" x2="166" y2="185" stroke="#5d6475" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="330" y1="175" x2="386" y2="175" stroke="#4f46e5" stroke-width="2" marker-end="url(#arrA)"/>
+      <text x="358" y="166" text-anchor="middle" font-size="9.5" fill="#4f46e5" font-weight="600">request</text>
+      <line x1="390" y1="200" x2="334" y2="200" stroke="#4f46e5" stroke-width="2" marker-end="url(#arrA)"/>
+      <text x="360" y="215" text-anchor="middle" font-size="9.5" fill="#4f46e5" font-weight="600">JSON</text>
+      <line x1="550" y1="150" x2="588" y2="70" stroke="#5d6475" stroke-width="1.8" marker-end="url(#arr)"/>
+      <line x1="550" y1="185" x2="586" y2="185" stroke="#5d6475" stroke-width="1.8" marker-end="url(#arr)"/>
+      <line x1="550" y1="225" x2="588" y2="300" stroke="#d9731a" stroke-width="1.8" marker-end="url(#arr)"/>
+      <line x1="250" y1="250" x2="250" y2="286" stroke="#6b7080" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <text x="262" y="272" font-size="9.5" fill="#5d6475">mock mode</text>
+      <text x="358" y="120" text-anchor="middle" font-size="9" fill="#5d6475">over HTTP</text>
+      <text x="358" y="132" text-anchor="middle" font-size="9" fill="#5d6475" font-family="Consolas">/api/...</text>
+    </svg>
+    <figcaption>Figure 1: The browser loads the React frontend; the frontend asks the backend for data; the backend reads from the user database, sample data or AWS.</figcaption>
+  </figure>
+  <div class="legend"><span class="lg-fe">Frontend</span><span class="lg-be">Backend</span><span class="lg-data">Data</span><span class="lg-aws">Cloud (AWS)</span></div>
+
+  <h3>In words</h3>
+  <ol class="steps">
+    <li>You open the website. Your browser downloads the <strong>frontend</strong> (HTML, CSS and JavaScript built from React code).</li>
+    <li>The frontend needs data, so it sends a <strong>request</strong> to the backend, for example <code>GET /api/devices</code>.</li>
+    <li>The <strong>backend</strong> checks who you are (if the page needs login), gets the data from the right place, and sends it back as <strong>JSON</strong> (plain text data).</li>
+    <li>The frontend turns that JSON into tables, badges and charts on your screen.</li>
+  </ol>
+  <div class="box tip">
+    <strong>Two ways to run it</strong>
+    <em>Mock mode</em>: the frontend uses its own sample data, so no backend is needed (great for UI work).
+    <em>Live mode</em>: the frontend talks to the real backend. A single setting switches between them (section 9).
+  </div>
+</section>
+
+<!-- ============================ 3. FOLDERS ============================ -->
+<section>
+  <h2 style="break-before: page">3. Where everything lives</h2>
+  <p>The repository is split by job. <code>frontend/</code>, <code>backend/</code> and <code>infra/</code> each have their own <code>README.md</code> with run instructions.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 236" role="img" aria-label="Repository folders diagram">
+      <rect x="260" y="10" width="180" height="44" rx="8" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.5"/>
+      <text x="350" y="37" text-anchor="middle" font-size="13" font-weight="700" font-family="Consolas">CloudOpsHub/</text>
+      <!-- branches -->
+      <path d="M350 54 V80 M70 80 H630 M70 80 V100 M210 80 V100 M350 80 V100 M490 80 V100 M630 80 V100" stroke="#6b7080" stroke-width="1.5" fill="none"/>
+      <g font-size="11">
+        <rect x="10" y="100" width="120" height="130" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+        <text x="70" y="124" text-anchor="middle" font-weight="700" font-family="Consolas" font-size="12">frontend/</text>
+        <text x="70" y="146" text-anchor="middle" fill="#5d6475">React website</text>
+        <text x="70" y="166" text-anchor="middle" fill="#5d6475">pages, components,</text>
+        <text x="70" y="182" text-anchor="middle" fill="#5d6475">services, mock data</text>
+        <text x="70" y="210" text-anchor="middle" fill="#2a6fd6" font-weight="600">what you see</text>
+
+        <rect x="150" y="100" width="120" height="130" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.8"/>
+        <text x="210" y="124" text-anchor="middle" font-weight="700" font-family="Consolas" font-size="12">backend/</text>
+        <text x="210" y="146" text-anchor="middle" fill="#5d6475">FastAPI server</text>
+        <text x="210" y="166" text-anchor="middle" fill="#5d6475">routes, login,</text>
+        <text x="210" y="182" text-anchor="middle" fill="#5d6475">AWS calls, tests</text>
+        <text x="210" y="210" text-anchor="middle" fill="#1a8a5a" font-weight="600">the API</text>
+
+        <rect x="290" y="100" width="120" height="130" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.8"/>
+        <text x="350" y="124" text-anchor="middle" font-weight="700" font-family="Consolas" font-size="12">infra/</text>
+        <text x="350" y="146" text-anchor="middle" fill="#5d6475">Dockerfiles,</text>
+        <text x="350" y="166" text-anchor="middle" fill="#5d6475">docker-compose,</text>
+        <text x="350" y="182" text-anchor="middle" fill="#5d6475">Terraform (planned)</text>
+        <text x="350" y="210" text-anchor="middle" fill="#d9731a" font-weight="600">packaging</text>
+
+        <rect x="430" y="100" width="120" height="130" rx="8" fill="#f3ecfd" stroke="#7c4ddb" stroke-width="1.8"/>
+        <text x="490" y="124" text-anchor="middle" font-weight="700" font-family="Consolas" font-size="12">.github/</text>
+        <text x="490" y="146" text-anchor="middle" fill="#5d6475">workflows:</text>
+        <text x="490" y="166" text-anchor="middle" fill="#5d6475">frontend.yml</text>
+        <text x="490" y="182" text-anchor="middle" fill="#5d6475">backend.yml</text>
+        <text x="490" y="210" text-anchor="middle" fill="#7c4ddb" font-weight="600">automatic checks</text>
+
+        <rect x="570" y="100" width="120" height="130" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.8"/>
+        <text x="630" y="124" text-anchor="middle" font-weight="700" font-family="Consolas" font-size="12">docs/</text>
+        <text x="630" y="146" text-anchor="middle" fill="#5d6475">api contract,</text>
+        <text x="630" y="166" text-anchor="middle" fill="#5d6475">architecture,</text>
+        <text x="630" y="182" text-anchor="middle" fill="#5d6475">planning, PROGRESS</text>
+        <text x="630" y="210" text-anchor="middle" fill="#6b7080" font-weight="600">documentation</text>
+      </g>
+    </svg>
+    <figcaption>Figure 2: Top-level folders. Application code, packaging, automation and docs are kept apart.</figcaption>
+  </figure>
+
+  <h3>Files worth knowing at the root</h3>
+  <table>
+    <tr><th>File</th><th>What it's for</th></tr>
+    <tr><td><code>README.md</code></td><td>Project overview, quick start, tech stack, roadmap</td></tr>
+    <tr><td><code>CONTRIBUTING.md</code></td><td>How to set up, branch naming, PR checklist, where things live</td></tr>
+    <tr><td><code>docs/PROGRESS.md</code></td><td>Team log: what each person did and what's next. Add an entry with every PR</td></tr>
+    <tr><td><code>docs/api/frontend-contract.md</code></td><td>The agreed shape of every API response (the "menu" both sides follow)</td></tr>
+    <tr><td><code>docs/architecture/</code></td><td>Design notes: dashboard layout, account model, AWS integration</td></tr>
+    <tr><td><code>.gitignore</code></td><td>Keeps junk (node_modules, databases, secrets) out of Git</td></tr>
+  </table>
+
+  <h3>Technology at a glance</h3>
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+    <tr><td>Frontend</td><td>React 19, TypeScript, Vite, React Router, Recharts, Axios</td><td>Popular, typed, fast dev server, charts, HTTP calls</td></tr>
+    <tr><td>Backend</td><td>Python, FastAPI, Pydantic, boto3</td><td>Simple to write, automatic API docs, AWS SDK</td></tr>
+    <tr><td>Login</td><td>JWT tokens (PyJWT), bcrypt passwords, SQLite</td><td>Standard, no extra database server needed</td></tr>
+    <tr><td>Testing</td><td>pytest, moto (fake AWS)</td><td>Tests run without real AWS or cost</td></tr>
+    <tr><td>Packaging, CI</td><td>Docker, nginx, GitHub Actions</td><td>One-command stack; checks on every PR</td></tr>
+    <tr><td>Cloud (planned)</td><td>Terraform + AWS or Azure</td><td>Infrastructure as code; provider not chosen yet</td></tr>
+  </table>
+</section>
+
+<!-- ============================ 4. FRONTEND ============================ -->
+<section>
+  <h2 style="break-before: page">4. The frontend (what you see)</h2>
+  <p>The frontend is built in <strong>layers</strong>. Each layer has one job, so it's easy to find where to change something.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" role="img" aria-label="Frontend layers diagram">
+      <g font-size="10.5">
+        <rect x="5" y="20" width="105" height="92" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+        <text x="57" y="42" text-anchor="middle" font-weight="700" font-size="12">Page</text>
+        <text x="57" y="60" text-anchor="middle" fill="#5d6475">a whole screen</text>
+        <text x="57" y="80" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">pages/</text>
+        <text x="57" y="94" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">DevicesPage</text>
+
+        <rect x="125" y="20" width="105" height="92" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+        <text x="177" y="42" text-anchor="middle" font-weight="700" font-size="12">Component</text>
+        <text x="177" y="60" text-anchor="middle" fill="#5d6475">one panel / table</text>
+        <text x="177" y="80" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">components/</text>
+        <text x="177" y="94" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">DeviceTable</text>
+
+        <rect x="245" y="20" width="105" height="92" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+        <text x="297" y="42" text-anchor="middle" font-weight="700" font-size="12">useApi hook</text>
+        <text x="297" y="60" text-anchor="middle" fill="#5d6475">loading, error,</text>
+        <text x="297" y="74" text-anchor="middle" fill="#5d6475">data, refresh</text>
+        <text x="297" y="94" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">hooks/useApi.ts</text>
+
+        <rect x="365" y="20" width="105" height="92" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+        <text x="417" y="42" text-anchor="middle" font-weight="700" font-size="12">Service</text>
+        <text x="417" y="60" text-anchor="middle" fill="#5d6475">"get devices"</text>
+        <text x="417" y="80" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">services/</text>
+        <text x="417" y="94" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">dashboardService</text>
+
+        <rect x="485" y="20" width="105" height="92" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+        <text x="537" y="42" text-anchor="middle" font-weight="700" font-size="12">apiClient</text>
+        <text x="537" y="60" text-anchor="middle" fill="#5d6475">sends HTTP,</text>
+        <text x="537" y="74" text-anchor="middle" fill="#5d6475">adds login token</text>
+        <text x="537" y="94" text-anchor="middle" font-family="Consolas" font-size="9" fill="#2a6fd6">apiClient.ts</text>
+
+        <rect x="605" y="20" width="90" height="40" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.8"/>
+        <text x="650" y="45" text-anchor="middle" font-weight="700">Backend</text>
+        <rect x="605" y="150" width="90" height="50" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="650" y="172" text-anchor="middle" font-weight="600">Mock data</text>
+        <text x="650" y="188" text-anchor="middle" font-family="Consolas" font-size="9" fill="#5d6475">mock/</text>
+      </g>
+      <g stroke="#4f46e5" stroke-width="2" fill="none">
+        <line x1="110" y1="66" x2="121" y2="66" marker-end="url(#arrA)"/>
+        <line x1="230" y1="66" x2="241" y2="66" marker-end="url(#arrA)"/>
+        <line x1="350" y1="66" x2="361" y2="66" marker-end="url(#arrA)"/>
+        <line x1="470" y1="66" x2="481" y2="66" marker-end="url(#arrA)"/>
+        <line x1="590" y1="40" x2="601" y2="40" marker-end="url(#arrA)"/>
+      </g>
+      <path d="M417 112 V175 H601" stroke="#6b7080" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#arr)"/>
+      <text x="428" y="168" font-size="9.5" fill="#5d6475">mock mode: sample data instead</text>
+      <text x="350" y="232" text-anchor="middle" font-size="10" fill="#5d6475">Data flows back the same way: backend → apiClient → service → useApi → component → page</text>
+    </svg>
+    <figcaption>Figure 3: Frontend layers. A component never talks to the backend directly; it always goes through a service.</figcaption>
+  </figure>
+
+  <h3>What each folder in <code>frontend/src/</code> does</h3>
+  <table>
+    <tr><th>Folder</th><th>Job</th><th>Examples</th></tr>
+    <tr><td><code>App.tsx</code></td><td>The "map" of URLs: which page shows at which address</td><td><code>/</code>, <code>/devices</code>, <code>/cloud</code>, <code>/admin/users</code></td></tr>
+    <tr><td><code>pages/</code></td><td>One file per screen</td><td>OverviewPage, DevicesPage, AlertsPage, AccountsPage, CloudPage, UsersPage</td></tr>
+    <tr><td><code>components/</code></td><td>Reusable pieces of a page</td><td>StatCard, CpuChart, DeviceTable, AlertsPanel, LoginPage</td></tr>
+    <tr><td><code>components/layout/</code></td><td>The frame around every page</td><td>Sidebar, TopBar, PageHeader, <code>navItems.ts</code> (the menu list)</td></tr>
+    <tr><td><code>components/devices/</code></td><td>Device dialogs and agent setup</td><td>DeviceFormDialog, DeleteDeviceDialog, AgentSetupPanel</td></tr>
+    <tr><td><code>utils/permissions.ts</code></td><td>Who may do what, in one place</td><td><code>can("manageDevices")</code>, <code>can("handleAlerts")</code></td></tr>
+    <tr><td><code>*.test.tsx</code>, <code>test/</code></td><td>Automatic tests, next to the code they test</td><td>58 tests, run with <code>npm test</code></td></tr>
+    <tr><td><code>services/</code></td><td>All talking to the backend</td><td>dashboardService, awsService, authService, userService</td></tr>
+    <tr><td><code>hooks/</code></td><td>Reusable logic</td><td>useApi (fetching), useAuth (who's signed in), useTheme, useSort</td></tr>
+    <tr><td><code>context/</code></td><td>App-wide shared state</td><td>AuthProvider (current user), RefreshProvider (30 s auto-refresh)</td></tr>
+    <tr><td><code>types/</code></td><td>The shape of the data, checked by TypeScript</td><td>Device, Alert, User, Ec2Instance</td></tr>
+    <tr><td><code>mock/</code></td><td>Sample data for mock mode</td><td>devices.ts, alerts.ts, aws.ts</td></tr>
+    <tr><td><code>styles/</code>, <code>index.css</code></td><td>Looks: colours (light/dark), layout, widgets</td><td>shell.css, widgets.css</td></tr>
+  </table>
+
+  <h3>The pages</h3>
+  <table>
+    <tr><th>Page</th><th>URL</th><th>Shows</th><th>Who</th></tr>
+    <tr><td>Overview</td><td><code>/</code></td><td>Summary cards, CPU chart, alerts, memory/storage chart, devices, accounts</td><td>Everyone</td></tr>
+    <tr><td>Devices</td><td><code>/devices</code></td><td>Device table with search, filter, sort + chart; admins add devices</td><td>Everyone</td></tr>
+    <tr><td>Device</td><td><code>/devices/:id</code></td><td>One device: details, usage, history charts, its alerts, agent setup; admins edit / delete</td><td>Everyone</td></tr>
+    <tr><td>Alerts</td><td><code>/alerts</code></td><td>Most severe first, filter by severity, history; operators acknowledge / resolve</td><td>Everyone</td></tr>
+    <tr><td>Accounts</td><td><code>/accounts</code></td><td>Cloud accounts and their health</td><td>Everyone</td></tr>
+    <tr><td>AWS Cloud</td><td><code>/cloud</code></td><td>AWS account, EC2 instances, CPU per instance</td><td>Signed-in users</td></tr>
+    <tr><td>Users</td><td><code>/admin/users</code></td><td>List users, add a user</td><td>Admins only</td></tr>
+  </table>
+  <p class="small">Extra touches: light/dark theme button, mobile slide-in menu, auto-refresh every 30 seconds
+  (dashboard data only, never AWS), loading placeholders, and a Retry button when something fails.</p>
+</section>
+
+<!-- ============================ 5. BACKEND ============================ -->
+<section>
+  <h2>5. The backend (the API)</h2>
+  <p>The backend is a <strong>FastAPI</strong> app. It listens on port 8000 and answers requests at
+  addresses called <strong>endpoints</strong>. Each endpoint returns JSON.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 270" role="img" aria-label="Backend structure diagram">
+      <rect x="10" y="105" width="120" height="60" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.8"/>
+      <text x="70" y="132" text-anchor="middle" font-size="12" font-weight="700">Request</text>
+      <text x="70" y="150" text-anchor="middle" font-size="10" font-family="Consolas" fill="#2a6fd6">GET /api/devices</text>
+
+      <rect x="165" y="80" width="140" height="110" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="2"/>
+      <text x="235" y="104" text-anchor="middle" font-size="12" font-weight="700">main.py</text>
+      <text x="235" y="124" text-anchor="middle" font-size="10" fill="#5d6475">starts the app</text>
+      <text x="235" y="140" text-anchor="middle" font-size="10" fill="#5d6475">CORS (who may call)</text>
+      <text x="235" y="156" text-anchor="middle" font-size="10" fill="#5d6475">sends request to</text>
+      <text x="235" y="170" text-anchor="middle" font-size="10" fill="#5d6475">the right router</text>
+
+      <g font-size="10">
+        <rect x="345" y="10" width="160" height="50" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.5"/>
+        <text x="425" y="31" text-anchor="middle" font-weight="700" font-family="Consolas">routers/dashboard.py</text>
+        <text x="425" y="48" text-anchor="middle" fill="#5d6475">summary numbers</text>
+        <rect x="345" y="72" width="160" height="50" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.5"/>
+        <text x="425" y="93" text-anchor="middle" font-weight="700" font-family="Consolas">routers/resources.py</text>
+        <text x="425" y="110" text-anchor="middle" fill="#5d6475">devices, alerts, accounts, cpu</text>
+        <rect x="345" y="134" width="160" height="50" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.5"/>
+        <text x="425" y="155" text-anchor="middle" font-weight="700" font-family="Consolas">routers/auth.py</text>
+        <text x="425" y="172" text-anchor="middle" fill="#5d6475">login, tokens, users</text>
+        <rect x="345" y="196" width="160" height="50" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.5"/>
+        <text x="425" y="217" text-anchor="middle" font-weight="700" font-family="Consolas">routers/aws.py</text>
+        <text x="425" y="234" text-anchor="middle" fill="#5d6475">account, EC2, CloudWatch</text>
+
+        <rect x="545" y="40" width="150" height="50" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
+        <text x="620" y="61" text-anchor="middle" font-weight="700" font-family="Consolas">mock_data.py</text>
+        <text x="620" y="78" text-anchor="middle" fill="#5d6475">sample devices etc.</text>
+        <rect x="545" y="134" width="150" height="50" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
+        <text x="620" y="155" text-anchor="middle" font-weight="700">SQLite users DB</text>
+        <text x="620" y="172" text-anchor="middle" fill="#5d6475" font-family="Consolas">auth/database.py</text>
+        <rect x="545" y="196" width="150" height="50" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.5"/>
+        <text x="620" y="217" text-anchor="middle" font-weight="700">AWS (boto3)</text>
+        <text x="620" y="234" text-anchor="middle" fill="#5d6475">STS, EC2, CloudWatch</text>
+      </g>
+      <g stroke="#5d6475" stroke-width="1.6" fill="none">
+        <line x1="130" y1="135" x2="161" y2="135" marker-end="url(#arr)"/>
+        <line x1="305" y1="120" x2="341" y2="35" marker-end="url(#arr)"/>
+        <line x1="305" y1="130" x2="341" y2="97" marker-end="url(#arr)"/>
+        <line x1="305" y1="145" x2="341" y2="159" marker-end="url(#arr)"/>
+        <line x1="305" y1="160" x2="341" y2="220" marker-end="url(#arr)"/>
+        <line x1="505" y1="35" x2="541" y2="58" marker-end="url(#arr)"/>
+        <line x1="505" y1="97" x2="541" y2="72" marker-end="url(#arr)"/>
+        <line x1="505" y1="159" x2="541" y2="159" marker-end="url(#arr)"/>
+        <line x1="505" y1="221" x2="541" y2="221" marker-end="url(#arr)"/>
+      </g>
+    </svg>
+    <figcaption>Figure 4: main.py hands each request to a router; routers get data from mock data, the user database or AWS.</figcaption>
+  </figure>
+
+  <h3>All endpoints</h3>
+  <table>
+    <tr><th>Endpoint</th><th>Returns</th><th>Login?</th><th>Data source</th></tr>
+    <tr><td><code>GET /health</code></td><td><code>{"status":"ok"}</code>, used by Docker</td><td>No</td><td>none</td></tr>
+    <tr><td><code>GET /api/dashboard/summary</code></td><td>online / offline / alerts / total counts</td><td>No</td><td class="status-mock">mock</td></tr>
+    <tr><td><code>GET /api/devices</code></td><td>list of devices with CPU, memory, storage %</td><td>No</td><td class="status-mock">mock</td></tr>
+    <tr><td><code>GET /api/alerts</code></td><td>active alerts with severity</td><td>No</td><td class="status-mock">mock</td></tr>
+    <tr><td><code>GET /api/accounts</code></td><td>cloud accounts and health</td><td>No</td><td class="status-mock">mock</td></tr>
+    <tr><td><code>GET /api/metrics/cpu</code></td><td>CPU over time</td><td>No</td><td class="status-mock">mock</td></tr>
+    <tr><td><code>GET /api/metrics/memory</code>, <code>/storage</code></td><td>memory / storage over time</td><td>No</td><td class="status-mock">mock</td></tr>
+    <tr><td><code>GET /api/billing/summary</code></td><td>this month's AWS spend, by service, forecast</td><td>No</td><td class="status-real">Cost Explorer</td></tr>
+    <tr><td><code>POST /api/auth/login</code></td><td>tokens + user</td><td>No</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>POST /api/auth/refresh</code></td><td>new access token</td><td>Refresh token</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>GET /api/auth/me</code></td><td>current user</td><td>Yes</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>GET /api/auth/users</code></td><td>all users</td><td>Admin</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>POST /api/auth/register</code></td><td>creates a user</td><td>Admin</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>GET /api/aws/account</code></td><td>which AWS account we're connected to</td><td>Yes</td><td class="status-real">AWS STS</td></tr>
+    <tr><td><code>GET /api/aws/ec2</code></td><td>EC2 instances</td><td>Yes</td><td class="status-real">AWS EC2</td></tr>
+    <tr><td><code>GET /api/aws/ec2/{id}/cpu</code></td><td>CPU history for one instance</td><td>Yes</td><td class="status-real">CloudWatch</td></tr>
+  </table>
+  <div class="box tip">
+    <strong>Try it yourself</strong>
+    Run the backend and open <code>http://localhost:8000/docs</code>. FastAPI builds an interactive
+    page listing every endpoint, where you can click "Try it out".
+  </div>
+  <h3>Two important backend files</h3>
+  <ul>
+    <li><code>schemas.py</code>: defines the exact shape of every response. Python uses <code>snake_case</code>
+    (<code>online_devices</code>) but the JSON is sent as <code>camelCase</code> (<code>onlineDevices</code>) to match the frontend.</li>
+    <li><code>tests/</code>: 49 automatic tests (pytest). AWS tests use <strong>moto</strong>, a fake AWS, so they cost nothing.</li>
+    <li><strong>Planned endpoints</strong> (devices CRUD, agent reports, alert acknowledge/resolve, login everywhere) are written down in
+    <code>docs/api/frontend-contract.md</code> → "Proposed endpoints". The screens for them already exist.</li>
+  </ul>
+</section>
+
+<!-- ============================ 6. LOGIN ============================ -->
+<section>
+  <h2>6. Login, tokens and roles</h2>
+  <p>When you sign in, the backend gives the browser two <strong>tokens</strong>: digital passes that
+  prove who you are, so you don't send your password with every request.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 440" role="img" aria-label="Login sequence diagram">
+      <g font-size="11.5" font-weight="700" text-anchor="middle">
+        <rect x="30" y="8" width="120" height="34" rx="8" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.5"/><text x="90" y="30">You</text>
+        <rect x="200" y="8" width="120" height="34" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.5"/><text x="260" y="30">Frontend</text>
+        <rect x="370" y="8" width="120" height="34" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.5"/><text x="430" y="30">Backend</text>
+        <rect x="540" y="8" width="120" height="34" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/><text x="600" y="30">Users DB</text>
+      </g>
+      <g stroke="#c4c8d2" stroke-width="1.5" stroke-dasharray="4 4">
+        <line x1="90" y1="42" x2="90" y2="430"/><line x1="260" y1="42" x2="260" y2="430"/>
+        <line x1="430" y1="42" x2="430" y2="430"/><line x1="600" y1="42" x2="600" y2="430"/>
+      </g>
+      <g font-size="10">
+        <!-- 1 -->
+        <line x1="90" y1="70" x2="256" y2="70" stroke="#4f46e5" stroke-width="1.8" marker-end="url(#arrA)"/>
+        <text x="173" y="64" text-anchor="middle">① username + password</text>
+        <!-- 2 -->
+        <line x1="260" y1="105" x2="426" y2="105" stroke="#4f46e5" stroke-width="1.8" marker-end="url(#arrA)"/>
+        <text x="345" y="99" text-anchor="middle">② POST /api/auth/login</text>
+        <!-- 3 -->
+        <line x1="430" y1="140" x2="596" y2="140" stroke="#4f46e5" stroke-width="1.8" marker-end="url(#arrA)"/>
+        <text x="515" y="134" text-anchor="middle">③ find user, check password</text>
+        <text x="515" y="156" text-anchor="middle" fill="#5d6475" font-size="9">(stored as a bcrypt hash, never plain text)</text>
+        <!-- 4 -->
+        <line x1="430" y1="185" x2="264" y2="185" stroke="#1a8a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+        <text x="345" y="179" text-anchor="middle">④ access token (30 min)</text>
+        <text x="345" y="200" text-anchor="middle">+ refresh token (7 days)</text>
+        <!-- 5 -->
+        <rect x="160" y="212" width="200" height="30" rx="6" fill="#e8f0fe" stroke="#2a6fd6"/>
+        <text x="260" y="231" text-anchor="middle">⑤ saves tokens in the browser</text>
+        <!-- 6 -->
+        <line x1="260" y1="270" x2="426" y2="270" stroke="#4f46e5" stroke-width="1.8" marker-end="url(#arrA)"/>
+        <text x="345" y="264" text-anchor="middle">⑥ GET /api/aws/ec2</text>
+        <text x="345" y="285" text-anchor="middle" fill="#5d6475" font-size="9">Authorization: Bearer &lt;access token&gt;</text>
+        <!-- 7 -->
+        <line x1="430" y1="315" x2="264" y2="315" stroke="#d9731a" stroke-width="1.8" marker-end="url(#arr)"/>
+        <text x="345" y="309" text-anchor="middle">⑦ 401 if the 30 min ran out</text>
+        <!-- 8 -->
+        <line x1="260" y1="355" x2="426" y2="355" stroke="#4f46e5" stroke-width="1.8" marker-end="url(#arrA)"/>
+        <text x="345" y="349" text-anchor="middle">⑧ POST /api/auth/refresh</text>
+        <!-- 9 -->
+        <line x1="430" y1="395" x2="264" y2="395" stroke="#1a8a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+        <text x="345" y="389" text-anchor="middle">⑨ new access token → retry ⑥</text>
+        <text x="345" y="412" text-anchor="middle" fill="#5d6475" font-size="9">you never notice; you stay signed in for 7 days</text>
+      </g>
+    </svg>
+    <figcaption>Figure 5: Signing in and staying signed in. Steps ⑦–⑨ happen automatically (frontend/src/services/apiClient.ts).</figcaption>
+  </figure>
+
+  <div class="two">
+    <div>
+      <h3>Roles</h3>
+      <table>
+        <tr><th>Role</th><th>Can do today</th></tr>
+        <tr><td><strong>Admin</strong></td><td>Everything, plus users and devices (add, edit, delete, new agent keys)</td></tr>
+        <tr><td><strong>Operator</strong></td><td>Acknowledge and resolve alerts (screens ready; backend B4 pending)</td></tr>
+        <tr><td><strong>Viewer</strong></td><td>Read-only dashboards; AWS page when signed in</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Demo accounts</h3>
+      <p class="small">Created by <code>python -m seed</code> in <code>backend/</code>:</p>
+      <table>
+        <tr><th>User</th><th>Password</th></tr>
+        <tr><td>admin</td><td><code>Admin123!</code></td></tr>
+        <tr><td>operator</td><td><code>Operator123!</code></td></tr>
+        <tr><td>viewer</td><td><code>Viewer123!</code></td></tr>
+      </table>
+      <p class="small">The quick-login buttons only appear in development or mock mode, never in a production build.</p>
+    </div>
+  </div>
+  <div class="box warn">
+    <strong>Known gap</strong>
+    Only the AWS and user-management endpoints require login. The dashboard endpoints (devices, alerts,
+    billing, ...) are still public (task B5). The frontend is ready: when the backend starts returning 401,
+    it shows a sign-in screen automatically. After 5 wrong passwords for one username in 15 minutes,
+    login is locked for 15 minutes (<code>app/auth/rate_limit.py</code>).
+  </div>
+</section>
+
+<!-- ============================ 7. ONE REQUEST ============================ -->
+<section>
+  <h2>7. Following one request, step by step</h2>
+  <p>Here is exactly what happens when the <strong>Devices</strong> page shows its table, in live mode.
+  This is the same pattern for every piece of data in the app.</p>
+
+  <ol class="steps">
+    <li>You click <strong>Devices</strong> in the sidebar. React Router sees the URL <code>/devices</code>
+    and shows <code>pages/DevicesPage.tsx</code> (rule in <code>App.tsx</code>).</li>
+    <li>The page renders <code>&lt;DeviceTable /&gt;</code>. The table calls
+    <code>useApi(getDevices, {'{'} live: true {'}'})</code>, so it shows a grey loading placeholder.</li>
+    <li><code>getDevices()</code> in <code>services/dashboardService.ts</code> checks the mode.
+    In live mode it calls <code>apiClient.get("/devices")</code>.</li>
+    <li><code>apiClient</code> (axios) adds your login token if you have one and sends
+    <code>GET http://localhost:8000/api/devices</code>.</li>
+    <li>The backend's <code>main.py</code> checks the request comes from an allowed website (CORS) and passes it
+    to <code>routers/resources.py</code> → <code>list_devices()</code>.</li>
+    <li>The router returns the device list. Pydantic (<code>schemas.py</code>) checks the shape and converts it to JSON.</li>
+    <li>The JSON travels back. <code>useApi</code> stores it, and <code>DeviceTable</code> draws the rows,
+    status badges and coloured usage bars (green / amber over 70% / red over 90%).</li>
+    <li>Every 30 seconds <code>RefreshProvider</code> repeats steps 3–7 in the background, keeping the old rows on screen until new ones arrive.</li>
+    <li>If anything fails (backend down, error), the panel shows <em>"Couldn't load devices"</em> with a <strong>Retry</strong> button.</li>
+  </ol>
+
+  <figure>
+    <svg viewBox="0 0 700 120" role="img" aria-label="Request path summary">
+      <g font-size="10" text-anchor="middle">
+        <rect x="5" y="30" width="95" height="56" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.5"/>
+        <text x="52" y="55" font-weight="700">DevicesPage</text><text x="52" y="72" fill="#5d6475">page</text>
+        <rect x="120" y="30" width="95" height="56" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.5"/>
+        <text x="167" y="55" font-weight="700">DeviceTable</text><text x="167" y="72" fill="#5d6475">component</text>
+        <rect x="235" y="30" width="95" height="56" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.5"/>
+        <text x="282" y="55" font-weight="700">getDevices()</text><text x="282" y="72" fill="#5d6475">service</text>
+        <rect x="350" y="30" width="95" height="56" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.5"/>
+        <text x="397" y="55" font-weight="700">apiClient</text><text x="397" y="72" fill="#5d6475">HTTP + token</text>
+        <rect x="465" y="30" width="105" height="56" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.5"/>
+        <text x="517" y="55" font-weight="700">list_devices()</text><text x="517" y="72" fill="#5d6475">backend router</text>
+        <rect x="590" y="30" width="105" height="56" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
+        <text x="642" y="55" font-weight="700">DEVICES</text><text x="642" y="72" fill="#5d6475">mock_data.py</text>
+      </g>
+      <g stroke="#4f46e5" stroke-width="2">
+        <line x1="100" y1="58" x2="116" y2="58" marker-end="url(#arrA)"/>
+        <line x1="215" y1="58" x2="231" y2="58" marker-end="url(#arrA)"/>
+        <line x1="330" y1="58" x2="346" y2="58" marker-end="url(#arrA)"/>
+        <line x1="445" y1="58" x2="461" y2="58" marker-end="url(#arrA)"/>
+        <line x1="570" y1="58" x2="586" y2="58" marker-end="url(#arrA)"/>
+      </g>
+      <text x="350" y="110" text-anchor="middle" font-size="10" fill="#5d6475">…and the JSON answer travels back right to left.</text>
+    </svg>
+    <figcaption>Figure 6: The path of one request through the code.</figcaption>
+  </figure>
+
+  <div class="box tip">
+    <strong>Rule of thumb for changes</strong>
+    New screen? Add a page + route + menu item. New data? Add a type, mock data, a service function,
+    then a backend endpoint, and document it in <code>docs/api/frontend-contract.md</code>.
+  </div>
+</section>
+
+<!-- ============================ 8. AWS ============================ -->
+<section>
+  <h2>8. AWS integration</h2>
+  <p>The backend reads real data from AWS using <strong>boto3</strong>, the official AWS library for Python.
+  It only ever <em>reads</em>; it never creates or changes anything in AWS.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 250" role="img" aria-label="AWS access diagram">
+      <rect x="10" y="85" width="140" height="80" rx="10" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="2"/>
+      <text x="80" y="115" text-anchor="middle" font-size="12.5" font-weight="700">Backend</text>
+      <text x="80" y="133" text-anchor="middle" font-size="10" font-family="Consolas" fill="#1a8a5a">routers/aws.py</text>
+      <text x="80" y="150" text-anchor="middle" font-size="10" fill="#5d6475">uses boto3</text>
+
+      <rect x="200" y="60" width="200" height="130" rx="10" fill="#fff2e5" stroke="#d9731a" stroke-width="2"/>
+      <text x="300" y="86" text-anchor="middle" font-size="12.5" font-weight="700">IAM user</text>
+      <text x="300" y="103" text-anchor="middle" font-size="10" font-family="Consolas">cloudopshub-service</text>
+      <rect x="215" y="115" width="170" height="64" rx="6" fill="#ffffff" stroke="#d9731a"/>
+      <text x="300" y="132" text-anchor="middle" font-size="9.5" font-weight="700">Policy: CloudOpsHubReadOnly</text>
+      <text x="300" y="148" text-anchor="middle" font-size="9" font-family="Consolas">sts:GetCallerIdentity</text>
+      <text x="300" y="161" text-anchor="middle" font-size="9" font-family="Consolas">ec2:DescribeInstances</text>
+      <text x="300" y="174" text-anchor="middle" font-size="9" font-family="Consolas">cloudwatch:GetMetricStatistics</text>
+
+      <g font-size="10.5" text-anchor="middle">
+        <rect x="460" y="15" width="230" height="56" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.5"/>
+        <text x="575" y="38" font-weight="700">STS</text><text x="575" y="56" fill="#5d6475">"which account am I?" → AWS Cloud page card</text>
+        <rect x="460" y="97" width="230" height="56" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.5"/>
+        <text x="575" y="120" font-weight="700">EC2</text><text x="575" y="138" fill="#5d6475">list servers → EC2 instances table</text>
+        <rect x="460" y="179" width="230" height="56" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.5"/>
+        <text x="575" y="202" font-weight="700">CloudWatch</text><text x="575" y="220" fill="#5d6475">CPU every 5 min → CPU chart (1h–24h)</text>
+      </g>
+      <g stroke="#d9731a" stroke-width="1.8" fill="none">
+        <line x1="150" y1="125" x2="196" y2="125" marker-end="url(#arr)"/>
+        <line x1="400" y1="100" x2="456" y2="45" marker-end="url(#arr)"/>
+        <line x1="400" y1="125" x2="456" y2="125" marker-end="url(#arr)"/>
+        <line x1="400" y1="150" x2="456" y2="205" marker-end="url(#arr)"/>
+      </g>
+    </svg>
+    <figcaption>Figure 7: The backend signs in to AWS as a dedicated read-only user that can do exactly three things (least privilege).</figcaption>
+  </figure>
+
+  <h3>Important things to know</h3>
+  <ul>
+    <li><strong>Credentials never go in Git.</strong> The backend finds them in your computer's AWS profile
+    (<code>aws configure --profile cloudopshub</code>, then set <code>AWS_PROFILE=cloudopshub</code>).</li>
+    <li><strong>Least privilege:</strong> the IAM user has only 3 permissions. Even if its keys leaked, it couldn't
+    delete or create anything.</li>
+    <li><strong>Free plan limitation:</strong> AWS Free plan accounts block listing EC2 from code (an AWS-managed
+    "service control policy"). The console still works. The AWS Cloud page explains this when it happens.</li>
+    <li><strong>Cost safety:</strong> STS and EC2 listing are free; CloudWatch has a large free quota. The frontend never
+    auto-refreshes AWS data, only when you click refresh. The future billing feature (Cost Explorer) costs
+    $0.01 per call, so it must also stay manual and should be cached.</li>
+    <li><strong>Errors are friendly:</strong> if AWS refuses, the backend returns a clean <code>502</code> with AWS's message,
+    and the page explains likely causes (no credentials, missing permission, Free plan).</li>
+  </ul>
+
+  <h3>Future: monitoring many AWS accounts</h3>
+  <p>The plan (in <code>docs/architecture/aws-integration.md</code>) is the pattern used by commercial tools:
+  each monitored account gets a read-only <strong>role</strong>, and the backend temporarily "becomes" that role
+  (<code>sts:AssumeRole</code>) to read it. No long-lived keys per account.</p>
+</section>
+
+<!-- ============================ 9. MOCK vs REAL ============================ -->
+<section>
+  <h2 style="break-before: page">9. Mock data vs real data</h2>
+  <p>Mock data lets everyone build and demo the app without a backend, a database or AWS.
+  The switch is one line in <code>frontend/.env.local</code>:</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" role="img" aria-label="Mock versus live mode">
+      <rect x="250" y="10" width="200" height="56" rx="10" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="2"/>
+      <text x="350" y="34" text-anchor="middle" font-size="12" font-weight="700">Service function</text>
+      <text x="350" y="52" text-anchor="middle" font-size="10" fill="#5d6475">e.g. getDevices()</text>
+      <rect x="20" y="120" width="260" height="70" rx="10" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.8" stroke-dasharray="5 4"/>
+      <text x="150" y="145" text-anchor="middle" font-size="12" font-weight="700">Mock mode (default)</text>
+      <text x="150" y="163" text-anchor="middle" font-size="10" font-family="Consolas">VITE_USE_MOCK=true</text>
+      <text x="150" y="179" text-anchor="middle" font-size="10" fill="#5d6475">returns sample data from src/mock/</text>
+      <rect x="420" y="120" width="260" height="70" rx="10" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.8"/>
+      <text x="550" y="145" text-anchor="middle" font-size="12" font-weight="700">Live mode</text>
+      <text x="550" y="163" text-anchor="middle" font-size="10" font-family="Consolas">VITE_USE_MOCK=false</text>
+      <text x="550" y="179" text-anchor="middle" font-size="10" fill="#5d6475">calls the backend at VITE_API_URL</text>
+      <line x1="300" y1="66" x2="180" y2="116" stroke="#6b7080" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <line x1="400" y1="66" x2="520" y2="116" stroke="#1a8a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+    </svg>
+    <figcaption>Figure 8: Every service function checks the mode. The sidebar footer shows which mode you're in.</figcaption>
+  </figure>
+
+  <h3>What's real today, and what's still sample data</h3>
+  <table>
+    <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>Login, tokens, roles, user management</td><td class="status-real">Real</td><td>Stored in SQLite on the backend</td></tr>
+    <tr><td>AWS account, EC2 list, EC2 CPU</td><td class="status-real">Real</td><td>Needs AWS credentials; blocked on Free plan accounts</td></tr>
+    <tr><td>Summary, devices, alerts, accounts, CPU chart</td><td class="status-mock">Sample</td><td>Backend serves <code>mock_data.py</code>; real collection not built yet</td></tr>
+    <tr><td>Memory and storage over time</td><td class="status-mock">Sample</td><td><code>/metrics/memory</code>, <code>/metrics/storage</code> (PR #13)</td></tr>
+    <tr><td>Billing / cost panel</td><td class="status-real">Real or sample</td><td>Cost Explorer when AWS allows it, sample data otherwise (PR #12)</td></tr>
+    <tr><td>Add / edit devices, agent keys, device history</td><td class="status-mock">Screens ready</td><td>Mock mode works; backend tasks B2–B3</td></tr>
+    <tr><td>Acknowledge / resolve alerts</td><td class="status-mock">Screens ready</td><td>Mock mode works; backend task B4</td></tr>
+  </table>
+  <div class="box tip">
+    <strong>Why this order makes sense</strong>
+    Building the screens and API on sample data first means the hard part (collecting real metrics from
+    homelab devices and clouds) can be added later <em>without changing the frontend</em>: only the backend
+    data source changes.
+  </div>
+</section>
+
+<!-- ============================ 10. GIT + CI ============================ -->
+<section>
+  <h2 style="break-before: page">10. How the team works: Git, PRs and CI</h2>
+  <p><code>main</code> is the shared, always-working version. Nobody commits to it directly.
+  Every change goes through a branch and a pull request (PR).</p>
+
+  <figure>
+    <svg viewBox="0 0 700 210" role="img" aria-label="Git workflow diagram">
+      <g font-size="10.5" text-anchor="middle">
+        <rect x="5" y="40" width="120" height="70" rx="10" fill="#f3ecfd" stroke="#7c4ddb" stroke-width="1.8"/>
+        <text x="65" y="66" font-weight="700">1. Branch</text>
+        <text x="65" y="84" fill="#5d6475" font-size="9.5">git checkout -b</text>
+        <text x="65" y="98" fill="#5d6475" font-size="9.5" font-family="Consolas">feature/xyz</text>
+
+        <rect x="145" y="40" width="120" height="70" rx="10" fill="#f3ecfd" stroke="#7c4ddb" stroke-width="1.8"/>
+        <text x="205" y="66" font-weight="700">2. Commit + push</text>
+        <text x="205" y="86" fill="#5d6475" font-size="9.5">small, clear</text>
+        <text x="205" y="100" fill="#5d6475" font-size="9.5">commits</text>
+
+        <rect x="285" y="40" width="120" height="70" rx="10" fill="#f3ecfd" stroke="#7c4ddb" stroke-width="1.8"/>
+        <text x="345" y="66" font-weight="700">3. Pull Request</text>
+        <text x="345" y="86" fill="#5d6475" font-size="9.5">into main on</text>
+        <text x="345" y="100" fill="#5d6475" font-size="9.5">GitHub</text>
+
+        <rect x="425" y="40" width="130" height="70" rx="10" fill="#f3ecfd" stroke="#7c4ddb" stroke-width="2"/>
+        <text x="490" y="62" font-weight="700">4. CI checks</text>
+        <text x="490" y="80" fill="#5d6475" font-size="9.5">GitHub Actions:</text>
+        <text x="490" y="94" fill="#5d6475" font-size="9.5">lint, build, pytest</text>
+
+        <rect x="575" y="40" width="120" height="70" rx="10" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="2"/>
+        <text x="635" y="66" font-weight="700">5. Review + merge</text>
+        <text x="635" y="86" fill="#5d6475" font-size="9.5">"Create a merge</text>
+        <text x="635" y="100" fill="#5d6475" font-size="9.5">commit" → main</text>
+      </g>
+      <g stroke="#7c4ddb" stroke-width="2">
+        <line x1="125" y1="75" x2="141" y2="75" marker-end="url(#arr)"/>
+        <line x1="265" y1="75" x2="281" y2="75" marker-end="url(#arr)"/>
+        <line x1="405" y1="75" x2="421" y2="75" marker-end="url(#arr)"/>
+        <line x1="555" y1="75" x2="571" y2="75" marker-end="url(#arr)"/>
+      </g>
+      <path d="M490 110 V150 H345 V114" stroke="#d9731a" stroke-width="1.6" fill="none" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <text x="420" y="168" text-anchor="middle" font-size="9.5" fill="#d9731a">red ✗? fix on your branch and push again</text>
+      <text x="350" y="198" text-anchor="middle" font-size="10" fill="#5d6475">Then log what you did in docs/PROGRESS.md so the team can follow along.</text>
+    </svg>
+    <figcaption>Figure 9: The branch → PR → CI → merge cycle used for every change.</figcaption>
+  </figure>
+
+  <h3>Branch names</h3>
+  <table>
+    <tr><th>Prefix</th><th>For</th><th>Example</th></tr>
+    <tr><td><code>feature/</code></td><td>new functionality</td><td><code>feature/frontend-aws-page</code></td></tr>
+    <tr><td><code>fix/</code></td><td>bug fixes</td><td><code>fix/auth-and-docs-cleanup</code></td></tr>
+    <tr><td><code>chore/</code></td><td>cleanup, config</td><td><code>chore/repo-cleanup</code></td></tr>
+    <tr><td><code>ci/</code>, <code>infra/</code>, <code>docs/</code></td><td>pipelines, Docker/Terraform, documentation</td><td><code>infra/docker</code></td></tr>
+  </table>
+
+  <h3>What CI (GitHub Actions) checks</h3>
+  <table>
+    <tr><th>Workflow</th><th>Runs when you change</th><th>Checks</th></tr>
+    <tr><td><code>.github/workflows/frontend.yml</code></td><td><code>frontend/**</code></td><td>install, <code>npm run lint</code>, <code>npm test</code>, <code>npm run build</code> (TypeScript check)</td></tr>
+    <tr><td><code>.github/workflows/backend.yml</code></td><td><code>backend/**</code></td><td>install, <code>pytest</code></td></tr>
+    <tr><td><code>.github/workflows/security.yml</code></td><td>every push and PR, and weekly</td><td><code>npm audit</code>, <code>pip-audit</code>, gitleaks secret scan of the whole history</td></tr>
+  </table>
+  <p class="small">The repo is public, so GitHub Actions minutes are free. Dependabot opens weekly PRs for dependency updates.
+  Security status: <code>docs/security/SECURITY_CHECKLIST.md</code>. Backups and restore drills: <code>docs/operations/DISASTER_RECOVERY.md</code>.</p>
+</section>
+
+<!-- ============================ 11. RUNNING ============================ -->
+<section>
+  <h2>11. Running it: locally and with Docker</h2>
+
+  <h3>Option A: frontend only (mock mode, fastest)</h3>
+<pre style="background:#f4f5f8;border:1px solid #d9dce3;border-radius:8px;padding:8px 12px;font:9pt Consolas,monospace;margin:4px 0 10px">cd frontend
+npm install
+npm run dev            → http://localhost:5173</pre>
+
+  <h3>Option B: frontend + backend (live mode)</h3>
+<pre style="background:#f4f5f8;border:1px solid #d9dce3;border-radius:8px;padding:8px 12px;font:9pt Consolas,monospace;margin:4px 0 10px">cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements-dev.txt
+python -m seed         (creates demo users)
+fastapi dev app/main.py → http://localhost:8000/docs
+
+frontend/.env.local:   VITE_USE_MOCK=false
+                       VITE_API_URL=http://localhost:8000/api</pre>
+
+  <h3>Option C: everything in Docker</h3>
+  <figure>
+    <svg viewBox="0 0 700 190" role="img" aria-label="Docker compose diagram">
+      <rect x="10" y="60" width="110" height="60" rx="10" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.5"/>
+      <text x="65" y="87" text-anchor="middle" font-size="12" font-weight="600">Browser</text>
+      <text x="65" y="104" text-anchor="middle" font-size="9.5" font-family="Consolas" fill="#5d6475">:8080</text>
+      <rect x="160" y="15" width="530" height="165" rx="12" fill="none" stroke="#7c4ddb" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="425" y="34" text-anchor="middle" font-size="10.5" fill="#7c4ddb" font-weight="600">docker compose up --build   (infra/docker-compose.yml)</text>
+      <rect x="180" y="50" width="220" height="110" rx="10" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="2"/>
+      <text x="290" y="74" text-anchor="middle" font-size="12" font-weight="700">frontend container</text>
+      <text x="290" y="92" text-anchor="middle" font-size="10" fill="#5d6475">nginx serving the built React app</text>
+      <text x="290" y="116" text-anchor="middle" font-size="10" font-family="Consolas">/        → static files</text>
+      <text x="290" y="134" text-anchor="middle" font-size="10" font-family="Consolas">/api/*   → backend:8000</text>
+      <rect x="460" y="50" width="210" height="110" rx="10" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="2"/>
+      <text x="565" y="74" text-anchor="middle" font-size="12" font-weight="700">backend container</text>
+      <text x="565" y="92" text-anchor="middle" font-size="10" fill="#5d6475">Python 3.13 + uvicorn</text>
+      <text x="565" y="110" text-anchor="middle" font-size="10" fill="#5d6475">runs as non-root user</text>
+      <text x="565" y="128" text-anchor="middle" font-size="10" fill="#5d6475">health check: /health</text>
+      <text x="565" y="146" text-anchor="middle" font-size="10" font-family="Consolas" fill="#5d6475">also on :8000</text>
+      <line x1="120" y1="90" x2="176" y2="90" stroke="#5d6475" stroke-width="1.8" marker-end="url(#arr)"/>
+      <line x1="400" y1="125" x2="456" y2="125" stroke="#4f46e5" stroke-width="1.8" marker-end="url(#arrA)"/>
+    </svg>
+    <figcaption>Figure 10: Docker runs two containers. nginx serves the website and forwards API calls to the backend.</figcaption>
+  </figure>
+  <div class="box warn">
+    <strong>Not tested yet</strong>
+    The Docker files are written and the compose file validates, but nobody has built and run the images yet.
+    Whoever has Docker Desktop should try it and note the result in PROGRESS.md.
+  </div>
+</section>
+
+<!-- ============================ 12. STATUS ============================ -->
+<section>
+  <h2 style="break-before: page">12. What's done, what's next</h2>
+  <div class="two">
+    <div>
+      <h3>Done</h3>
+      <ul>
+        <li>Planning: concept, charter, risk register, SWOT</li>
+        <li>Repo structure, contributor guide, progress log</li>
+        <li>React dashboard: 7 pages, charts, tables, themes, mobile</li>
+        <li>FastAPI backend with 49 tests; 58 frontend tests</li>
+        <li>Login with JWT, roles, admin user management, login lockout</li>
+        <li>Live AWS: account, EC2, CloudWatch CPU, cost panel</li>
+        <li>Device, alert and agent-setup screens (backend pending)</li>
+        <li>CI on every pull request + security scans, Dependabot</li>
+        <li>Backup / restore tool with a passed recovery drill</li>
+        <li>Dockerfiles and docker-compose</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Next</h3>
+      <ul>
+        <li>Decisions meeting: cloud provider, AWS account, hosting, database</li>
+        <li>Real database, device API, metrics agent, alert engine (B1–B4)</li>
+        <li>Require login on every endpoint; cache the cost data (B5, B6)</li>
+        <li>Test Docker end to end; Terraform; CD; HTTPS; monitoring (A1–A6)</li>
+        <li>Cloud database backups and a cloud restore drill (C7)</li>
+        <li>Requirements spec, end-to-end demo, final report</li>
+        <li>Full list with owners: <code>docs/REMAINING_WORK.md</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Who did what so far</h3>
+  <table>
+    <tr><th>Who</th><th>Main contributions</th></tr>
+    <tr><td>Aaron</td><td>Project kickoff and planning docs, React foundation, API contract, architecture docs, AWS endpoints (account, EC2, CloudWatch), least-privilege IAM</td></tr>
+    <tr><td>pshrestha49</td><td>Login system: JWT, bcrypt, roles, login UI; AWS cost panel; memory/storage charts and account detail popup</td></tr>
+    <tr><td>Tirth</td><td>Repo cleanup and docs, API service layer, dashboard UI, FastAPI backend, CI, Docker; login fixes, app shell, AWS Cloud page, Users page, dashboard polish; frontend tests, security checks and login lockout, device / alert / agent screens, backups and DR drill, this guide</td></tr>
+  </table>
+  <p class="small">The full, dated history is in <code>docs/PROGRESS.md</code>.</p>
+</section>
+
+<!-- ============================ 13. GLOSSARY ============================ -->
+<section>
+  <h2 style="break-before: page">13. Glossary</h2>
+  <table>
+    <tr><th style="width:24%">Term</th><th>Meaning in plain words</th></tr>
+    <tr><td>API</td><td>The set of addresses (endpoints) the frontend can call to ask the backend for data.</td></tr>
+    <tr><td>Endpoint</td><td>One API address, e.g. <code>GET /api/devices</code>.</td></tr>
+    <tr><td>JSON</td><td>A simple text format for data: <code>{"hostname": "nas-01", "cpu": 12}</code>.</td></tr>
+    <tr><td>React</td><td>A JavaScript library for building user interfaces out of components.</td></tr>
+    <tr><td>Component</td><td>A reusable piece of the screen, like a table or a chart.</td></tr>
+    <tr><td>Hook</td><td>A reusable piece of React logic, like <code>useApi</code> (fetch data + loading state).</td></tr>
+    <tr><td>TypeScript</td><td>JavaScript with types, so mistakes are caught before the app runs.</td></tr>
+    <tr><td>Vite</td><td>The tool that runs the frontend dev server and builds the final website files.</td></tr>
+    <tr><td>FastAPI</td><td>A Python framework for building APIs; also generates the <code>/docs</code> page.</td></tr>
+    <tr><td>Pydantic</td><td>Checks that data has the right shape and converts it to JSON.</td></tr>
+    <tr><td>CORS</td><td>A browser safety rule; the backend lists which websites may call it.</td></tr>
+    <tr><td>JWT / token</td><td>A signed digital pass proving who you are. Access token = short-lived, refresh token = long-lived.</td></tr>
+    <tr><td>bcrypt / hash</td><td>A one-way scramble of a password, so the real password is never stored.</td></tr>
+    <tr><td>RBAC / role</td><td>Role-based access control: what you can do depends on your role (admin, operator, viewer).</td></tr>
+    <tr><td>401 / 403 / 502</td><td>HTTP errors: 401 = not signed in, 403 = signed in but not allowed, 502 = an upstream service (AWS) failed.</td></tr>
+    <tr><td>boto3</td><td>The official Python library for calling AWS.</td></tr>
+    <tr><td>IAM / least privilege</td><td>AWS identity and permissions; give only the permissions that are truly needed.</td></tr>
+    <tr><td>STS / EC2 / CloudWatch</td><td>AWS services: identity check / virtual servers / metrics and monitoring.</td></tr>
+    <tr><td>SCP</td><td>Service control policy: an account-wide AWS rule that can block actions even if IAM allows them.</td></tr>
+    <tr><td>Mock data</td><td>Fake sample data used for development and demos.</td></tr>
+    <tr><td>Docker / container</td><td>A packaged app with everything it needs, so it runs the same everywhere.</td></tr>
+    <tr><td>nginx</td><td>A web server; here it serves the website and forwards <code>/api</code> calls to the backend.</td></tr>
+    <tr><td>CI / CD</td><td>Continuous integration (automatic checks on every change) / continuous deployment (automatic release).</td></tr>
+    <tr><td>Pull Request (PR)</td><td>A request to merge your branch into <code>main</code>, where others review it and CI checks it.</td></tr>
+    <tr><td>Terraform</td><td>Infrastructure as code: describe cloud resources in files and create them automatically.</td></tr>
+  </table>
+</section>
+
+</body>
+</html>
