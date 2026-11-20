@@ -65,6 +65,8 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30`     | Access token lifetime (the frontend refreshes it automatically) |
 | `REFRESH_TOKEN_EXPIRE_DAYS`   | `7`      | How long a user stays signed in        |
 | `AUTH_DB_PATH` | `cloudopshub_auth.db`   | SQLite file holding user accounts          |
+| `LOGIN_MAX_ATTEMPTS` | `5`               | Failed logins per username + address before a lockout |
+| `LOGIN_WINDOW_SECONDS` | `900`           | Lockout window in seconds (15 minutes)     |
 
 Generate a production secret with:
 

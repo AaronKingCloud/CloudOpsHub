@@ -37,6 +37,24 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-20 — Security checks and hardening (`security/hardening`) — Tirth
+
+- Track C task **C6** from `docs/REMAINING_WORK.md`; full write-up in `docs/security/SECURITY_CHECKLIST.md`
+  (OWASP Top 10 status, what's automated, what's still open)
+- New **Security** CI workflow on every push, PR and weekly: `npm audit` (fails on high/critical),
+  `pip-audit`, and a **gitleaks** secret scan of the whole Git history. **Dependabot** opens weekly update PRs
+- Fixed dependency advisories: 1 high (`follow-redirects`, used by axios) and 9 moderate (`minimatch`, lint tools only); now 0.
+  Backend: no known vulnerabilities. Manual history scan: no keys, tokens, `.env` files or databases ever committed
+- **Login lockout:** 5 wrong passwords for one username from one address in 15 min → `429` with `Retry-After`;
+  a correct login resets it (`app/auth/rate_limit.py`, settings `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_SECONDS`).
+  6 new backend tests; checked on a running server
+- **Fixed a bug:** the sign-in form showed "Request failed with status code 401" instead of the backend's
+  "Incorrect username or password". It now shows the real reason (also for the lockout). 2 new frontend tests
+  that fail on the old form
+- **Security headers:** API responses get `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, and `no-store` on
+  `/api/auth`. nginx (Docker) adds a Content Security Policy; the inline theme script moved to `public/theme-init.js` so the CSP can block inline scripts
+- Tests: backend 43 passed, frontend 42 passed
+
 ### 2026-11-20 — Frontend tests (`test/frontend-tests`) — Tirth
 
 - Track C task **C5** from `docs/REMAINING_WORK.md`

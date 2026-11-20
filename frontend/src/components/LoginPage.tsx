@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { USE_MOCK } from "../services/apiClient";
+import { getErrorMessage } from "../utils/errors";
 
 // Demo accounts come from backend/seed.py. Show the shortcuts only in local dev or mock mode
 // so the demo passwords are never shipped in a production build that talks to a real backend.
@@ -32,11 +33,8 @@ export default function LoginPage({ onClose }: LoginPageProps) {
       await login({ username, password });
       onClose?.();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Invalid username or password");
-      }
+      // Shows the backend's reason, e.g. "Incorrect username or password" or the lockout message.
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -51,8 +49,8 @@ export default function LoginPage({ onClose }: LoginPageProps) {
         setLoading(true);
         await login({ username: demoUser, password: demoPass });
         onClose?.();
-      } catch {
-        setError("Login failed. Check server status.");
+      } catch (err: unknown) {
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }

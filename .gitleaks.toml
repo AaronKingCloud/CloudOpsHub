@@ -1,0 +1,16 @@
+# gitleaks settings for the Security workflow (.github/workflows/security.yml).
+# Uses gitleaks' built-in rules, plus an allowlist for values that look like secrets but aren't.
+# Only add a value here if it is a deliberate, public placeholder; never to hide a real secret.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known placeholders and generated files"
+regexes = [
+  # Dev-only JWT key; the backend refuses to start with it when APP_ENV=production (app/auth/utils.py)
+  '''cloudopshub-dev-secret-change-in-production''',
+]
+paths = [
+  '''(^|/)package-lock\.json$''',
+]

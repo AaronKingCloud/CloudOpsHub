@@ -74,8 +74,8 @@ These block almost everything else. Do them first.
 | C2 | Alerts screen: acknowledge / resolve (operator), alert history | S | B4 | Operator can acknowledge from the UI |
 | C3 | Sign-in-required experience once B5 lands: redirect to sign in, hide actions a role can't use | S | B5 | Viewer never sees buttons they can't use |
 | C4 | Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
-| C5 | Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
-| C6 | Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
+| C5 | ✅ **Done 2026-11-20** (`test/frontend-tests`). Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
+| C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
 | C7 | Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
 | C8 | Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
 

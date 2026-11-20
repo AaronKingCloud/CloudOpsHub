@@ -4,13 +4,15 @@ All endpoints live under ``/api/auth/``.  The ``/api/aws/*`` endpoints require
 login; dashboard / resource endpoints are still public for now.
 """
 
+import math
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.auth.database import get_db
 from app.auth.dependencies import get_current_user, require_role
+from app.auth.rate_limit import login_limiter
 from app.auth.schemas import (
     AccessTokenResponse,
     TokenRefresh,
@@ -68,8 +70,20 @@ def register(
 # ── Login ────────────────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: UserLogin) -> TokenResponse:
-    """Authenticate with username + password and receive JWT tokens."""
+def login(body: UserLogin, request: Request) -> TokenResponse:
+    """Authenticate with username + password and receive JWT tokens.
+
+    Repeated failures for one username from one address are slowed down (see app/auth/rate_limit.py).
+    """
+    client = request.client.host if request.client else None
+    wait = login_limiter.retry_after(client, body.username)
+    if wait is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many failed sign-in attempts. Try again in {math.ceil(wait / 60)} minute(s).",
+            headers={"Retry-After": str(wait)},
+        )
+
     with get_db() as conn:
         row = conn.execute(
             "SELECT * FROM users WHERE username = ? AND is_active = 1",
@@ -77,11 +91,13 @@ def login(body: UserLogin) -> TokenResponse:
         ).fetchone()
 
     if row is None or not verify_password(body.password, row["hashed_password"]):
+        login_limiter.record_failure(client, body.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
 
+    login_limiter.record_success(client, body.username)
     now = datetime.now(timezone.utc).isoformat()
     with get_db() as conn:
         conn.execute("UPDATE users SET last_login = ? WHERE id = ?", (now, row["id"]))
