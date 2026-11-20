@@ -15,6 +15,8 @@ npm run dev        # http://localhost:5173
 | `npm run dev`     | Start dev server with hot reload     |
 | `npm run build`   | Type-check and build to `dist/`      |
 | `npm run lint`    | Run ESLint                           |
+| `npm test`        | Run the unit tests once (Vitest)     |
+| `npm run test:watch` | Re-run tests as you edit          |
 | `npm run preview` | Serve the production build locally   |
 
 ## Mock data vs real backend
@@ -57,6 +59,15 @@ src/
 2. Add a `<Route path="my-page" element={<MyPage />} />` in `src/App.tsx`
 3. Add an entry to `src/components/layout/navItems.ts` (label, icon, description;
    set `roles` to hide it from some users)
+
+## Tests
+
+Tests live next to the code they test (`DeviceTable.tsx` → `DeviceTable.test.tsx`) and run in a
+simulated browser (happy-dom) against mock data, so no backend is needed. CI runs them on every PR.
+
+- `src/test/render.tsx` → `renderApp(<Component />, { route, as: "admin" })` renders inside the
+  router and auth provider, optionally signed in as a role
+- Query the page the way a user sees it: `screen.getByRole("button", { name: "Offline" })`
 
 ## Auto-refresh
 

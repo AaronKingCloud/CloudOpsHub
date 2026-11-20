@@ -37,6 +37,18 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-20 — Frontend tests (`test/frontend-tests`) — Tirth
+
+- Track C task **C5** from `docs/REMAINING_WORK.md`
+- Added Vitest + React Testing Library (happy-dom), `npm test` / `npm run test:watch`
+- **40 tests** covering: usage colour thresholds (70% / 90%), error messages, "time ago" text, table sorting,
+  device search + online/offline filter, alerts ordering + severity filter, account popup (mouse and keyboard),
+  admin-only Users page and its form, sidebar showing Users only to admins, and the silent login refresh
+  (expired token renewed once even when several requests fail, sign-out when the refresh token is bad)
+- Frontend CI now runs the tests on every PR; CONTRIBUTING checklist and frontend README updated
+- Checked that the tests catch real mistakes: changing the 90% critical threshold makes a test fail
+- Note: `npm install` of `vitest` hits an npm 10 bug locally; `npx npm@11 install` works. `npm ci` (what CI uses) is fine
+
 ### 2026-11-15 — Remaining work plan (`feature/frontend-dashboard-polish`) — Tirth
 
 - Added `docs/REMAINING_WORK.md`: everything left to finish the project, split into three tracks

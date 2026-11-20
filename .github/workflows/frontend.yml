@@ -1,4 +1,4 @@
-# Lints and builds the frontend on every PR / push to main that touches frontend/.
+# Lints, tests and builds the frontend on every PR / push to main that touches frontend/.
 name: Frontend CI
 
 on:
@@ -32,6 +32,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Unit tests
+        run: npm test
 
       - name: Type-check and build
         run: npm run build
