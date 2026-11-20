@@ -4,7 +4,7 @@ Everything left to finish CloudOps Hub, split into three tracks so the team can 
 Owners are a **suggestion** based on what each person has built so far. Swap freely, then put your
 name next to the task in your PR and log it in `docs/PROGRESS.md`.
 
-Last updated: 2026-11-15
+Last updated: 2026-11-20
 
 **Size:** S = about a day · M = 2–4 days · L = a week or more (rough estimates)
 
@@ -15,7 +15,7 @@ Last updated: 2026-11-15
 | Area | Status |
 | --- | --- |
 | Planning docs (charter, risk register, SWOT) | ✅ Done |
-| Frontend: 6 pages, charts, login, roles, themes, mobile | ✅ Done (5 PRs waiting to merge) |
+| Frontend: 6 pages, charts, login, roles, themes, mobile | ✅ Done (merged, PRs #14–#15) |
 | Backend API + 35 tests | ✅ Done, but dashboard data is **sample data** |
 | Login, JWT, roles, user management | ✅ Done |
 | Live AWS: account, EC2, CloudWatch CPU, cost | ✅ Done |
@@ -34,7 +34,7 @@ These block almost everything else. Do them first.
 
 | # | Task | Owner | Size |
 | --- | --- | --- | --- |
-| 0.1 | Merge the 5 open frontend PRs, in order: `fix/auth-and-docs-cleanup` → `feature/frontend-app-shell` → `feature/frontend-aws-page` → `feature/frontend-admin-users` → `feature/frontend-dashboard-polish` ("Create a merge commit") | Tirth | S |
+| 0.1 | ✅ **Done 2026-11-20.** Merge the 5 open frontend PRs, in order: `fix/auth-and-docs-cleanup` → `feature/frontend-app-shell` → `feature/frontend-aws-page` → `feature/frontend-admin-users` → `feature/frontend-dashboard-polish` ("Create a merge commit") | Tirth | S |
 | 0.2 | **Team decisions** (one meeting): cloud provider (AWS or Azure); which AWS account (Free plan blocks listing EC2 from code); hosting (ECS Fargate, App Runner or EC2); database (RDS Postgres or DynamoDB); how real metrics are collected (agent on devices, cloud APIs, or both); MVP scope | All | S |
 | 0.3 | Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
 
