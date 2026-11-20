@@ -2,17 +2,16 @@
 // Switching between mock data and the real backend only requires changing VITE_USE_MOCK.
 
 import { accounts } from "../mock/accounts";
-import { alerts } from "../mock/alerts";
 import { billingSummary } from "../mock/billing";
 import { cpuData } from "../mock/cpuData";
-import { devices } from "../mock/devices";
 import { memoryData } from "../mock/memoryData";
 import { storageData } from "../mock/storageData";
-import { summary } from "../mock/summary";
 import type { Account } from "../types/Account";
 import type { BillingSummary } from "../types/Billing";
 import type { Alert, DashboardSummary, Device, MetricPoint } from "../types/Dashboard";
+import { listAlerts } from "./alertService";
 import { apiClient, USE_MOCK } from "./apiClient";
+import { listDevices } from "./deviceService";
 
 async function get<T>(path: string, mock: T): Promise<T> {
   if (USE_MOCK) {
@@ -22,11 +21,18 @@ async function get<T>(path: string, mock: T): Promise<T> {
   return response.data;
 }
 
-export const getDashboardSummary = () => get<DashboardSummary>("/dashboard/summary", summary);
-export const getDevices = () => get<Device[]>("/devices", devices);
+// In mock mode the summary is counted from the mock devices and alerts, so adding a device updates it.
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  if (!USE_MOCK) return (await apiClient.get<DashboardSummary>("/dashboard/summary")).data;
+  const [devices, alerts] = await Promise.all([listDevices(), listAlerts("active")]);
+  const online = devices.filter((d) => d.status === "online").length;
+  return { onlineDevices: online, offlineDevices: devices.length - online, activeAlerts: alerts.length, totalDevices: devices.length };
+}
+
+export const getDevices = (): Promise<Device[]> => listDevices();
 export const getCpuMetrics = () => get<MetricPoint[]>("/metrics/cpu", cpuData);
 export const getMemoryMetrics = () => get<MetricPoint[]>("/metrics/memory", memoryData);
 export const getStorageMetrics = () => get<MetricPoint[]>("/metrics/storage", storageData);
-export const getAlerts = () => get<Alert[]>("/alerts", alerts);
+export const getAlerts = (): Promise<Alert[]> => listAlerts("active");
 export const getAccounts = () => get<Account[]>("/accounts", accounts);
 export const getBillingSummary = () => get<BillingSummary>("/billing/summary", billingSummary);

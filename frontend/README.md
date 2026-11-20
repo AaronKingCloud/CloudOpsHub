@@ -37,11 +37,12 @@ Restart `npm run dev` after changing env files.
 ```
 src/
 ├── App.tsx       Routes (which URL shows which page)
-├── pages/        One file per page: Overview, Devices, Alerts, Accounts, AWS Cloud, Users
+├── pages/        One file per page: Overview, Devices, Device detail, Alerts, Accounts, AWS Cloud, Users
 ├── components/
 │   ├── layout/   App shell: sidebar, top bar, page header, icons, navItems.ts
 │   ├── aws/      AWS Cloud page pieces (account card, EC2 table, CPU panel)
 │   ├── users/    Admin user management (Add user dialog)
+│   ├── devices/  Add/edit/delete device dialogs, agent setup panel
 │   └── *.tsx     Dashboard widgets (StatCard, CpuChart, MetricChart, DeviceTable, ...)
 ├── context/      AuthProvider (signed-in user, roles), RefreshProvider (auto-refresh)
 ├── hooks/        useApi (loading / error / data / reload), useSort, useAuth, useTheme
@@ -84,6 +85,12 @@ calls `reload()` instead, like the EC2 panel does.
 Use the shared pieces in `components/PanelStatus.tsx`:
 `<Skeleton rows={3} />` (or `height={240}` for charts) while loading, and
 `<ErrorState what="devices" message={error} onRetry={reload} />` on failure.
+
+## Roles and permissions
+
+`src/utils/permissions.ts` lists who may do what (manage users and devices: admin; acknowledge /
+resolve alerts: admin and operator). In a component: `const { can } = useAuth(); can("manageDevices")`.
+The backend enforces the same rules; the frontend only hides buttons people can't use.
 
 ## Theme
 

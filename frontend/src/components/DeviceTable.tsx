@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { useApi } from "../hooks/useApi";
 import { useSort } from "../hooks/useSort";
 import { getDevices } from "../services/dashboardService";
@@ -99,7 +100,11 @@ function DeviceTable({ showControls = false }: DeviceTableProps) {
             <tbody>
               {sorted.map((device) => (
                 <tr key={device.id}>
-                  <td>{device.hostname}</td>
+                  <td>
+                    <Link to={`/devices/${device.id}`} className="row-link">
+                      {device.hostname}
+                    </Link>
+                  </td>
                   <td>
                     <StatusBadge label={device.status} tone={deviceTone(device.status)} />
                   </td>

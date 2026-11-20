@@ -18,6 +18,10 @@ const REFRESH_TOKEN_KEY = "cloudopshub_refresh_token";
 // Fired when the session can't be renewed, so AuthProvider can sign the user out.
 export const SESSION_EXPIRED_EVENT = "cloudopshub:session-expired";
 
+// Fired when the backend answers 401 and nobody is signed in, i.e. the backend requires login.
+// AppLayout then shows the sign-in screen instead of a page full of errors.
+export const AUTH_REQUIRED_EVENT = "cloudopshub:auth-required";
+
 function storeOrRemove(key: string, value: string | null): void {
   if (value) {
     localStorage.setItem(key, value);
@@ -80,6 +84,10 @@ apiClient.interceptors.response.use(
     const original = error.config as RetriableConfig | undefined;
     const isAuthCall = original?.url?.startsWith("/auth/login") || original?.url?.startsWith("/auth/refresh");
 
+    if (error.response?.status === 401 && !isAuthCall && !getStoredToken()) {
+      window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT));
+    }
+
     if (error.response?.status !== 401 || !original || original._retried || isAuthCall || !getStoredRefreshToken()) {
       return Promise.reject(error);
     }
@@ -97,6 +105,7 @@ apiClient.interceptors.response.use(
       setStoredToken(null);
       setStoredRefreshToken(null);
       window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+      window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT));
       return Promise.reject(error);
     }
   },

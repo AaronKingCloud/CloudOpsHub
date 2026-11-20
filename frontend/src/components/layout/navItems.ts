@@ -19,3 +19,10 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/cloud", label: "AWS Cloud", icon: "cloud", description: "Live EC2 instances and CloudWatch CPU from the connected AWS account" },
   { to: "/admin/users", label: "Users", icon: "users", description: "Who can sign in to CloudOps Hub, and with which role", roles: ["admin"] },
 ];
+
+// The menu item a URL belongs to, e.g. /devices/3 → Devices.
+export function navItemFor(pathname: string): NavItem | undefined {
+  return NAV_ITEMS.filter((item) =>
+    item.to === "/" ? pathname === "/" : pathname === item.to || pathname.startsWith(item.to + "/"),
+  ).sort((a, b) => b.to.length - a.to.length)[0];
+}

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import type { LoginCredentials, User, UserRole } from "../types/Auth";
 import { getCurrentUser, getStoredToken, getStoredUser, loginUser, logoutUser } from "../services/authService";
-import { SESSION_EXPIRED_EVENT } from "../services/apiClient";
+import { AUTH_REQUIRED_EVENT, SESSION_EXPIRED_EVENT } from "../services/apiClient";
+import { can as canDo, type Action } from "../utils/permissions";
 import { AuthContext } from "./authContextDef";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => getStoredUser());
   const [token, setToken] = useState<string | null>(() => getStoredToken());
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -37,8 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setToken(null);
     };
+    const handleAuthRequired = () => setAuthRequired(true);
     window.addEventListener(SESSION_EXPIRED_EVENT, handleExpired);
-    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired);
+    window.addEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
+    return () => {
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired);
+      window.removeEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
+    };
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
@@ -59,6 +66,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return roleList.includes(user.role);
   };
 
+  const can = (action: Action): boolean => canDo(user?.role, action);
+
   return (
     <AuthContext.Provider
       value={{
@@ -69,6 +78,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         hasRole,
+        can,
+        authRequired,
       }}
     >
       {children}
