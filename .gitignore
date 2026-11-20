@@ -245,3 +245,7 @@ Thumbs.db
 
 # Local SQLite databases (auth users, password hashes)
 *.db
+
+# Database backups (scripts/backup_db.py) and pre-restore copies
+backend/backups/
+*.before-restore

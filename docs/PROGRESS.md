@@ -37,6 +37,41 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-20 — Backups, recovery drill and architecture guide (`ops/dr-and-docs`) — Tirth
+
+- Track C tasks **C7** (local part) and **C8** from `docs/REMAINING_WORK.md`
+- **Backup tool** `backend/scripts/backup_db.py`: `backup` (safe while the backend runs, integrity-checked,
+  SHA-256 checksum, keeps the newest 14), `verify`, and `restore` (keeps the old database as `.before-restore`).
+  6 tests in `tests/test_backup.py` (49 backend tests passing). `backend/backups/` is git-ignored
+- **Recovery drill passed:** real backend, created a user, backed up, deleted the database file, restored,
+  restarted: the user could sign in again. Restore 120 ms, **total recovery 1.6 s** (target: 30 min)
+- **DR plan** `docs/operations/DISASTER_RECOVERY.md`: RPO/RTO targets, what holds data, backup schedule,
+  restore steps, scenarios (lost server, leaked AWS key, leaked JWT secret), the cloud plan for after A3/B1,
+  and a drill log to keep updating
+- **Architecture guide** now in the repo: `docs/architecture/CloudOps_Hub_Architecture_Guide.pdf` (16 pages,
+  diagrams) and its editable source `docs/architecture/guide/architecture-guide.html`. Updated to 20 Nov:
+  device page, alert actions, roles, billing and metrics endpoints, proposed endpoints, security and tests,
+  CI security workflow, current status, who did what. To update: edit the HTML, print it to PDF from Edge or Chrome
+- Still to do for C7/C8: a cloud database restore drill and a deployment diagram, once Terraform (A3) and the database (B1) exist
+
+### 2026-11-20 — Device screens, alert actions, sign-in screen, agent setup (`feature/frontend-devices-alerts`) — Tirth
+
+- Track C tasks **C1–C4** from `docs/REMAINING_WORK.md`. All work fully in mock mode today; with the real
+  backend they need pshrestha49's tasks B2–B5. **The API they expect is written down** in
+  `docs/api/frontend-contract.md` → "Proposed endpoints", so the backend can be built to it directly
+- **C1 Devices:** admins can add, edit and delete devices (hostname, type, IP, description; checked before
+  sending; delete asks first). Hostnames link to a new **device page** (`/devices/:id`): status, type, IP,
+  last report, current usage, CPU / memory / storage **history** (1h · 6h · 24h · 7d), and its alerts
+- **C2 Alerts:** operators and admins can **Acknowledge** ("I'm on it") and **Resolve** alerts on the Alerts page;
+  "Including resolved" shows history; each alert links to its device and shows how long ago it started
+- **C3 Sign-in:** when the backend starts requiring login (B5), the app shows a sign-in screen instead of a page
+  of errors; it switches on by itself. Who-can-do-what is in one place: `src/utils/permissions.ts`
+- **C4 Agent setup:** a new device shows its **agent key once** with copy buttons and the exact install command;
+  admins can generate a new key. Install guide for Linux, Windows and systemd: `docs/agent/INSTALL.md`
+- Works with today's backend too: missing fields are hidden, missing history says so, alerts without a status count as open
+- 16 new tests (58 frontend tests passing); checked in the browser at desktop and phone width
+- Fixed while checking: the setup commands pushed the device page wider than a phone screen
+
 ### 2026-11-20 — Security checks and hardening (`security/hardening`) — Tirth
 
 - Track C task **C6** from `docs/REMAINING_WORK.md`; full write-up in `docs/security/SECURITY_CHECKLIST.md`

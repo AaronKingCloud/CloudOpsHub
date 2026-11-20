@@ -54,6 +54,9 @@ These block almost everything else. Do them first.
 
 ## Track B: Backend & data (suggested: pshrestha49)
 
+**The screens for B2–B5 are already built.** Build the endpoints to the shapes in
+`docs/api/frontend-contract.md` → "Proposed endpoints" and they work with no frontend changes.
+
 | # | Task | Size | Depends on | Done when |
 | --- | --- | --- | --- | --- |
 | B1 | Real database for devices, metric history and alerts; replace `mock_data.py` | L | 0.2 | Dashboard data survives a restart; sample data only in tests |
@@ -70,14 +73,14 @@ These block almost everything else. Do them first.
 
 | # | Task | Size | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| C1 | Device screens: add/edit device form, device detail page with history charts | M | B2 | Devices managed from the UI |
-| C2 | Alerts screen: acknowledge / resolve (operator), alert history | S | B4 | Operator can acknowledge from the UI |
-| C3 | Sign-in-required experience once B5 lands: redirect to sign in, hide actions a role can't use | S | B5 | Viewer never sees buttons they can't use |
-| C4 | Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
+| C1 | 🟡 **Frontend done 2026-11-20** (works in mock mode; needs B2). Device screens: add/edit device form, device detail page with history charts | M | B2 | Devices managed from the UI |
+| C2 | 🟡 **Frontend done 2026-11-20** (needs B4). Alerts screen: acknowledge / resolve (operator), alert history | S | B4 | Operator can acknowledge from the UI |
+| C3 | 🟡 **Frontend done 2026-11-20** (turns on by itself when B5 lands). Sign-in-required experience once B5 lands: redirect to sign in, hide actions a role can't use | S | B5 | Viewer never sees buttons they can't use |
+| C4 | 🟡 **Frontend + guide done 2026-11-20** (`docs/agent/INSTALL.md`; needs B3). Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
 | C5 | ✅ **Done 2026-11-20** (`test/frontend-tests`). Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
 | C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
-| C7 | Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
-| C8 | Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
+| C7 | 🟡 **Local part done 2026-11-20**: backup/restore tool + passed drill (`docs/operations/DISASTER_RECOVERY.md`); cloud drill needs A3, B1. Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
+| C8 | 🟡 **Guide added 2026-11-20** (`docs/architecture/CloudOps_Hub_Architecture_Guide.pdf`); deployment diagram needs A3. Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
 
 ---
 

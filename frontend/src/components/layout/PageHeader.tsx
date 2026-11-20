@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useLocation } from "react-router";
-import { NAV_ITEMS } from "./navItems";
+import { navItemFor } from "./navItems";
 
 interface PageHeaderProps {
   // Defaults to the description of the current page in navItems.ts.
@@ -10,7 +10,7 @@ interface PageHeaderProps {
 
 function PageHeader({ description, actions }: PageHeaderProps) {
   const { pathname } = useLocation();
-  const text = description ?? NAV_ITEMS.find((item) => item.to === pathname)?.description;
+  const text = description ?? navItemFor(pathname)?.description;
 
   return (
     <div className="page-header">
