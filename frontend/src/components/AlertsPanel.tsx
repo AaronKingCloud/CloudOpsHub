@@ -4,7 +4,7 @@ import { useApi } from "../hooks/useApi";
 import { useAuth } from "../hooks/useAuth";
 import { acknowledgeAlert, listAlerts, resolveAlert, type AlertScope } from "../services/alertService";
 import type { Alert, AlertSeverity } from "../types/Dashboard";
-import { getErrorMessage } from "../utils/errors";
+import { getErrorMessage, getErrorStatus } from "../utils/errors";
 import { alertTone } from "../utils/status";
 import { timeAgo } from "../utils/time";
 import { ErrorState, Skeleton } from "./PanelStatus";
@@ -42,7 +42,11 @@ function AlertsPanel({ showFilter = false }: AlertsPanelProps) {
       await (action === "acknowledge" ? acknowledgeAlert(alert.id) : resolveAlert(alert.id));
       reload();
     } catch (err) {
-      setActionError(`Couldn't ${action} "${alert.message}": ${getErrorMessage(err)}`);
+      const reason =
+        getErrorStatus(err) === 404
+          ? "the backend doesn't support this yet (alert engine, task B4)."
+          : getErrorMessage(err);
+      setActionError(`Couldn't ${action} "${alert.message}": ${reason}`);
     } finally {
       setBusyId(null);
     }
