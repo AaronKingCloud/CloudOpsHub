@@ -1,0 +1,66 @@
+#!/bin/bash
+# First-boot setup for the CloudOps Hub dev server (Ubuntu 24.04).
+# Log: /var/log/cloudopshub-setup.log  (view via SSM: sudo tail -f /var/log/cloudopshub-setup.log)
+set -euxo pipefail
+exec > >(tee -a /var/log/cloudopshub-setup.log) 2>&1
+
+# Swap: t3.micro has 1 GB RAM, not enough to build the frontend image
+if [ ! -f /swapfile ]; then
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
+# Docker Engine + Compose + Buildx from Docker's official apt repo
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y ca-certificates curl git
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  > /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+systemctl enable --now docker
+
+# AWS CLI (to read the JWT secret from SSM via the instance role)
+snap install aws-cli --classic
+
+# App code
+git clone --depth 1 --branch "${git_ref}" "${repo_url}" /opt/cloudopshub
+
+# Production settings, layered on top of infra/docker-compose.yml
+JWT_SECRET="$(aws ssm get-parameter --region "${region}" --name "${jwt_param}" --with-decryption --query Parameter.Value --output text)"
+umask 077
+cat > /opt/cloudopshub/infra/.env <<EOF
+JWT_SECRET=$JWT_SECRET
+EOF
+umask 022
+
+cat > /opt/cloudopshub/infra/docker-compose.prod.yml <<'EOF'
+services:
+  backend:
+    environment:
+      APP_ENV: production
+      JWT_SECRET: $${JWT_SECRET}
+      AWS_DEFAULT_REGION: ${region}
+    ports: !reset []          # backend is reached only through nginx
+  frontend:
+    ports: !override
+      - "80:80"
+EOF
+
+cd /opt/cloudopshub/infra
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+# Demo users (admin / operator / viewer). Port 80 is limited to allowed_cidrs.
+for i in $(seq 1 30); do
+  docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" && break
+  sleep 5
+done
+docker compose exec -T backend python -m seed
+
+echo "CloudOps Hub setup complete"
