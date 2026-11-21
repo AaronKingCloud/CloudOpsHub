@@ -16,7 +16,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Backend             | 🟡 FastAPI: auth + live AWS; dashboard data still mock |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)    |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
-| Docker / Infra      | 🟡 Dockerfiles + compose written, needs test run    |
+| Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
 | Terraform / Cloud   | ⬜ Not started                                      |
 
 ## Next Up
@@ -36,6 +36,30 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 ---
 
 ## Log
+
+### 2026-11-20 — Docker follow-ups (`infra/docker-followups`) — Aaron
+
+- Task **A1** from `docs/REMAINING_WORK.md` (done)
+- Backend image now includes `scripts/`, so the backup tool runs in the container:
+  `docker compose exec backend python -m scripts.backup_db backup --dest /app/data/backups`
+- `infra/README.md`: replaced "not yet built and run" with the test results, plus how to seed users, back up,
+  and why the AWS page errors locally (no credentials in local containers; the cloud uses the instance role)
+- `docs/architecture/aws-integration.md`: corrected the "Free plan" explanation. The real cause of the EC2
+  denial is that AWS Settings projects only allow EC2 in their home Region (us-east-2 for Console Dot Dream)
+- Checked: `docker compose config --quiet`; `up --build` with both containers healthy; seeded and signed in on :8080
+  with live backend data; users survive `down` / `up`; backup written and verified (3 users); `curl -I` shows the CSP
+  and other security headers; no CSP errors in the browser console on any page
+- For Tirth (backup tool): `verify` leaves `-shm` / `-wal` files next to the backup it checked. Harmless, just clutter
+- Unblocks **C7** prep: the backup tool can now run inside the deployed container
+
+### 2026-11-20 — Backend container fix (`fix/docker-sqlite-path`, PR #32) — Aaron
+
+- Backend container crashed on startup (`sqlite3.OperationalError: unable to open database file`): it runs as
+  `appuser`, but `/app` is owned by root
+- `backend.Dockerfile`: writable `/app/data` owned by `appuser`, `AUTH_DB_PATH=/app/data/cloudopshub_auth.db`,
+  and `seed.py` copied in so demo users can be created inside the container
+- `docker-compose.yml`: `backend-data` volume at `/app/data` so users survive rebuilds
+- Checked: container healthy, seed + login work, users persist after restart
 
 ### 2026-11-20 — Dependabot updates merged (PRs #18–#30) — Tirth
 

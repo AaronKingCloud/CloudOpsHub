@@ -44,7 +44,7 @@ These block almost everything else. Do them first.
 
 | # | Task | Size | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| A1 | Run `docker compose up --build` in `infra/`, fix whatever breaks | S | – | Frontend on :8080 shows live backend data |
+| A1 | ✅ **Done 2026-11-20** (`fix/docker-sqlite-path` #32, `infra/docker-followups`). Run `docker compose up --build` in `infra/`, fix whatever breaks | S | – | Frontend on :8080 shows live backend data |
 | A2 | Terraform foundation: remote state, network (VPC/subnets), IAM roles | M | 0.2 | `terraform apply` creates the base, state stored remotely |
 | A3 | Terraform app stack: container registry, backend compute, frontend hosting, database, secrets (`JWT_SECRET`) | L | A2, B1 | App reachable on a cloud URL |
 | A4 | CD pipeline: on merge to `main`, build images, push, deploy. GitHub OIDC, no long-lived AWS keys in GitHub | M | A3 | Merging a PR updates the live site |
