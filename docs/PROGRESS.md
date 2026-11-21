@@ -37,6 +37,18 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-20 — Requirements specification draft (`docs/requirements-spec`) — Aaron
+
+- Task **0.3** from `docs/REMAINING_WORK.md` (draft done, **needs review from everyone**)
+- New `docs/requirements/REQUIREMENTS.md`: MVP scope (the F1 demo story), roles, 24 functional requirements (FR-1…FR-24),
+  non-functional requirements with numbers (security, availability/recovery, cost, performance, delivery, usability),
+  constraints and an out-of-scope list
+- Every requirement shows its status today and maps to a task or an existing feature (checked: none unmapped)
+- Numbers come from the existing docs: RTO ≤ 30 min / RPO ≤ 24 h (DR doc), token lifetimes, lockout, 70/90 % thresholds,
+  "offline after 3 missed reports" (API contract), $10 budget. Performance numbers are marked as *targets* to measure in F1
+- **For the team:** section 6 lists gaps with no task yet (audit log, token revocation, service health, **SonarQube owner**).
+  Please check your track's rows and approve or comment on the PR
+
 ### 2026-11-20 — Dependabot updates merged (PRs #18–#30) — Tirth
 
 - First batch of Dependabot PRs merged: frontend minor/patch group, react-router 7 → 8, @types/node 26, fastapi, uvicorn,

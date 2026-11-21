@@ -36,7 +36,7 @@ These block almost everything else. Do them first.
 | --- | --- | --- | --- |
 | 0.1 | ✅ **Done 2026-11-20.** Merge the 5 open frontend PRs, in order: `fix/auth-and-docs-cleanup` → `feature/frontend-app-shell` → `feature/frontend-aws-page` → `feature/frontend-admin-users` → `feature/frontend-dashboard-polish` ("Create a merge commit") | Tirth | S |
 | 0.2 | **Team decisions** (one meeting): cloud provider (AWS or Azure); which AWS account (Free plan blocks listing EC2 from code); hosting (ECS Fargate, App Runner or EC2); database (RDS Postgres or DynamoDB); how real metrics are collected (agent on devices, cloud APIs, or both); MVP scope | All | S |
-| 0.3 | Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
+| 0.3 | 🟡 **Started 2026-11-20** (`docs/requirements-spec`): draft in `docs/requirements/REQUIREMENTS.md`, waiting for team review. Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
 
 ---
 
