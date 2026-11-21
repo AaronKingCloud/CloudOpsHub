@@ -30,12 +30,17 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 - Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
   requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
   and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
-- `backend/seed.py` crashes on Windows when its output is redirected (emoji in `print`).
-  Workaround: set `PYTHONIOENCODING=utf-8`.
 
 ---
 
 ## Log
+
+### 2026-11-20 — Fix seed.py Windows output (`fix/seed-windows-output`) — pshrestha49
+
+- Task **B8** from `docs/REMAINING_WORK.md`
+- Replaced emoji and non-ASCII characters in `backend/seed.py` output with plain ASCII so redirecting output on Windows (`python -m seed > out.txt`) works without `UnicodeEncodeError`
+- Added `backend/tests/test_seed.py` verifying cp1252 encoding, idempotency, and CLI execution
+- Verified on Windows PowerShell with `python -m seed > out.txt` (temp DB) and `pytest -q` (all 51 backend tests passing)
 
 ### 2026-11-20 — Dependabot updates merged (PRs #18–#30) — Tirth
 
