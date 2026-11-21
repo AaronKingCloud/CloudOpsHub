@@ -38,6 +38,25 @@ The `cloudopshub-service` IAM user has only this inline policy (`CloudOpsHubRead
 
 Add actions here when new endpoints need them, and update this doc in the same PR.
 
+### Deployed app (instance role)
+
+In AWS the backend uses no access keys. The EC2 instance role from `infra/terraform/modules/iam`
+(`cloudopshub-dev-instance`) allows exactly these actions, which include the two Cost Explorer
+actions the cost panel needs:
+
+```json
+[
+  "sts:GetCallerIdentity",
+  "ec2:DescribeInstances",
+  "cloudwatch:GetMetricStatistics",
+  "ce:GetCostAndUsage",
+  "ce:GetCostForecast"
+]
+```
+
+plus `ssm:GetParameter` on the JWT secret only. To change the app's permissions, edit
+`modules/iam/main.tf` and this section in the same PR.
+
 Verified 2026-11-11: CloudWatch allowed; `s3 ls` denied ("no identity-based policy allows").
 
 ## Known limitation: single-region projects (AWS Settings / Builder ID accounts)
