@@ -38,19 +38,50 @@ The `cloudopshub-service` IAM user has only this inline policy (`CloudOpsHubRead
 
 Add actions here when new endpoints need them, and update this doc in the same PR.
 
+### Deployed app (instance role)
+
+In AWS the backend uses no access keys. The EC2 instance role from `infra/terraform/modules/iam`
+(`cloudopshub-dev-instance`) allows exactly these actions, which include the two Cost Explorer
+actions the cost panel needs:
+
+```json
+[
+  "sts:GetCallerIdentity",
+  "ec2:DescribeInstances",
+  "cloudwatch:GetMetricStatistics",
+  "ce:GetCostAndUsage",
+  "ce:GetCostForecast"
+]
+```
+
+plus `ssm:GetParameter` on the JWT secret only. To change the app's permissions, edit
+`modules/iam/main.tf` and this section in the same PR.
+
 Verified 2026-11-11: CloudWatch allowed; `s3 ls` denied ("no identity-based policy allows").
 
-## Known limitation: AWS Free plan accounts
+## Known limitation: single-region projects (AWS Settings / Builder ID accounts)
 
-On an account using AWS's **Free plan**, `ec2:DescribeInstances` from the service user's
-access key fails with:
+> **Correction (2026-11-20):** an earlier version of this section blamed the AWS **Free plan**.
+> Upgrading the plan did not help; the real cause is the Region restriction below.
 
-> explicit deny in a service control policy
+Accounts created through **AWS Settings** (Projects / Team, signed in with an AWS Builder ID) are
+member accounts in an AWS-managed organization. A guardrail SCP denies EC2 in every Region except
+the project's **home Region**, for every caller, including the console's own full-access role.
 
-The SCP is AWS-managed (Organizations, Policy Simulator, etc. show "Available with advanced
-features"). Console access to EC2 still works. IAM changes cannot override it.
+Symptom: `UnauthorizedOperation ... explicit deny in a service control policy`.
 
-Options: upgrade the account plan, or use an account that allows programmatic EC2 access.
+How we found it: tested `ec2 describe-instances` in 8 Regions from CloudShell; only us-east-2 worked.
+
+Fix: use the project's home Region everywhere (CLI profiles, Terraform, the deployed backend):
+
+```bash
+aws configure set region us-east-2 --profile cloudopshub   # Console Dot Dream = us-east-2
+```
+
+- Upgrading the billing plan does **not** remove the guardrail. Activating "advanced features"
+  would, but that is irreversible and deletes the project's spend limit.
+- Each monitored account may have a different home Region, so the multi-account design (below)
+  must store a **Region per account**.
 
 ## Team decision needed: which accounts do we monitor, and how?
 

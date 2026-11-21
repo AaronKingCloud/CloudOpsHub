@@ -10,7 +10,7 @@ not building. Every requirement maps to an existing feature or a task in
 `docs/api/frontend-contract.md`, `docs/operations/DISASTER_RECOVERY.md`, `docs/security/SECURITY_CHECKLIST.md`,
 infrastructure decisions (task 0.2) in `infra/terraform/README.md`.
 
-**Status legend:** ✅ works today (✅ *PR #33* = deployed, Terraform PR awaiting merge) · 🟡 partly (e.g. screen built, backend pending; or runs on sample data) · ⬜ not started
+**Status legend:** ✅ works today · 🟡 partly (e.g. screen built, backend pending; or runs on sample data) · ⬜ not started
 **Priority:** **MVP** = needed for the final demo · **Should** = expected, cut only if time runs out · **Stretch** = only if ahead
 
 ---
@@ -101,9 +101,9 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 | NFR-S2 | Passwords are stored only as bcrypt hashes | ✅ | Auth (done) |
 | NFR-S3 | Access tokens expire after **30 min**, refresh tokens after **7 days**; the deployed backend refuses to start with the development signing key | ✅ | Auth, A2/A3 (`APP_ENV=production`) |
 | NFR-S4 | **No secrets in Git**: every push is scanned (gitleaks) and fails on a finding; deployed secrets live in SSM Parameter Store / Secrets Manager | ✅ | C6, A2 |
-| NFR-S5 | **No long-lived AWS keys** in the cloud or in GitHub: the server uses an IAM role, CD uses GitHub OIDC; every AWS permission is read-only and listed in `docs/architecture/aws-integration.md` | 🟡 role done (PR #33), CD pending | A2, A4 |
+| NFR-S5 | **No long-lived AWS keys** in the cloud or in GitHub: the server uses an IAM role, CD uses GitHub OIDC; every AWS permission is read-only and listed in `docs/architecture/aws-integration.md` | 🟡 role done, CD pending | A2, A4 |
 | NFR-S6 | Dependency audits block the build on any **high or critical** vulnerability (npm) / any known vulnerability (pip) | ✅ | C6 |
-| NFR-S7 | Only the web port is reachable from the internet; the API container, database and SSH are not exposed (admin access via SSM Session Manager) | ✅ *PR #33* | A2 |
+| NFR-S7 | Only the web port is reachable from the internet; the API container, database and SSH are not exposed (admin access via SSM Session Manager) | ✅ | A2 |
 | NFR-S8 | Browser security headers on every page (CSP without inline scripts, `X-Frame-Options: DENY`, `nosniff`, `no-referrer`) | ✅ | C6, A1 |
 | NFR-S9 | The OWASP Top 10 checklist is kept current with every security-relevant change | ✅ | C6 |
 
@@ -122,8 +122,8 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 
 | ID | Requirement | Status | Maps to |
 | --- | --- | --- | --- |
-| NFR-C1 | AWS spend stays **≤ $10 / month**; the team is emailed at **$5**, **$10** and on a forecast overrun | ✅ *PR #33* | A2 |
-| NFR-C2 | Use free-tier-eligible resources where possible; no NAT gateway or other always-on paid extras without team agreement | ✅ *PR #33* | A2 |
+| NFR-C1 | AWS spend stays **≤ $10 / month**; the team is emailed at **$5**, **$10** and on a forecast overrun | ✅ | A2 |
+| NFR-C2 | Use free-tier-eligible resources where possible; no NAT gateway or other always-on paid extras without team agreement | ✅ | A2 |
 | NFR-C3 | Cost Explorer (≈ $0.01 per call) is called **at most once per 6 h** per account, never on a timer | ⬜ | B6 |
 
 ### Performance *(targets)*

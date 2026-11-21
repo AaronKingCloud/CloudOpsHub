@@ -7,23 +7,23 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Current Status
 
-| Area                | Status                                              |
-| ------------------- | --------------------------------------------------- |
-| Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)   |
-| Architecture docs   | 🟡 Started (`docs/architecture/`)                   |
-| API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)        |
-| Frontend            | 🟡 Dashboard UI + login; mock or live backend       |
+| Area                | Status                                                  |
+| ------------------- | ----------------------------------------------------    |
+| Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)      |
+| Architecture docs   | 🟡 Started (`docs/architecture/`)                      |
+| API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)           |
+| Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
 | Backend             | 🟡 FastAPI: auth + live AWS; dashboard data still mock |
-| Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)    |
-| CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet        |
-| Docker / Infra      | 🟡 Dockerfiles + compose written, needs test run    |
-| Terraform / Cloud   | ⬜ Not started                                      |
+| Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
+| CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet           |
+| Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
+| Terraform / Cloud   | 🟡 Foundation done; dev environment deployed (EC2)     |
 
 ## Next Up
 
 Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
-- Decide on target cloud provider (AWS vs Azure) for Terraform
+- Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
 - Cache `/api/billing/summary` (Cost Explorer costs ~$0.01 per call) and require login for it
@@ -48,6 +48,50 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
   "offline after 3 missed reports" (API contract), $10 budget. Performance numbers are marked as *targets* to measure in F1
 - **For the team:** section 6 lists gaps with no task yet (audit log, token revocation, service health, **SonarQube owner**).
   Please check your track's rows and approve or comment on the PR
+
+### 2026-11-20 — Docker follow-ups (`infra/docker-followups`) — Aaron
+
+- Task **A1** from `docs/REMAINING_WORK.md` (done)
+- Backend image now includes `scripts/`, so the backup tool runs in the container:
+  `docker compose exec backend python -m scripts.backup_db backup --dest /app/data/backups`
+- `infra/README.md`: replaced "not yet built and run" with the test results, plus how to seed users, back up,
+  and why the AWS page errors locally (no credentials in local containers; the cloud uses the instance role)
+- `docs/architecture/aws-integration.md`: corrected the "Free plan" explanation. The real cause of the EC2
+  denial is that AWS Settings projects only allow EC2 in their home Region (us-east-2 for Console Dot Dream)
+- Checked: `docker compose config --quiet`; `up --build` with both containers healthy; seeded and signed in on :8080
+  with live backend data; users survive `down` / `up`; backup written and verified (3 users); `curl -I` shows the CSP
+  and other security headers; no CSP errors in the browser console on any page
+- For Tirth (backup tool): `verify` leaves `-shm` / `-wal` files next to the backup it checked. Harmless, just clutter
+- Unblocks **C7** prep: the backup tool can now run inside the deployed container
+
+### 2026-11-20 — Backend container fix (`fix/docker-sqlite-path`, PR #32) — Aaron
+
+- Backend container crashed on startup (`sqlite3.OperationalError: unable to open database file`): it runs as
+  `appuser`, but `/app` is owned by root
+- `backend.Dockerfile`: writable `/app/data` owned by `appuser`, `AUTH_DB_PATH=/app/data/cloudopshub_auth.db`,
+  and `seed.py` copied in so demo users can be created inside the container
+- `docker-compose.yml`: `backend-data` volume at `/app/data` so users survive rebuilds
+- Checked: container healthy, seed + login work, users persist after restart
+
+### 2026-11-20 — Terraform foundation + dev deployment (`infra/terraform-foundation`) — Aaron
+
+- Task **A2** from `docs/REMAINING_WORK.md` (done), plus the first part of **A3** (started)
+- **Infrastructure decisions (task 0.2), proposed by Aaron. Object on this PR if you disagree:**
+  AWS, account Console Dot Dream, region us-east-2 (the only region that account allows EC2 in);
+  hosting phase 1 = one EC2 instance running Docker Compose (cheapest, reuses our compose file; Fargate later if time);
+  database = SQLite on the instance until pshrestha49 decides B1 (RDS Postgres is a drop-in addition)
+- `infra/terraform/bootstrap/`: S3 state bucket (versioned, encrypted, public access blocked); S3-native locking, no DynamoDB
+- `modules/budget`: **$10/month budget, emails the team at $5, $10 and on a forecast overrun** (credits excluded, so it tracks real usage)
+- `modules/network`: own VPC, public subnets in 2 AZs; no NAT gateway (saves ~$32/month); default security group locked down
+- `modules/iam`: app instance role (the 5 read-only actions from the briefing + read the JWT secret; no access keys) and
+  **GitHub OIDC deploy role** limited to this repo's `main` branch (permissions get added with CD, A4)
+- `envs/dev`: EC2 (Ubuntu 24.04, t3.micro) running Docker Compose; port 80 only from approved IPs; no SSH (SSM Session Manager);
+  JWT secret generated by Terraform in SSM Parameter Store; backend in `APP_ENV=production`; backend port not published;
+  encrypted disk; IMDSv2; Elastic IP
+- Checked: `terraform fmt -check`, `validate` and `plan` clean; deployed and verified login, `/api/aws/*` via the instance role,
+  401 without login, backend port closed to the internet
+- Left for A3: persistent storage for `/app/data` (users are lost if the server is replaced), ECR images, DB backups
+- Teammates: budget emails come from AWS Budgets. To view the demo, send Aaron your public IP
 
 ### 2026-11-20 — Dependabot updates merged (PRs #18–#30) — Tirth
 

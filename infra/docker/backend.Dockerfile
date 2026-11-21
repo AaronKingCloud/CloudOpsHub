@@ -13,6 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY seed.py .
+# Backup tool: docker compose exec backend python -m scripts.backup_db backup --dest /app/data/backups
+COPY scripts ./scripts
 
 # Run as a non-root user. /app is owned by root, so give appuser its own
 # writable folder for the SQLite database (mounted as a volume in compose).

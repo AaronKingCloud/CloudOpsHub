@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars (gitignored) and fill in.
+
+# Who may open the app. Find your public IP: (Invoke-RestMethod https://checkip.amazonaws.com).Trim()
+allowed_cidrs = ["203.0.113.10/32"]
+
+# Who gets budget alert emails
+alert_emails = ["you@example.com"]
+
+# Optional overrides
+# monthly_budget_usd = 10
+# instance_type      = "t3.small"
+# git_ref            = "main"
