@@ -117,6 +117,8 @@ resource "aws_instance" "app" {
     region         = var.region
     jwt_param      = aws_ssm_parameter.jwt_secret.name
     data_volume_id = aws_ebs_volume.data.id
+    tag_param      = aws_ssm_parameter.image_tag.name
+    ecr_registry   = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
   })
   # The boot script only runs on first boot, so a changed script means a fresh server.
   # Safe since A3: the data lives on the separate volume (storage.tf), not on this server.

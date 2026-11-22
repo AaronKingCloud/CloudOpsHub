@@ -66,6 +66,12 @@ variable "snapshot_retention_days" {
   default     = 7
 }
 
+variable "images_to_keep" {
+  description = "Images kept per ECR repository (older ones expire)"
+  type        = number
+  default     = 10
+}
+
 variable "root_volume_size_gb" {
   description = "Root disk size. Also holds the SQLite database volume while we're on SQLite."
   type        = number

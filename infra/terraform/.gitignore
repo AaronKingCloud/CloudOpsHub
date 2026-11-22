@@ -1,0 +1,3 @@
+# Terraform plan files contain state, including secrets. Never commit them.
+tfplan
+*.tfplan
