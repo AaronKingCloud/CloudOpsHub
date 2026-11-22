@@ -54,6 +54,7 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | GET    | `/api/metrics/cpu`   | CPU time series         |
 | GET    | `/api/alerts`        | Active alerts           |
 | GET    | `/api/accounts`      | Cloud accounts          |
+| GET    | `/api/billing/summary` | AWS cost summary (cached, requires login) |
 
 ## Configuration
 
@@ -67,6 +68,7 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | `AUTH_DB_PATH` | `cloudopshub_auth.db`   | SQLite file holding user accounts          |
 | `LOGIN_MAX_ATTEMPTS` | `5`               | Failed logins per username + address before a lockout |
 | `LOGIN_WINDOW_SECONDS` | `900`           | Lockout window in seconds (15 minutes)     |
+| `BILLING_CACHE_SECONDS` | `21600`        | How long `/api/billing/summary` caches AWS Cost Explorer results in memory (6 hours; set `0` to disable) |
 
 Generate a production secret with:
 

@@ -5,6 +5,9 @@ Calls AWS Cost Explorer (``ce``) in ``us-east-1`` to retrieve:
 - Spend broken down by AWS service
 - End-of-month forecasted spend
 
+Results are cached in memory (default 6 hours, via ``BILLING_CACHE_SECONDS``)
+so dashboard reloads don't trigger repeated paid Cost Explorer calls.
+
 If ``BILLING_USE_MOCK=true`` or AWS credentials / Cost Explorer permissions are
 unavailable in local development, it falls back to representative mock data
 (unless ``BILLING_STRICT_AWS=true``) so the dashboard remains functional.
@@ -12,15 +15,43 @@ unavailable in local development, it falls back to representative mock data
 
 import calendar
 import os
+import threading
+import time
 from datetime import date, timedelta
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth.dependencies import get_current_user
 from app.schemas import BillingSummary, ServiceCost
 
-router = APIRouter(prefix="/billing", tags=["billing"])
+router = APIRouter(
+    prefix="/billing",
+    tags=["billing"],
+    dependencies=[Depends(get_current_user)],
+)
+
+_DEFAULT_CACHE_SECONDS = 21600  # 6 hours
+_cache_lock = threading.Lock()
+_cached_summary: BillingSummary | None = None
+_cache_expires_at: float = 0.0
+
+
+def _cache_ttl_seconds() -> float:
+    raw = os.getenv("BILLING_CACHE_SECONDS", str(_DEFAULT_CACHE_SECONDS))
+    try:
+        return float(raw)
+    except ValueError:
+        return float(_DEFAULT_CACHE_SECONDS)
+
+
+def clear_billing_cache() -> None:
+    """Clear the cached billing summary (used by tests)."""
+    global _cached_summary, _cache_expires_at
+    with _cache_lock:
+        _cached_summary = None
+        _cache_expires_at = 0.0
 
 
 def _month_bounds(today: date) -> tuple[str, str, str, str]:
@@ -143,15 +174,31 @@ def _fetch_aws_billing(today: date) -> BillingSummary:
 
 @router.get("/summary", response_model=BillingSummary)
 def get_billing_summary() -> BillingSummary:
-    """Return current month spend, service breakdown, and forecasted spend."""
-    today = date.today()
-    if os.getenv("BILLING_USE_MOCK", "").lower() == "true":
-        return _mock_billing_summary(today)
+    """Return current month spend, service breakdown, and forecasted spend (cached)."""
+    global _cached_summary, _cache_expires_at
 
-    try:
-        return _fetch_aws_billing(today)
-    except (BotoCoreError, ClientError) as exc:
-        if os.getenv("BILLING_STRICT_AWS", "").lower() == "true":
-            raise HTTPException(status_code=502, detail=f"AWS Cost Explorer failed: {exc}")
-        return _mock_billing_summary(today)
+    ttl = _cache_ttl_seconds()
+    now = time.monotonic()
+
+    with _cache_lock:
+        if ttl > 0 and _cached_summary is not None and now < _cache_expires_at:
+            return _cached_summary
+
+        today = date.today()
+        if os.getenv("BILLING_USE_MOCK", "").lower() == "true":
+            summary = _mock_billing_summary(today)
+        else:
+            try:
+                summary = _fetch_aws_billing(today)
+            except (BotoCoreError, ClientError) as exc:
+                if os.getenv("BILLING_STRICT_AWS", "").lower() == "true":
+                    raise HTTPException(
+                        status_code=502, detail=f"AWS Cost Explorer failed: {exc}"
+                    )
+                summary = _mock_billing_summary(today)
+
+        if ttl > 0:
+            _cached_summary = summary
+            _cache_expires_at = time.monotonic() + ttl
+        return summary
 
