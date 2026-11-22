@@ -26,7 +26,6 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 - Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
-- Cache `/api/billing/summary` (Cost Explorer costs ~$0.01 per call) and require login for it
 - Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
   requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
   and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
@@ -34,6 +33,15 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 ---
 
 ## Log
+
+### 2026-11-21 — Billing cache and login (`feature/billing-cache`) — pshrestha49
+
+- Task **B6** from `docs/REMAINING_WORK.md`
+- Added in-memory TTL caching (default 6 h via `BILLING_CACHE_SECONDS`, default `21600`) to `GET /api/billing/summary` so repeated dashboard reloads make at most one AWS Cost Explorer call per cache window
+- Added `Depends(get_current_user)` to the billing router so signed-out requests return `401`
+- Documented `BILLING_CACHE_SECONDS` and `/api/billing/summary` in `backend/README.md`
+- Added 3 tests in `backend/tests/test_billing.py` (401 when signed out, two calls hit AWS once, cache expiry refreshes); verified with `pytest -q` (54 passed)
+- For Tirth: `docs/security/SECURITY_CHECKLIST.md` items A01 and A04 (billing login + cache) can be updated
 
 ### 2026-11-20 — Fix seed.py Windows output (`fix/seed-windows-output`) — pshrestha49
 

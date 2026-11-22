@@ -64,7 +64,7 @@ These block almost everything else. Do them first.
 | B3 | Metrics agent: small Python script (psutil) on a device that sends CPU, memory, disk and uptime every minute with a per-device key | L | B1, B2 | A homelab VM shows real numbers on the dashboard |
 | B4 | Alert engine: offline after X minutes, storage > 90%, CPU/memory thresholds; alerts open and resolve automatically; operator can acknowledge | M | B3 | Stopping the agent raises "device offline" |
 | B5 | Require login on all dashboard endpoints; viewer read-only, operator acknowledges alerts, admin manages | M | – | Signed-out calls get 401; roles enforced |
-| B6 | Cache `/api/billing/summary` for 6–12 h and require login (Cost Explorer costs ~$0.01 per call) | S | – | Reloading the page doesn't call AWS again |
+| B6 | ✅ **Done 2026-11-21** (`feature/billing-cache`). Cache `/api/billing/summary` for 6–12 h and require login (Cost Explorer costs ~$0.01 per call) | S | – | Reloading the page doesn't call AWS again |
 | B7 | User management extras: change role, disable user, change own password | S | – | Admin can disable a user; user can change password |
 | B8 | ✅ **Done 2026-11-20** (`fix/seed-windows-output`). Fix `seed.py` crashing on Windows when output is redirected (emoji in `print`) | XS | – | `python -m seed > out.txt` works on Windows |
 | B9 | *(Stretch)* Notifications for critical alerts (email, SNS or Discord webhook) | M | B4 | Critical alert sends a message |
