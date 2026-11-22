@@ -71,6 +71,8 @@ Full shapes: [`docs/api/frontend-contract.md`](../docs/api/frontend-contract.md)
 | POST   | `/api/alerts/{id}/resolve` | Mark alert resolved (operator, admin) |
 | GET    | `/api/accounts`      | Cloud accounts          |
 | GET    | `/api/billing/summary` | AWS cost summary (cached, requires login) |
+| PATCH  | `/api/auth/users/{id}` | Change a user's role or active status (admin) |
+| POST   | `/api/auth/me/password` | Change the signed-in user's password |
 
 ## Configuration
 

@@ -31,6 +31,14 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-21 — User management extras (`feature/user-management`) — pshrestha49
+
+- Task **B7** from `docs/REMAINING_WORK.md`
+- Documented `PATCH /api/auth/users/{id}` and `POST /api/auth/me/password` in `docs/api/frontend-contract.md`
+- Added `UserUpdate` and `PasswordChange` schemas (`backend/app/auth/schemas.py`) and endpoints in `backend/app/routers/auth.py`: admins can change roles or disable/re-enable users (blocked from demoting or disabling themselves), and any signed-in user can change their password
+- Added 3 tests in `backend/tests/test_auth.py` and updated `backend/README.md`; verified with `pytest -q` (83 passed)
+- For Tirth: contract updated in `docs/api/frontend-contract.md` so UI screens can hook into both endpoints, and item **A07** in `docs/security/SECURITY_CHECKLIST.md` (password change) can be updated
+
 ### 2026-11-21 — Login on every endpoint (`feature/login-everywhere`) — pshrestha49
 
 - Task **B5** from `docs/REMAINING_WORK.md`

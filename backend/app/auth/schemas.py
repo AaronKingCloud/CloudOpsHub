@@ -37,6 +37,16 @@ class TokenRefresh(_Camel):
     refresh_token: str
 
 
+class UserUpdate(_Camel):
+    role: UserRole | None = None
+    is_active: bool | None = None
+
+
+class PasswordChange(_Camel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 # ── Responses ────────────────────────────────────────────────────────
 
 class UserResponse(_Camel):
