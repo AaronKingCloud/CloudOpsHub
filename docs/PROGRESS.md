@@ -13,7 +13,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                      |
 | API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)           |
 | Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
-| Backend             | 🟡 FastAPI: auth + live AWS; dashboard data still mock |
+| Backend             | 🟡 FastAPI: auth + live AWS + SQLAlchemy DB (devices/metrics/alerts) |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet           |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
@@ -33,6 +33,16 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 ---
 
 ## Log
+
+### 2026-11-21 — Real database for devices, metrics and alerts (`feature/database`) — pshrestha49
+
+- Task **B1** from `docs/REMAINING_WORK.md`
+- Added SQLAlchemy (`app/database.py`, `app/models.py`) configured via `DATABASE_URL` (defaults to `sqlite:///./cloudopshub.db`; drop-in compatible with RDS Postgres) with `devices`, `metrics` (indexed on `device_id + timestamp`), and `alerts` tables
+- Replaced `mock_data.py` in `/api/dashboard/summary`, `/api/devices`, `/api/alerts`, and `/api/metrics/{cpu,memory,storage}` with database queries; overview metrics now average online devices in 5-minute buckets; `/api/accounts` remains sample data
+- Moved sample devices, metric history, and alerts into `backend/seed.py` (`seed_app_data()`, idempotent) and an `isolated_app_db` fixture in `tests/conftest.py`
+- Added 5 database tests in `tests/test_database.py` (persistence across restarts, 5-min bucket averaging, active alert counts, empty DB, cascade deletes) and updated `test_seed.py`; verified with `pytest -q` (59 passed) and `pip-audit -r requirements.txt` (0 vulnerabilities)
+- Documented `DATABASE_URL` and seeding in `backend/README.md` (for Aaron's deployment)
+- Kept user accounts on `AUTH_DB_PATH` (`app/auth/database.py`) so Tirth's `scripts/backup_db.py` and DR workflow keep working unchanged
 
 ### 2026-11-21 — Billing cache and login (`feature/billing-cache`) — pshrestha49
 
