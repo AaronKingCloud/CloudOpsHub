@@ -2,9 +2,12 @@
 
 from datetime import datetime, timezone
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
+from app.auth.dependencies import get_current_user
+from app.auth.schemas import UserResponse
 from app.database import configure_database, get_engine, get_session_factory, init_app_db
 from app.main import app
 from app.models import AlertModel, DeviceModel, MetricModel
@@ -12,7 +15,21 @@ from app.models import AlertModel, DeviceModel, MetricModel
 client = TestClient(app)
 
 
-def test_data_survives_restart(tmp_path):
+@pytest.fixture
+def logged_in():
+    app.dependency_overrides[get_current_user] = lambda: UserResponse(
+        id="user-viewer",
+        username="viewer",
+        email="viewer@test.local",
+        role="viewer",
+        is_active=True,
+        created_at="2026-11-21T00:00:00+00:00",
+    )
+    yield
+    app.dependency_overrides.clear()
+
+
+def test_data_survives_restart(tmp_path, logged_in):
     """Data written to the database remains available after re-configuring the engine."""
     db_url = f"sqlite:///{tmp_path / 'persist.db'}"
     configure_database(db_url)
@@ -66,7 +83,7 @@ def test_data_survives_restart(tmp_path):
     get_engine().dispose()
 
 
-def test_overview_metrics_average_online_devices_in_5min_buckets(tmp_path):
+def test_overview_metrics_average_online_devices_in_5min_buckets(tmp_path, logged_in):
     """Overview metrics average across online devices per 5-minute bucket and ignore offline."""
     configure_database(f"sqlite:///{tmp_path / 'buckets.db'}")
     init_app_db()
@@ -135,7 +152,7 @@ def test_overview_metrics_average_online_devices_in_5min_buckets(tmp_path):
     get_engine().dispose()
 
 
-def test_resolved_alerts_excluded_from_active_and_summary(tmp_path):
+def test_resolved_alerts_excluded_from_active_and_summary(tmp_path, logged_in):
     configure_database(f"sqlite:///{tmp_path / 'alerts.db'}")
     init_app_db()
 
@@ -178,7 +195,7 @@ def test_resolved_alerts_excluded_from_active_and_summary(tmp_path):
     get_engine().dispose()
 
 
-def test_empty_database_returns_empty_lists_and_zero_counts(tmp_path):
+def test_empty_database_returns_empty_lists_and_zero_counts(tmp_path, logged_in):
     configure_database(f"sqlite:///{tmp_path / 'empty.db'}")
     init_app_db()
 

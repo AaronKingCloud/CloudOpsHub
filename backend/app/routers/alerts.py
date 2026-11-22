@@ -7,14 +7,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.alert_engine import evaluate_all_devices
-from app.auth.dependencies import require_role
+from app.auth.dependencies import get_current_user, require_role
 from app.auth.schemas import UserResponse
 from app.database import get_db
 from app.device_status import to_utc
 from app.models import AlertModel
 from app.schemas import Alert
 
-router = APIRouter(prefix="/alerts", tags=["alerts"])
+router = APIRouter(
+    prefix="/alerts",
+    tags=["alerts"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def _serialize_alert(a: AlertModel) -> Alert:

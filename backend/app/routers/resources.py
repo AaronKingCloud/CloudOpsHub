@@ -7,13 +7,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.device_status import is_device_online
 from app.mock_data import ACCOUNTS
 from app.models import DeviceModel, MetricModel
 from app.schemas import Account, MetricPoint
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 def _overview_metrics(db: Session, field: str) -> list[MetricPoint]:
