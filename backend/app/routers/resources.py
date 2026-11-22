@@ -1,4 +1,4 @@
-"""List endpoints for devices, alerts, accounts and metrics."""
+"""List endpoints for alerts, accounts and overview metrics."""
 
 from collections import defaultdict
 from datetime import datetime
@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.mock_data import ACCOUNTS
 from app.models import AlertModel, DeviceModel, MetricModel
-from app.schemas import Account, Alert, Device, MetricPoint
+from app.schemas import Account, Alert, MetricPoint
 
 router = APIRouter()
 
@@ -36,22 +36,6 @@ def _overview_metrics(db: Session, field: str) -> list[MetricPoint]:
             value=round(sum(values) / len(values), 1),
         )
         for bucket, values in sorted(buckets.items())
-    ]
-
-
-@router.get("/devices", response_model=list[Device], tags=["devices"])
-def list_devices(db: Session = Depends(get_db)) -> list[Device]:
-    rows = db.scalars(select(DeviceModel).order_by(DeviceModel.id)).all()
-    return [
-        Device(
-            id=d.id,
-            hostname=d.hostname,
-            status=d.status,
-            cpu=round(d.cpu),
-            memory=round(d.memory),
-            storage=round(d.storage),
-        )
-        for d in rows
     ]
 
 
