@@ -29,6 +29,26 @@ systemctl enable --now docker
 # AWS CLI (to read the JWT secret from SSM via the instance role)
 snap install aws-cli --classic
 
+# Persistent data disk (A3): both databases live here, so they survive a server rebuild.
+# Terraform attaches the volume after the server starts, so wait for it (up to 5 min).
+DATA_DIR=/srv/cloudopshub-data
+DATA_DEV="/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_$(echo "${data_volume_id}" | tr -d '-')"
+for i in $(seq 1 60); do
+  [ -e "$DATA_DEV" ] && break
+  echo "waiting for data volume ${data_volume_id} ($i/60)"
+  sleep 5
+done
+[ -e "$DATA_DEV" ] || { echo "data volume ${data_volume_id} never attached"; exit 1; }
+
+# Format ONLY a brand-new, empty volume. An existing filesystem (= existing data) is never touched.
+if ! blkid "$DATA_DEV"; then
+  mkfs.ext4 -L cloudopsdata "$DATA_DEV"
+fi
+mkdir -p "$DATA_DIR"
+DATA_UUID="$(blkid -s UUID -o value "$DATA_DEV")"
+grep -q "$DATA_UUID" /etc/fstab || echo "UUID=$DATA_UUID $DATA_DIR ext4 defaults,nofail 0 2" >> /etc/fstab
+mount "$DATA_DIR"
+
 # App code
 git clone --depth 1 --branch "${git_ref}" "${repo_url}" /opt/cloudopshub
 
@@ -48,15 +68,25 @@ services:
       JWT_SECRET: $${JWT_SECRET}
       AWS_DEFAULT_REGION: ${region}
     ports: !reset []          # backend is reached only through nginx
+    volumes: !override        # /app/data on the persistent EBS volume instead of a Docker volume
+      - /srv/cloudopshub-data:/app/data
   frontend:
     ports: !override
       - "80:80"
 EOF
 
 cd /opt/cloudopshub/infra
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+$COMPOSE build
 
-# Demo users (admin / operator / viewer). Port 80 is limited to allowed_cidrs.
+# The backend runs as a non-root user; give that user the data folder
+APP_UID="$($COMPOSE run --rm --no-deps --entrypoint id backend -u | tr -d '\r')"
+chown -R "$APP_UID:$APP_UID" "$DATA_DIR"
+
+$COMPOSE up -d
+
+# Demo users (admin / operator / viewer); skipped for users that already exist on the data volume.
+# Port 80 is limited to allowed_cidrs.
 for i in $(seq 1 30); do
   docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" && break
   sleep 5

@@ -17,19 +17,37 @@ A running log of what the team has done, what is in progress, and what is next.
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet           |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
-| Terraform / Cloud   | 🟡 Foundation done; dev environment deployed (EC2)     |
+| Terraform / Cloud   | 🟡 Deployed (EC2) with persistent data + daily snapshots; CD/HTTPS next |
 
 ## Next Up
 
 Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 - Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
-- Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
 
 ---
 
 ## Log
+
+### 2026-11-22 — Persistent data + daily snapshots on AWS (`infra/terraform-app`) — Aaron
+
+- Task **A3** from `docs/REMAINING_WORK.md` (persistent storage + backups part; ECR/images move to A4)
+- `infra/terraform/envs/dev/storage.tf`: separate 5 GB encrypted **EBS data disk** for `/app/data`, so **both databases**
+  (users; devices/metrics/alerts) survive server rebuilds; `prevent_destroy` guards it
+- **Daily snapshots** of the data disk (Data Lifecycle Manager, 07:00 UTC, keep 7): the cloud backups C7 needs
+- Boot script waits for the disk, **formats it only if brand new**, mounts it, and maps it to the backend's `/app/data`
+  (replaces the Docker volume on the server); demo users are only seeded if missing
+- Changing the boot script now replaces the server automatically (safe now that data lives on the disk);
+  redeploy latest `main` with `terraform apply -replace=aws_instance.app` (in `infra/terraform/README.md`)
+- Redeployed: the cloud server now runs today's `main` (device API, agent, alerts, login everywhere, notifications)
+- **Checked:** `terraform fmt`/`validate`/`plan` clean; boot script rendered and syntax-checked; on AWS both databases are on
+  the data disk (`/dev/nvme1n1`); added a test device, **replaced the whole server** (`-replace=aws_instance.app`, new
+  instance), and the device was still there after ~2 min; login and `/api/aws/*` (instance role) work. Test device deleted
+- Also verified Tirth's `fix/docker-app-db-path` (#46) locally: on the old `main` the backend crashed on startup;
+  with the fix: healthy, seeded, signed in, added a device, `down`/`up`, device still there
+- For Tirth (C7): snapshots exist from tomorrow 07:00 UTC; restore steps are in `infra/terraform/README.md`
+- Teammates: the site allows Aaron's home and Seneca campus IPs; send Aaron yours to be added
 
 ### 2026-11-22 — Docker: app database on the volume (`fix/docker-app-db-path`) — Tirth, **for Aaron to review**
 

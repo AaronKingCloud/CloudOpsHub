@@ -107,16 +107,20 @@ data "aws_ssm_parameter" "ubuntu_ami" {
 resource "aws_instance" "app" {
   ami                    = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type          = var.instance_type
-  subnet_id              = module.network.public_subnet_ids[0]
+  subnet_id              = data.aws_subnet.app.id
   vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = module.iam.instance_profile_name
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    repo_url  = var.repo_url
-    git_ref   = var.git_ref
-    region    = var.region
-    jwt_param = aws_ssm_parameter.jwt_secret.name
+    repo_url       = var.repo_url
+    git_ref        = var.git_ref
+    region         = var.region
+    jwt_param      = aws_ssm_parameter.jwt_secret.name
+    data_volume_id = aws_ebs_volume.data.id
   })
+  # The boot script only runs on first boot, so a changed script means a fresh server.
+  # Safe since A3: the data lives on the separate volume (storage.tf), not on this server.
+  user_data_replace_on_change = true
 
   metadata_options {
     http_tokens                 = "required" # IMDSv2 only
