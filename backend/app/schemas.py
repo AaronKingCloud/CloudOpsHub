@@ -59,10 +59,18 @@ class MetricPoint(CamelModel):
     value: float
 
 
+AlertStatus = Literal["open", "acknowledged", "resolved"]
+
+
 class Alert(CamelModel):
     id: int
     severity: Literal["info", "warning", "critical"]
     message: str
+    device_id: int | None = None
+    status: AlertStatus = "open"
+    created_at: str | None = None
+    acknowledged_by: str | None = None
+    resolved_at: str | None = None
 
 
 class Account(CamelModel):

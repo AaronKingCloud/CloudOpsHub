@@ -11,7 +11,7 @@ so ``backend/scripts/backup_db.py`` and the DR setup continue working unchanged.
 import os
 from collections.abc import Generator
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, event, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 DEFAULT_DATABASE_URL = "sqlite:///./cloudopshub.db"
@@ -74,7 +74,15 @@ def init_app_db() -> None:
     """Create application tables if they do not already exist."""
     import app.models  # noqa: F401  # ensure ORM models are registered on Base.metadata
 
-    Base.metadata.create_all(bind=get_engine())
+    engine = get_engine()
+    Base.metadata.create_all(bind=engine)
+
+    inspector = inspect(engine)
+    if inspector.has_table("alerts"):
+        cols = {c["name"] for c in inspector.get_columns("alerts")}
+        if "rule" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE alerts ADD COLUMN rule VARCHAR(50)"))
 
 
 def get_db() -> Generator[Session, None, None]:

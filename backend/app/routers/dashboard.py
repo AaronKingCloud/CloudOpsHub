@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.alert_engine import evaluate_all_devices
 from app.database import get_db
 from app.device_status import is_device_online
 from app.models import AlertModel, DeviceModel
@@ -14,8 +15,9 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/summary", response_model=DashboardSummary)
 def get_summary(db: Session = Depends(get_db)) -> DashboardSummary:
-    devices = db.scalars(select(DeviceModel)).all()
     now = datetime.now(timezone.utc)
+    evaluate_all_devices(db, now)
+    devices = db.scalars(select(DeviceModel)).all()
     online = sum(1 for d in devices if is_device_online(d, now))
     total = len(devices)
     active_alerts = (

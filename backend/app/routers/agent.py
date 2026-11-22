@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.alert_engine import evaluate_device_alerts
 from app.database import get_db
 from app.models import DeviceModel, MetricModel
 from app.routers.devices import hash_agent_key
@@ -51,5 +52,6 @@ def ingest_agent_metrics(
             storage=float(body.storage),
         )
     )
+    evaluate_device_alerts(db, device, now)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
