@@ -1,6 +1,6 @@
 # CloudOps Hub — Requirements Specification
 
-Task **0.3** · Draft by Aaron, 2026-11-20 · **Status: in team review** (comment on the PR)
+Task **0.3** · Draft by Aaron, 2026-11-20 · **Status: merged (PR #35)** · statuses refreshed 2026-11-22 by Tirth
 
 What CloudOps Hub must do for the capstone MVP, how well it must do it, and what we are deliberately
 not building. Every requirement maps to an existing feature or a task in
@@ -45,37 +45,37 @@ Per risk **R001 (scope creep)**, anything not needed for that story is *Should*,
 | FR-1 | Users sign in with username and password and receive a session token (JWT) | MVP | ✅ | Auth (done) |
 | FR-2 | Every user has exactly one role: admin, operator or viewer | MVP | ✅ | Auth (done) |
 | FR-3 | Admins can create users and list all users | MVP | ✅ | Auth, Users page (done) |
-| FR-4 | Every dashboard, device, alert, metric, account and billing endpoint requires sign-in; signed-out requests get 401 | MVP | 🟡 only `/aws/*` today | B5, C3 |
-| FR-5 | Each role only sees the actions it may use, and the API enforces the same rules (403 otherwise) | MVP | 🟡 | B5, C3 |
+| FR-4 | Every dashboard, device, alert, metric, account and billing endpoint requires sign-in; signed-out requests get 401 | MVP | ✅ | B5, C3 |
+| FR-5 | Each role only sees the actions it may use, and the API enforces the same rules (403 otherwise) | MVP | ✅ | B5, C3 |
 | FR-6 | After 5 failed sign-ins in 15 minutes, that username + address is locked out for the rest of the window | MVP | ✅ | C6 (done) |
-| FR-7 | Admins can change a user's role and disable a user; users can change their own password | Should | ⬜ | B7 |
+| FR-7 | Admins can change a user's role and disable a user; users can change their own password | Should | ✅ | B7 |
 
 ### Devices (asset inventory)
 
 | ID | Requirement | Priority | Status | Maps to |
 | --- | --- | --- | --- | --- |
-| FR-8 | Operators can add, edit and delete devices of type server, VM, container, NAS or service | MVP | 🟡 screens built | B2, C1 |
-| FR-9 | Each device shows status (online / offline), CPU %, memory %, storage % and last-seen time | MVP | 🟡 sample data | B1, B3 |
-| FR-10 | A device detail page shows that device's metric history as charts | MVP | 🟡 screen built | B1, C1 |
+| FR-8 | Operators can add, edit and delete devices of type server, VM, container, NAS or service | MVP | 🟡 admins only (spec says operators): team to decide | B2, C1 |
+| FR-9 | Each device shows status (online / offline), CPU %, memory %, storage % and last-seen time | MVP | ✅ | B1, B3 |
+| FR-10 | A device detail page shows that device's metric history as charts | MVP | ✅ | B1, C1 |
 
 ### Monitoring
 
 | ID | Requirement | Priority | Status | Maps to |
 | --- | --- | --- | --- | --- |
-| FR-11 | An agent installed on a Linux device sends CPU, memory, disk and uptime **every 60 seconds**, authenticated with a per-device key | MVP | ⬜ (install guide written) | B3, C4 |
-| FR-12 | Metric history and device data are stored in a database and survive a backend restart or redeploy | MVP | ⬜ sample data in code | B1, A3 |
-| FR-13 | The overview shows online, offline and total devices, active alerts, and CPU / memory / storage charts | MVP | 🟡 sample data | B1 (screen done) |
+| FR-11 | An agent installed on a Linux device sends CPU, memory, disk and uptime **every 60 seconds**, authenticated with a per-device key | MVP | ✅ (tested on Windows; Linux at the demo) | B3, C4 |
+| FR-12 | Metric history and device data are stored in a database and survive a backend restart or redeploy | MVP | 🟡 survives restarts; redeploy needs persistent `/app/data` (A3) | B1, A3 |
+| FR-13 | The overview shows online, offline and total devices, active alerts, and CPU / memory / storage charts | MVP | ✅ | B1 (screen done) |
 | FR-14 | The dashboard refreshes automatically (default every 30 s) and can be refreshed manually | Should | ✅ | Frontend (done) |
 
 ### Alerting
 
 | ID | Requirement | Priority | Status | Maps to |
 | --- | --- | --- | --- | --- |
-| FR-15 | A device that misses **3 reports in a row** (3 min at the 60 s interval, as in the API contract) is marked offline and raises a **critical "device offline"** alert | MVP | ⬜ | B3, B4 |
-| FR-16 | Threshold alerts: storage > 90 % critical; CPU or memory > 90 % critical, > 70 % warning (same thresholds as the UI) | MVP | ⬜ | B4 |
-| FR-17 | Alerts open and resolve automatically when the condition starts and ends | MVP | ⬜ | B4 |
-| FR-18 | Operators can acknowledge and resolve alerts; past alerts remain in an alert history | MVP | 🟡 screen built | B4, C2 |
-| FR-19 | Critical alerts are sent as a notification (email, SNS or Discord webhook) | Stretch | ⬜ | B9 |
+| FR-15 | A device that misses **3 reports in a row** (3 min at the 60 s interval, as in the API contract) is marked offline and raises a **critical "device offline"** alert | MVP | ✅ | B3, B4 |
+| FR-16 | Threshold alerts: storage > 90 % critical; CPU or memory > 90 % critical, > 70 % warning (same thresholds as the UI) | MVP | ✅ | B4 |
+| FR-17 | Alerts open and resolve automatically when the condition starts and ends | MVP | ✅ | B4 |
+| FR-18 | Operators can acknowledge and resolve alerts; past alerts remain in an alert history | MVP | ✅ | B4, C2 |
+| FR-19 | Critical alerts are sent as a notification (email, SNS or Discord webhook) | Stretch | ✅ | B9 |
 
 ### Cloud accounts
 
@@ -84,7 +84,7 @@ Per risk **R001 (scope creep)**, anything not needed for that story is *Should*,
 | FR-20 | Show the connected AWS account (account ID, identity) | MVP | ✅ | AWS integration (done) |
 | FR-21 | List the account's EC2 instances (name, state, type, AZ, IP, launch time) | MVP | ✅ | AWS integration (done) |
 | FR-22 | Show an EC2 instance's CPU from CloudWatch (last 1–24 h, 5-minute points) | MVP | ✅ | AWS integration (done) |
-| FR-23 | Show month-to-date AWS cost and the month-end forecast | Should | ✅ uncached | Billing (done), B6 |
+| FR-23 | Show month-to-date AWS cost and the month-end forecast | Should | ✅ cached 6 h | Billing (done), B6 |
 | FR-24 | Monitor **several** AWS accounts, each with its own read-only role and home Region | Stretch | ⬜ | A7 (+ backend) |
 
 ---
@@ -111,7 +111,7 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 
 | ID | Requirement | Status | Maps to |
 | --- | --- | --- | --- |
-| NFR-A1 | **RTO ≤ 30 min**: the service can be fully restored within 30 minutes of a failure | 🟡 local drill passed | C7, A3 |
+| NFR-A1 | **RTO ≤ 30 min**: the service can be fully restored within 30 minutes of a failure | 🟡 local drill passed (both databases, 3.7 s); cloud drill needs A3 | C7, A3 |
 | NFR-A2 | **RPO ≤ 24 h** now (daily backups); **≤ 5 min** once the managed cloud database exists | 🟡 | C7, B1, A3 |
 | NFR-A3 | Containers restart automatically after a crash or server reboot; each exposes a health check (`GET /health`) | ✅ | A1 |
 | NFR-A4 | If `/health` fails, the team gets an email alarm **within 5 minutes** | ⬜ | A6 |
@@ -124,7 +124,7 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 | --- | --- | --- | --- |
 | NFR-C1 | AWS spend stays **≤ $10 / month**; the team is emailed at **$5**, **$10** and on a forecast overrun | ✅ | A2 |
 | NFR-C2 | Use free-tier-eligible resources where possible; no NAT gateway or other always-on paid extras without team agreement | ✅ | A2 |
-| NFR-C3 | Cost Explorer (≈ $0.01 per call) is called **at most once per 6 h** per account, never on a timer | ⬜ | B6 |
+| NFR-C3 | Cost Explorer (≈ $0.01 per call) is called **at most once per 6 h** per account, never on a timer | ✅ | B6 |
 
 ### Performance *(targets)*
 
@@ -152,7 +152,7 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 | NFR-U1 | Usable on phone and desktop screens (responsive layout, phone menu) | ✅ | Frontend (done) |
 | NFR-U1b | Works in current Chrome, Edge and Firefox *(target: check all three before the demo)* | 🟡 Chrome/Edge used so far | F1 |
 | NFR-U2 | Light, dark and system themes | ✅ | Frontend (done) |
-| NFR-U3 | The agent supports **Linux** (x86-64) first; a teammate can install it by following `docs/agent/INSTALL.md` | ⬜ | B3, C4 (per risk R002) |
+| NFR-U3 | The agent supports **Linux** (x86-64) first; a teammate can install it by following `docs/agent/INSTALL.md` | 🟡 agent built; Linux install to verify at the demo | B3, C4 (per risk R002) |
 
 ---
 

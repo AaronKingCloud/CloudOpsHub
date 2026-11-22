@@ -88,10 +88,9 @@
   </div>
   <div class="box">
     <strong>Snapshot</strong>
-    Describes the project as of 20 Nov 2026: everything on <code>main</code> (including the cost panel
-    and dashboard update, PRs #12–#15) plus the open branches from 20 Nov: frontend tests, security
-    hardening, device and alert screens, and disaster recovery. Things the backend doesn't do yet are
-    marked as planned. The source of this guide is <code>docs/architecture/guide/architecture-guide.html</code>.
+    Describes the project as of 22 Nov 2026: everything on <code>main</code> (all of Track B, Terraform
+    and the dev deployment, PRs up to #44) plus the open branches from 22 Nov (backups for both databases,
+    user-management screens, docs). Things not built yet are marked as planned. The source of this guide is <code>docs/architecture/guide/architecture-guide.html</code>.
   </div>
   <ol class="toc">
     <li>What CloudOps Hub is</li>
@@ -187,9 +186,9 @@
       <text x="642" y="77" text-anchor="middle" font-size="10" fill="#5d6475">accounts, roles</text>
 
       <rect x="590" y="150" width="105" height="70" rx="10" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
-      <text x="642" y="176" text-anchor="middle" font-size="12" font-weight="600">Mock data</text>
-      <text x="642" y="192" text-anchor="middle" font-size="10" fill="#5d6475">devices, alerts,</text>
-      <text x="642" y="207" text-anchor="middle" font-size="10" fill="#5d6475">metrics (sample)</text>
+      <text x="642" y="176" text-anchor="middle" font-size="12" font-weight="600">App database</text>
+      <text x="642" y="192" text-anchor="middle" font-size="10" fill="#5d6475">devices, metrics,</text>
+      <text x="642" y="207" text-anchor="middle" font-size="10" fill="#5d6475">alerts (SQLAlchemy)</text>
 
       <rect x="590" y="280" width="105" height="80" rx="10" fill="#fff2e5" stroke="#d9731a" stroke-width="2"/>
       <text x="642" y="306" text-anchor="middle" font-size="12" font-weight="700">AWS</text>
@@ -433,8 +432,8 @@
         <text x="425" y="234" text-anchor="middle" fill="#5d6475">account, EC2, CloudWatch</text>
 
         <rect x="545" y="40" width="150" height="50" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
-        <text x="620" y="61" text-anchor="middle" font-weight="700" font-family="Consolas">mock_data.py</text>
-        <text x="620" y="78" text-anchor="middle" fill="#5d6475">sample devices etc.</text>
+        <text x="620" y="61" text-anchor="middle" font-weight="700">App database</text>
+        <text x="620" y="78" text-anchor="middle" fill="#5d6475">devices, metrics, alerts</text>
         <rect x="545" y="134" width="150" height="50" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
         <text x="620" y="155" text-anchor="middle" font-weight="700">SQLite users DB</text>
         <text x="620" y="172" text-anchor="middle" fill="#5d6475" font-family="Consolas">auth/database.py</text>
@@ -461,18 +460,23 @@
   <table>
     <tr><th>Endpoint</th><th>Returns</th><th>Login?</th><th>Data source</th></tr>
     <tr><td><code>GET /health</code></td><td><code>{"status":"ok"}</code>, used by Docker</td><td>No</td><td>none</td></tr>
-    <tr><td><code>GET /api/dashboard/summary</code></td><td>online / offline / alerts / total counts</td><td>No</td><td class="status-mock">mock</td></tr>
-    <tr><td><code>GET /api/devices</code></td><td>list of devices with CPU, memory, storage %</td><td>No</td><td class="status-mock">mock</td></tr>
-    <tr><td><code>GET /api/alerts</code></td><td>active alerts with severity</td><td>No</td><td class="status-mock">mock</td></tr>
-    <tr><td><code>GET /api/accounts</code></td><td>cloud accounts and health</td><td>No</td><td class="status-mock">mock</td></tr>
-    <tr><td><code>GET /api/metrics/cpu</code></td><td>CPU over time</td><td>No</td><td class="status-mock">mock</td></tr>
-    <tr><td><code>GET /api/metrics/memory</code>, <code>/storage</code></td><td>memory / storage over time</td><td>No</td><td class="status-mock">mock</td></tr>
-    <tr><td><code>GET /api/billing/summary</code></td><td>this month's AWS spend, by service, forecast</td><td>No</td><td class="status-real">Cost Explorer</td></tr>
+    <tr><td><code>GET /api/dashboard/summary</code></td><td>online / offline / alerts / total counts</td><td>Yes</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>GET /api/devices</code>, <code>/devices/{id}</code></td><td>devices with CPU, memory, storage %, last report</td><td>Yes</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>POST /api/devices</code>, <code>PUT</code>, <code>DELETE</code>, <code>…/agent-key</code></td><td>add / edit / delete a device; new agent key (shown once)</td><td>Admin</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>GET /api/devices/{id}/metrics</code></td><td>one device's history (1 h – 7 days)</td><td>Yes</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>POST /api/agent/metrics</code></td><td>the agent's report every 60 s</td><td>Agent key</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>GET /api/alerts</code> (<code>?status=all</code>)</td><td>active alerts (or history)</td><td>Yes</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>POST /api/alerts/{id}/acknowledge</code>, <code>/resolve</code></td><td>handle an alert</td><td>Operator, admin</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>GET /api/accounts</code></td><td>cloud accounts and health</td><td>Yes</td><td class="status-mock">sample</td></tr>
+    <tr><td><code>GET /api/metrics/cpu</code>, <code>/memory</code>, <code>/storage</code></td><td>average over online devices, 5-min buckets</td><td>Yes</td><td class="status-real">app DB</td></tr>
+    <tr><td><code>GET /api/billing/summary</code></td><td>this month's AWS spend, by service, forecast (cached 6 h)</td><td>Yes</td><td class="status-real">Cost Explorer</td></tr>
     <tr><td><code>POST /api/auth/login</code></td><td>tokens + user</td><td>No</td><td class="status-real">SQLite</td></tr>
     <tr><td><code>POST /api/auth/refresh</code></td><td>new access token</td><td>Refresh token</td><td class="status-real">SQLite</td></tr>
     <tr><td><code>GET /api/auth/me</code></td><td>current user</td><td>Yes</td><td class="status-real">SQLite</td></tr>
     <tr><td><code>GET /api/auth/users</code></td><td>all users</td><td>Admin</td><td class="status-real">SQLite</td></tr>
     <tr><td><code>POST /api/auth/register</code></td><td>creates a user</td><td>Admin</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>PATCH /api/auth/users/{id}</code></td><td>change role, disable / re-enable</td><td>Admin</td><td class="status-real">SQLite</td></tr>
+    <tr><td><code>POST /api/auth/me/password</code></td><td>change your own password</td><td>Yes</td><td class="status-real">SQLite</td></tr>
     <tr><td><code>GET /api/aws/account</code></td><td>which AWS account we're connected to</td><td>Yes</td><td class="status-real">AWS STS</td></tr>
     <tr><td><code>GET /api/aws/ec2</code></td><td>EC2 instances</td><td>Yes</td><td class="status-real">AWS EC2</td></tr>
     <tr><td><code>GET /api/aws/ec2/{id}/cpu</code></td><td>CPU history for one instance</td><td>Yes</td><td class="status-real">CloudWatch</td></tr>
@@ -486,15 +490,14 @@
   <ul>
     <li><code>schemas.py</code>: defines the exact shape of every response. Python uses <code>snake_case</code>
     (<code>online_devices</code>) but the JSON is sent as <code>camelCase</code> (<code>onlineDevices</code>) to match the frontend.</li>
-    <li><code>tests/</code>: 49 automatic tests (pytest). AWS tests use <strong>moto</strong>, a fake AWS, so they cost nothing.</li>
-    <li><strong>Planned endpoints</strong> (devices CRUD, agent reports, alert acknowledge/resolve, login everywhere) are written down in
-    <code>docs/api/frontend-contract.md</code> → "Proposed endpoints". The screens for them already exist.</li>
+    <li><code>tests/</code>: 90 automatic tests (pytest). AWS tests use <strong>moto</strong>, a fake AWS, so they cost nothing.</li>
+    <li><strong>Devices, agent and alerts endpoints</strong> were designed frontend-first and are documented in <code>docs/api/frontend-contract.md</code> → "Devices, agent and alerts (implemented)".</li>
   </ul>
 </section>
 
 <!-- ============================ 6. LOGIN ============================ -->
 <section>
-  <h2>6. Login, tokens and roles</h2>
+  <h2 style="break-before: page">6. Login, tokens and roles</h2>
   <p>When you sign in, the backend gives the browser two <strong>tokens</strong>: digital passes that
   prove who you are, so you don't send your password with every request.</p>
 
@@ -553,7 +556,7 @@
       <table>
         <tr><th>Role</th><th>Can do today</th></tr>
         <tr><td><strong>Admin</strong></td><td>Everything, plus users and devices (add, edit, delete, new agent keys)</td></tr>
-        <tr><td><strong>Operator</strong></td><td>Acknowledge and resolve alerts (screens ready; backend B4 pending)</td></tr>
+        <tr><td><strong>Operator</strong></td><td>Everything a viewer can, plus acknowledge and resolve alerts</td></tr>
         <tr><td><strong>Viewer</strong></td><td>Read-only dashboards; AWS page when signed in</td></tr>
       </table>
     </div>
@@ -570,11 +573,10 @@
     </div>
   </div>
   <div class="box warn">
-    <strong>Known gap</strong>
-    Only the AWS and user-management endpoints require login. The dashboard endpoints (devices, alerts,
-    billing, ...) are still public (task B5). The frontend is ready: when the backend starts returning 401,
-    it shows a sign-in screen automatically. After 5 wrong passwords for one username in 15 minutes,
-    login is locked for 15 minutes (<code>app/auth/rate_limit.py</code>).
+    <strong>Good to know</strong>
+    Every data endpoint requires login; signed out, the app shows its sign-in screen. After 5 wrong passwords
+    for one username in 15 minutes, login is locked for 15 minutes. Admins can disable an account (it stops
+    working at once) and everyone can change their own password from the top bar.
   </div>
 </section>
 
@@ -616,7 +618,7 @@
         <rect x="465" y="30" width="105" height="56" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.5"/>
         <text x="517" y="55" font-weight="700">list_devices()</text><text x="517" y="72" fill="#5d6475">backend router</text>
         <rect x="590" y="30" width="105" height="56" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
-        <text x="642" y="55" font-weight="700">DEVICES</text><text x="642" y="72" fill="#5d6475">mock_data.py</text>
+        <text x="642" y="55" font-weight="700">devices</text><text x="642" y="72" fill="#5d6475">app database</text>
       </g>
       <g stroke="#4f46e5" stroke-width="2">
         <line x1="100" y1="58" x2="116" y2="58" marker-end="url(#arrA)"/>
@@ -728,11 +730,11 @@
     <tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
     <tr><td>Login, tokens, roles, user management</td><td class="status-real">Real</td><td>Stored in SQLite on the backend</td></tr>
     <tr><td>AWS account, EC2 list, EC2 CPU</td><td class="status-real">Real</td><td>Needs AWS credentials; blocked on Free plan accounts</td></tr>
-    <tr><td>Summary, devices, alerts, accounts, CPU chart</td><td class="status-mock">Sample</td><td>Backend serves <code>mock_data.py</code>; real collection not built yet</td></tr>
-    <tr><td>Memory and storage over time</td><td class="status-mock">Sample</td><td><code>/metrics/memory</code>, <code>/metrics/storage</code> (PR #13)</td></tr>
+    <tr><td>Devices, metrics, summary, charts</td><td class="status-real">Real</td><td>Reported by the agent, stored in the app database (B1–B3)</td></tr>
+    <tr><td>Alerts and notifications</td><td class="status-real">Real</td><td>Raised and resolved by the alert engine; critical ones go to Discord / SNS (B4, B9)</td></tr>
+    <tr><td>Accounts page</td><td class="status-mock">Sample</td><td>The only page still on sample data</td></tr>
     <tr><td>Billing / cost panel</td><td class="status-real">Real or sample</td><td>Cost Explorer when AWS allows it, sample data otherwise (PR #12)</td></tr>
-    <tr><td>Add / edit devices, agent keys, device history</td><td class="status-mock">Screens ready</td><td>Mock mode works; backend tasks B2–B3</td></tr>
-    <tr><td>Acknowledge / resolve alerts</td><td class="status-mock">Screens ready</td><td>Mock mode works; backend task B4</td></tr>
+    <tr><td>Mock mode</td><td class="status-mock">Optional</td><td><code>VITE_USE_MOCK=true</code> runs the whole frontend without a backend (UI work, demos)</td></tr>
   </table>
   <div class="box tip">
     <strong>Why this order makes sense</strong>
@@ -853,11 +855,97 @@ frontend/.env.local:   VITE_USE_MOCK=false
     </svg>
     <figcaption>Figure 10: Docker runs two containers. nginx serves the website and forwards API calls to the backend.</figcaption>
   </figure>
-  <div class="box warn">
-    <strong>Not tested yet</strong>
-    The Docker files are written and the compose file validates, but nobody has built and run the images yet.
-    Whoever has Docker Desktop should try it and note the result in PROGRESS.md.
+  <div class="box tip">
+    <strong>Tested</strong>
+    Aaron ran the full stack in Docker: both containers healthy, users survive a restart, backups run inside
+    the container. Seed demo users with <code>docker compose exec backend python -m seed</code>.
   </div>
+  <h3 style="break-before: page">Option D: the AWS dev environment (Aaron, Terraform)</h3>
+  <p>Everything below is created by Terraform in <code>infra/terraform/</code>, so it can be rebuilt with one command.</p>
+  <figure>
+    <svg viewBox="0 0 700 410" role="img" aria-label="AWS deployment diagram">
+      <rect x="170" y="8" width="525" height="395" rx="14" fill="none" stroke="#d9731a" stroke-width="1.6" stroke-dasharray="7 5"/>
+      <text x="432" y="26" text-anchor="middle" font-size="10.5" fill="#d9731a" font-weight="700">AWS · us-east-2 · created by Terraform</text>
+
+      <rect x="182" y="38" width="340" height="262" rx="10" fill="none" stroke="#6b7080" stroke-width="1.2" stroke-dasharray="5 4"/>
+      <text x="352" y="54" text-anchor="middle" font-size="9.5" fill="#5d6475">Own VPC · public subnets in 2 AZs · no NAT gateway</text>
+
+      <rect x="195" y="62" width="314" height="228" rx="10" fill="#fff8ef" stroke="#d9731a" stroke-width="1.8"/>
+      <text x="352" y="80" text-anchor="middle" font-size="11" font-weight="700">EC2 t3.micro · Ubuntu 24.04 · Docker Compose</text>
+      <text x="352" y="95" text-anchor="middle" font-size="8.6" fill="#5d6475">Port 80 from approved IPs only · no SSH · IMDSv2 · encrypted disk</text>
+
+      <rect x="208" y="110" width="135" height="62" rx="8" fill="#e8f0fe" stroke="#2a6fd6" stroke-width="1.6"/>
+      <text x="275" y="133" text-anchor="middle" font-size="11" font-weight="700">frontend</text>
+      <text x="275" y="149" text-anchor="middle" font-size="9.5" fill="#5d6475">nginx: website +</text>
+      <text x="275" y="162" text-anchor="middle" font-size="9.5" fill="#5d6475">/api proxy</text>
+
+      <rect x="362" y="110" width="135" height="62" rx="8" fill="#e6f6ee" stroke="#1a8a5a" stroke-width="1.6"/>
+      <text x="430" y="133" text-anchor="middle" font-size="11" font-weight="700">backend</text>
+      <text x="430" y="149" text-anchor="middle" font-size="9.5" fill="#5d6475">FastAPI, port not</text>
+      <text x="430" y="162" text-anchor="middle" font-size="9.5" fill="#5d6475">published</text>
+
+      <rect x="362" y="200" width="135" height="76" rx="8" fill="#f1f1f4" stroke="#6b7080" stroke-width="1.5"/>
+      <text x="430" y="220" text-anchor="middle" font-size="10.5" font-weight="700" font-family="Consolas">/app/data</text>
+      <text x="430" y="236" text-anchor="middle" font-size="9.5" fill="#5d6475">SQLite: users +</text>
+      <text x="430" y="249" text-anchor="middle" font-size="9.5" fill="#5d6475">devices, metrics, alerts</text>
+      <text x="430" y="266" text-anchor="middle" font-size="9" fill="#d9731a">persistent disk: A3</text>
+
+      <text x="275" y="205" text-anchor="middle" font-size="9.5" fill="#5d6475">Elastic IP</text>
+      <text x="275" y="219" text-anchor="middle" font-size="9.5" fill="#5d6475">(fixed address)</text>
+
+      <g font-size="10" text-anchor="middle">
+        <rect x="540" y="40" width="145" height="52" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.4"/>
+        <text x="612" y="61" font-weight="700">SSM Parameter Store</text><text x="612" y="78" fill="#5d6475">JWT secret (encrypted)</text>
+        <rect x="540" y="110" width="145" height="66" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.4"/>
+        <text x="612" y="130" font-weight="700">AWS APIs</text><text x="612" y="146" fill="#5d6475">STS · EC2 · CloudWatch</text><text x="612" y="161" fill="#5d6475">Cost Explorer (read-only)</text>
+        <rect x="540" y="194" width="145" height="52" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.4"/>
+        <text x="612" y="215" font-weight="700">SNS / Discord</text><text x="612" y="232" fill="#5d6475">critical-alert messages</text>
+        <rect x="540" y="264" width="145" height="52" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.4"/>
+        <text x="612" y="285" font-weight="700">AWS Budgets</text><text x="612" y="302" fill="#5d6475">$10/month → team email</text>
+        <rect x="540" y="334" width="145" height="52" rx="8" fill="#fff2e5" stroke="#d9731a" stroke-width="1.4"/>
+        <text x="612" y="355" font-weight="700">S3 state bucket</text><text x="612" y="372" fill="#5d6475">Terraform state, locked</text>
+        <rect x="195" y="318" width="314" height="68" rx="8" fill="#f3ecfd" stroke="#7c4ddb" stroke-width="1.4"/>
+        <text x="352" y="340" font-weight="700">IAM</text>
+        <text x="352" y="356" fill="#5d6475">Instance role: read-only AWS actions + JWT secret, no keys</text>
+        <text x="352" y="371" fill="#5d6475">GitHub OIDC role for CD (A4), main branch only</text>
+      </g>
+
+      <g font-size="10" text-anchor="middle">
+        <rect x="8" y="64" width="128" height="50" rx="8" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.4"/>
+        <text x="72" y="86" font-weight="700">Browser</text><text x="72" y="102" fill="#5d6475">approved IP</text>
+        <rect x="8" y="150" width="128" height="58" rx="8" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.4"/>
+        <text x="72" y="172" font-weight="700">Metrics agent</text><text x="72" y="187" fill="#5d6475">on a homelab device</text><text x="72" y="200" fill="#5d6475">(approved IP)</text>
+        <rect x="8" y="246" width="128" height="50" rx="8" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.4"/>
+        <text x="72" y="268" font-weight="700">Team admin</text><text x="72" y="284" fill="#5d6475">SSM Session Manager</text>
+        <rect x="8" y="330" width="128" height="50" rx="8" fill="#f4f5f8" stroke="#6b7080" stroke-width="1.4"/>
+        <text x="72" y="352" font-weight="700">GitHub repo</text><text x="72" y="368" fill="#5d6475">cloned at boot</text>
+      </g>
+
+      <g stroke="#5d6475" stroke-width="1.6" fill="none">
+        <line x1="136" y1="89" x2="205" y2="128" marker-end="url(#arr)"/>
+        <line x1="136" y1="179" x2="205" y2="155" marker-end="url(#arr)"/>
+        <line x1="136" y1="271" x2="192" y2="250" marker-end="url(#arr)"/>
+        <line x1="136" y1="355" x2="192" y2="282" marker-end="url(#arr)"/>
+        <line x1="343" y1="141" x2="358" y2="141" marker-end="url(#arr)"/>
+        <line x1="430" y1="172" x2="430" y2="196" marker-end="url(#arr)"/>
+      </g>
+      <g stroke="#d9731a" stroke-width="1.5" fill="none">
+        <line x1="497" y1="120" x2="537" y2="70" marker-end="url(#arr)"/>
+        <line x1="497" y1="141" x2="537" y2="141" marker-end="url(#arr)"/>
+        <line x1="497" y1="162" x2="537" y2="214" marker-end="url(#arr)"/>
+      </g>
+      <text x="158" y="92" text-anchor="middle" font-size="9" fill="#5d6475">:80</text>
+      <text x="160" y="160" text-anchor="middle" font-size="9" fill="#5d6475">reports</text>
+    </svg>
+    <figcaption>Figure 11: The dev deployment. One EC2 instance runs the same two containers as Docker locally; only approved IPs reach port 80.</figcaption>
+  </figure>
+  <div class="box warn">
+    <strong>Still to do on the cloud side (Aaron)</strong>
+    <code>/app/data</code> is on the instance's own disk, so replacing the server would lose users and device data (A3).
+    Deploys are manual until CD (A4); HTTPS (A5) and health/error alarms (A6) are next. To open the demo,
+    send Aaron your public IP so it can be added to the approved list.
+  </div>
+
 </section>
 
 <!-- ============================ 12. STATUS ============================ -->
@@ -870,24 +958,23 @@ frontend/.env.local:   VITE_USE_MOCK=false
         <li>Planning: concept, charter, risk register, SWOT</li>
         <li>Repo structure, contributor guide, progress log</li>
         <li>React dashboard: 7 pages, charts, tables, themes, mobile</li>
-        <li>FastAPI backend with 49 tests; 58 frontend tests</li>
-        <li>Login with JWT, roles, admin user management, login lockout</li>
-        <li>Live AWS: account, EC2, CloudWatch CPU, cost panel</li>
-        <li>Device, alert and agent-setup screens (backend pending)</li>
-        <li>CI on every pull request + security scans, Dependabot</li>
-        <li>Backup / restore tool with a passed recovery drill</li>
-        <li>Dockerfiles and docker-compose</li>
+        <li>Real database, device API, metrics agent, alert engine, notifications</li>
+        <li>90 backend + 65 frontend tests; security scans; Dependabot</li>
+        <li>Login everywhere, roles, lockout, user management, password change</li>
+        <li>Live AWS: account, EC2, CloudWatch CPU, cached cost panel</li>
+        <li>Docker tested; Terraform foundation; dev environment on EC2</li>
+        <li>Backups of both databases with a passed recovery drill</li>
+        <li>Requirements specification</li>
       </ul>
     </div>
     <div>
       <h3>Next</h3>
       <ul>
-        <li>Decisions meeting: cloud provider, AWS account, hosting, database</li>
-        <li>Real database, device API, metrics agent, alert engine (B1–B4)</li>
-        <li>Require login on every endpoint; cache the cost data (B5, B6)</li>
-        <li>Test Docker end to end; Terraform; CD; HTTPS; monitoring (A1–A6)</li>
-        <li>Cloud database backups and a cloud restore drill (C7)</li>
-        <li>Requirements spec, end-to-end demo, final report</li>
+        <li>Persistent storage, CD, HTTPS, monitoring (A3–A6)</li>
+        <li>SonarQube code-quality scan (C9)</li>
+        <li>Cloud restore drill (C7) once storage is persistent</li>
+        <li>Decide who manages devices (FR-8)</li>
+        <li>End-to-end demo, final report, slides, video (F1–F2)</li>
         <li>Full list with owners: <code>docs/REMAINING_WORK.md</code></li>
       </ul>
     </div>
@@ -896,9 +983,9 @@ frontend/.env.local:   VITE_USE_MOCK=false
   <h3>Who did what so far</h3>
   <table>
     <tr><th>Who</th><th>Main contributions</th></tr>
-    <tr><td>Aaron</td><td>Project kickoff and planning docs, React foundation, API contract, architecture docs, AWS endpoints (account, EC2, CloudWatch), least-privilege IAM</td></tr>
-    <tr><td>pshrestha49</td><td>Login system: JWT, bcrypt, roles, login UI; AWS cost panel; memory/storage charts and account detail popup</td></tr>
-    <tr><td>Tirth</td><td>Repo cleanup and docs, API service layer, dashboard UI, FastAPI backend, CI, Docker; login fixes, app shell, AWS Cloud page, Users page, dashboard polish; frontend tests, security checks and login lockout, device / alert / agent screens, backups and DR drill, this guide</td></tr>
+    <tr><td>Aaron</td><td>Project kickoff and planning docs, React foundation, API contract, AWS endpoints, least-privilege IAM; Docker fixes, Terraform foundation, dev deployment on EC2, budget alarm, requirements specification</td></tr>
+    <tr><td>pshrestha49</td><td>Login system and roles; cost panel; memory/storage charts and account popup; real database, device API, metrics agent, alert engine, login everywhere, cost cache, user management API, notifications</td></tr>
+    <tr><td>Tirth</td><td>Repo cleanup and docs, API service layer, dashboard UI, FastAPI backend, CI, Docker; login fixes, app shell, AWS Cloud page, Users page, dashboard polish; frontend tests, security checks and login lockout, device / alert / agent screens, backups and DR drills, user-management screens, this guide</td></tr>
   </table>
   <p class="small">The full, dated history is in <code>docs/PROGRESS.md</code>.</p>
 </section>
@@ -933,6 +1020,8 @@ frontend/.env.local:   VITE_USE_MOCK=false
     <tr><td>CI / CD</td><td>Continuous integration (automatic checks on every change) / continuous deployment (automatic release).</td></tr>
     <tr><td>Pull Request (PR)</td><td>A request to merge your branch into <code>main</code>, where others review it and CI checks it.</td></tr>
     <tr><td>Terraform</td><td>Infrastructure as code: describe cloud resources in files and create them automatically.</td></tr>
+    <tr><td>Agent</td><td>The small program on each monitored device that reports its numbers every minute.</td></tr>
+    <tr><td>SSM</td><td>AWS Systems Manager: stores the JWT secret (Parameter Store) and gives admin shell access without SSH (Session Manager).</td></tr>
   </table>
 </section>
 

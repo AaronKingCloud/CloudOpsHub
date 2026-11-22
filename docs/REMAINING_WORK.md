@@ -73,14 +73,15 @@ These block almost everything else. Do them first.
 
 | # | Task | Size | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| C1 | 🟡 **Frontend done 2026-11-20** (works in mock mode; needs B2). Device screens: add/edit device form, device detail page with history charts | M | B2 | Devices managed from the UI |
-| C2 | 🟡 **Frontend done 2026-11-20** (needs B4). Alerts screen: acknowledge / resolve (operator), alert history | S | B4 | Operator can acknowledge from the UI |
-| C3 | 🟡 **Frontend done 2026-11-20** (turns on by itself when B5 lands). Sign-in-required experience once B5 lands: redirect to sign in, hide actions a role can't use | S | B5 | Viewer never sees buttons they can't use |
-| C4 | 🟡 **Frontend + guide done 2026-11-20** (`docs/agent/INSTALL.md`; needs B3). Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
+| C1 | ✅ **Done 2026-11-22**: checked against the real backend (B2). Device screens: add/edit device form, device detail page with history charts | M | B2 | Devices managed from the UI |
+| C2 | ✅ **Done 2026-11-22**: checked against the real backend (B4). Alerts screen: acknowledge / resolve (operator), alert history | S | B4 | Operator can acknowledge from the UI |
+| C3 | ✅ **Done 2026-11-22**: sign-in screen appears on 401 with the real backend (B5). Sign-in-required experience once B5 lands: redirect to sign in, hide actions a role can't use | S | B5 | Viewer never sees buttons they can't use |
+| C4 | ✅ **Done 2026-11-22**: real agent reported using the key and command from the device page (B3). Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
 | C5 | ✅ **Done 2026-11-20** (`test/frontend-tests`). Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
 | C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
 | C7 | 🟡 **Local part done 2026-11-22**: backup/restore tool covers both databases + passed drill with both lost (`docs/operations/DISASTER_RECOVERY.md`); cloud drill needs A3 (persistent `/app/data`). Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
-| C8 | 🟡 **Guide added 2026-11-20** (`docs/architecture/CloudOps_Hub_Architecture_Guide.pdf`); deployment diagram needs A3. Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
+| C8 | ✅ **Done 2026-11-22**: guide updated to real data + AWS deployment diagram (Figure 11); refresh it after A3–A5 change the setup. Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
+| C9 | ⬜ SonarQube / SonarCloud code-quality scan on every PR (NFR-M5, professor requirement): scanner config + CI job + coverage; needs a SonarCloud project and `SONAR_TOKEN` secret | S | – | Every PR shows a SonarCloud quality-gate check |
 
 ---
 

@@ -7,29 +7,44 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Current Status
 
-| Area                | Status                                                  |
-| ------------------- | ----------------------------------------------------    |
-| Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)      |
-| Architecture docs   | 🟡 Started (`docs/architecture/`)                      |
-| API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)           |
-| Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
-| Backend             | 🟡 FastAPI: auth + live AWS + SQLAlchemy DB (devices/metrics/alerts) |
-| Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
-| CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet           |
-| Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
-| Terraform / Cloud   | 🟡 Foundation done; dev environment deployed (EC2)     |
+Updated 2026-11-22. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
+
+| Area                | Status                                                                 |
+| ------------------- | ---------------------------------------------------------------------- |
+| Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow), requirements spec merged (#35) |
+| Frontend            | ✅ 7 pages + device page, roles, user management; works on mock or real data |
+| Backend             | ✅ Real database, device API, metrics agent, alert engine, notifications, login everywhere |
+| Authentication/RBAC | ✅ JWT, roles, lockout, password change, disable users                  |
+| Tests / quality     | ✅ 90 backend + 65 frontend tests; security scans; ⬜ SonarQube (C9)    |
+| CI/CD               | 🟡 CI on every PR; no CD yet (A4)                                       |
+| Docker              | ✅ Tested end to end; app-database path fix waiting for Aaron's check   |
+| Cloud (AWS)         | 🟡 Terraform foundation + dev EC2 running; persistent storage, CD, HTTPS, monitoring to do (A3–A6) |
+| Disaster recovery   | 🟡 Both databases backed up, local drill passed; cloud drill after A3   |
 
 ## Next Up
 
-Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
-
-- Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
-- Requirements specification document
-- Replace mock data with real metrics collection (agent or cloud APIs)
+- **Aaron:** A3 persistent `/app/data`, A4 CD, A5 HTTPS, A6 monitoring; review `fix/docker-app-db-path`
+- **Tirth:** C9 SonarQube; cloud DR drill and deployment diagram once A3 is done
+- **Team:** decide FR-8 (who manages devices: admins only today); end-to-end demo (F1), report, slides, video (F2)
 
 ---
 
 ## Log
+
+### 2026-11-22 — Status refresh across the docs + deployment diagram (`docs/status-refresh`) — Tirth
+
+- `docs/REMAINING_WORK.md`: **C1–C4 done** (checked end to end against the real backend and agent), **C8 done**, and a
+  new task **C9 SonarQube** (professor requirement NFR-M5, owner Tirth, as suggested in the requirements spec)
+- `docs/requirements/REQUIREMENTS.md`: refreshed the **status column only** (18 rows) now that Track B is merged;
+  requirement text unchanged. FR-8 flagged: the spec says operators manage devices, the app allows admins only. **Team to decide**
+- `docs/api/frontend-contract.md`: "Proposed endpoints" → "Devices, agent and alerts (implemented)"
+- `docs/security/SECURITY_CHECKLIST.md`: A01 now ✅ (login on every endpoint); A04 (cost cache), A05 (Docker tested),
+  A07 (password change, disable users) and A10 (webhook URL only from env, https) updated
+- `docs/PROGRESS.md` Current Status / Next Up rewritten; `README.md` status, tech stack and roadmap brought up to date
+- Architecture guide: real data instead of sample, all new endpoints, roles, Docker "tested", and a new
+  **Figure 11: the AWS dev deployment** (EC2 + Docker Compose, security group, SSM, IAM, Budgets, S3 state), drawn from
+  `infra/terraform/`. PDF regenerated (18 pages)
+- For Aaron: rows 0.2 / 0.3 in REMAINING_WORK are yours to close (decisions recorded in your Terraform entry, spec merged as #35)
 
 ### 2026-11-22 — User management screens and history fix (`feature/user-management-ui`) — Tirth
 
