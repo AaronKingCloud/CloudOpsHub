@@ -31,6 +31,14 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-21 — Critical alert notifications (`feature/alert-notifications`) — pshrestha49
+
+- Task **B9** (stretch) from `docs/REMAINING_WORK.md`
+- Added `backend/app/notifications.py`: dispatches new or escalated `critical` alerts to an HTTPS webhook (`ALERT_WEBHOOK_URL`, e.g. Discord) and/or AWS SNS (`ALERT_SNS_TOPIC_ARN`); rejects non-HTTPS webhook URLs and logs delivery errors without breaking metric ingestion
+- Wired `notify_critical_alert` into `backend/app/alert_engine.py` so notifications fire only when a critical alert opens or escalates from warning (never on repeats or recoveries)
+- Added 5 tests in `backend/tests/test_notifications.py` and documented both env vars in `backend/README.md`; verified with `pytest -q` (88 passed)
+- For Aaron: `ALERT_WEBHOOK_URL` / `ALERT_SNS_TOPIC_ARN` are optional runtime env vars (never committed to Git); for Tirth: item **A10** in `docs/security/SECURITY_CHECKLIST.md` can be rechecked (webhook URL comes only from env var and enforces `https://`)
+
 ### 2026-11-21 — User management extras (`feature/user-management`) — pshrestha49
 
 - Task **B7** from `docs/REMAINING_WORK.md`
