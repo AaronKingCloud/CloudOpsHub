@@ -89,6 +89,8 @@ Full shapes: [`docs/api/frontend-contract.md`](../docs/api/frontend-contract.md)
 | `LOGIN_WINDOW_SECONDS` | `900`           | Lockout window in seconds (15 minutes)     |
 | `BILLING_CACHE_SECONDS` | `21600`        | How long `/api/billing/summary` caches AWS Cost Explorer results in memory (6 hours; set `0` to disable) |
 | `AGENT_OFFLINE_SECONDS` | `180`          | Seconds without an agent report before a device is marked `offline` (3 minutes) |
+| `ALERT_WEBHOOK_URL`   | unset                   | Optional `https://` Discord/JSON webhook URL notified on new critical alerts |
+| `ALERT_SNS_TOPIC_ARN` | unset                   | Optional AWS SNS topic ARN notified on new critical alerts |
 
 Generate a production secret with:
 

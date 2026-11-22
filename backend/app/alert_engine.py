@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.device_status import is_device_online, to_utc
 from app.models import AlertModel, DeviceModel
+from app.notifications import notify_critical_alert
 
 
 def _sync_rule_alert(
@@ -41,6 +42,7 @@ def _sync_rule_alert(
         severity, message = triggered
         if active:
             existing = active[0]
+            was_critical = existing.severity == "critical"
             changed = False
             if existing.severity != severity:
                 existing.severity = severity
@@ -48,6 +50,8 @@ def _sync_rule_alert(
             if existing.message != message:
                 existing.message = message
                 changed = True
+            if not was_critical and severity == "critical":
+                notify_critical_alert(device.hostname, message, rule)
             return changed
 
         db.add(
@@ -60,6 +64,8 @@ def _sync_rule_alert(
                 created_at=now,
             )
         )
+        if severity == "critical":
+            notify_critical_alert(device.hostname, message, rule)
         return True
 
     if not active:
