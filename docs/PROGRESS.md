@@ -15,7 +15,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
 | Backend             | 🟡 FastAPI: auth + live AWS + SQLAlchemy DB (devices/metrics/alerts) |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
-| CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet           |
+| CI/CD               | 🟡 CI on PRs; CD built and tested (first run after merge) |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
 | Terraform / Cloud   | 🟡 Deployed (EC2) with persistent data + daily snapshots; CD/HTTPS next |
 
@@ -29,6 +29,25 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 ---
 
 ## Log
+
+### 2026-11-22 — Continuous deployment (`ci/deploy`) — Aaron
+
+- Task **A4** from `docs/REMAINING_WORK.md` (built and tested; finished by its first run after merge). Includes A3's changes
+  (`infra/terraform-app`, branched on top), so merge that PR first
+- `.github/workflows/deploy.yml`: on every push to `main`, sign in with **GitHub OIDC (no AWS keys in GitHub)**, build both
+  images, push to **ECR** tagged with the commit SHA, deploy on the server through **SSM Run Command**, then record the SHA
+  as the live version. All actions pinned to full commit SHAs; permissions `contents: read`, `id-token: write`
+- `infra/scripts/deploy.sh` (runs on the server): pull, restart, wait for both containers to be healthy;
+  **if not healthy within 2 minutes it rolls back** and the workflow fails without recording the bad version
+- `infra/terraform/envs/dev/cd.tf`: ECR repos (immutable tags, scan on push, keep 10), live-version SSM parameter,
+  least-privilege policies (deploy role: push to 2 repos, run commands on this one server; server: pull only)
+- Boot script now starts a rebuilt server on the **last deployed version** from ECR (builds locally only before the first deploy)
+- **Checked on the live server:** real deploy from ECR succeeded (site 200, 5 devices kept); a deliberately **broken deploy
+  rolled back automatically** and the site stayed up. Not yet run: the workflow itself (its OIDC role only trusts `main`)
+- ⚠️ **Incident, fixed:** a Terraform plan file (contains state, including the JWT secret) was pushed to the `ci/deploy`
+  branch for ~2 minutes. Removed from the branch, `tfplan` now in `infra/terraform/.gitignore`, and the **JWT secret was
+  rotated** (old tokens now rejected: checked). Everyone signed in had to sign in again. Never on `main`
+- For Tirth: `docs/security/SECURITY_CHECKLIST.md` A08 ("CD signing not set up") can note pinned actions + OIDC + immutable tags
 
 ### 2026-11-22 — Persistent data + daily snapshots on AWS (`infra/terraform-app`) — Aaron
 

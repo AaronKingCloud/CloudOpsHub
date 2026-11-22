@@ -27,6 +27,7 @@ terraform/
 └── envs/
     └── dev/          Wires the modules together + EC2, security group, secret, Elastic IP
                       storage.tf: persistent data disk + daily snapshots
+                      cd.tf: ECR repositories, deploy role permissions, live-version parameter
 ```
 
 ## What `envs/dev` creates
@@ -48,16 +49,41 @@ On first boot, `user_data.sh.tftpl` installs Docker, waits for the data disk, fo
 brand new**, mounts it, clones the repo, builds and starts the containers with `APP_ENV=production`, and seeds
 the demo users (skipped if they already exist). The backend port is not published; nginx proxies `/api`.
 
-### Redeploying (until CD, A4)
+### Continuous deployment (A4)
+
+**Merging to `main` deploys automatically** (`.github/workflows/deploy.yml`, infrastructure in `envs/dev/cd.tf`):
+
+1. GitHub Actions signs in with the **OIDC deploy role** (no AWS keys in GitHub; only `main` of this repo may assume it)
+2. Builds the backend and frontend images and pushes them to **ECR**, tagged with the commit SHA (immutable; last 10 kept)
+3. Runs `infra/scripts/deploy.sh` on the server through **SSM Run Command**: pull, restart, wait until healthy
+4. **If the new version isn't healthy within 2 minutes, it rolls back** to the previous version and the workflow fails,
+   so a bad merge never leaves the site down
+5. Records the SHA in SSM (`/cloudopshub/dev/image_tag`), so a rebuilt server starts on the same version
+
+Redeploy by hand: **Actions → Deploy → Run workflow** (on `main`). The server must be running (not stopped).
+The deploy role's permissions: ECR push to the two repositories, `ssm:SendCommand` on this one server, and
+writing the live-version parameter. Nothing else.
+
+### Rebuilding the server
 
 The boot script runs once per server, so **any change to it replaces the server** (`user_data_replace_on_change`).
-That is safe: the new server re-attaches the same data disk. To redeploy the latest `main` without changes:
+That is safe: the new server re-attaches the same data disk and starts on the last deployed version. To rebuild by hand:
 
 ```bash
 terraform apply -replace=aws_instance.app
 ```
 
-Downtime is ~5–10 minutes while the new server builds. Data, the IP and the JWT secret are kept.
+Downtime is ~2–5 minutes. Data, the IP and the JWT secret are kept.
+
+### Rotating the JWT secret
+
+```bash
+terraform apply -replace=random_password.jwt_secret -replace=aws_instance.app
+```
+
+Generates a new secret, stores it in SSM and rebuilds the server so it loads it. Everyone has to sign in again.
+
+> Never commit `tfplan` files: they contain the state, **including secrets**. `infra/terraform/.gitignore` blocks them.
 
 ### Restoring from a snapshot (for the DR drill, C7)
 
@@ -107,6 +133,6 @@ or `terraform destroy` to remove everything except the state bucket and the data
 - One server: no high availability (see NFR-A6 in `docs/requirements/REQUIREMENTS.md`).
 - Snapshots stay in us-east-2; a copy in another Region would need the account's Region guardrail lifted.
 - HTTP only (no domain/TLS yet).
-- Deploys by building on the instance; CD (GitHub Actions + OIDC) is next.
+- A deploy restarts the containers: ~10–30 s of downtime (one server, no load balancer).
 
 Never commit `*.tfstate` or `terraform.tfvars`; they are in `.gitignore`.
