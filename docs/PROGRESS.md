@@ -26,13 +26,18 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 - Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
-- Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
-  requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
-  and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
 
 ---
 
 ## Log
+
+### 2026-11-21 — Login on every endpoint (`feature/login-everywhere`) — pshrestha49
+
+- Task **B5** from `docs/REMAINING_WORK.md`
+- Added `Depends(get_current_user)` to `dashboard`, `resources`, `devices`, and `alerts` routers so every data endpoint returns `401` when signed out; `/health`, `/api/auth/login`, `/api/auth/refresh`, and `/api/agent/metrics` (`X-Agent-Key`) remain public
+- Role enforcement preserved: device add/edit/delete/rotate-key = `admin`, alert acknowledge/resolve = `admin` + `operator`, viewing = any signed-in user
+- Updated `tests/test_api.py` (with `test_all_data_endpoints_require_login`), `tests/test_metrics.py`, `tests/test_database.py`, and `backend/README.md`; verified with `pytest -q` (80 passed)
+- Team heads-up: everyone now needs `python -m seed` locally to sign in (`C3` frontend sign-in screen activates automatically on `401`); Tirth can mark **A01** complete in `docs/security/SECURITY_CHECKLIST.md`
 
 ### 2026-11-21 — Alert engine and acknowledge/resolve API (`feature/alert-engine`) — pshrestha49
 

@@ -23,7 +23,11 @@ from app.schemas import (
     MetricPoint,
 )
 
-router = APIRouter(prefix="/devices", tags=["devices"])
+router = APIRouter(
+    prefix="/devices",
+    tags=["devices"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def hash_agent_key(plain_key: str) -> str:

@@ -47,7 +47,9 @@ VITE_API_URL=http://localhost:8000/api
 
 ## Endpoints
 
-All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](../docs/api/frontend-contract.md).
+All endpoints are under `/api` and require a signed-in Bearer token (`Authorization: Bearer <accessToken>`),
+except `/health`, `/api/auth/login`, `/api/auth/refresh`, and `/api/agent/metrics` (`X-Agent-Key`).
+Full shapes: [`docs/api/frontend-contract.md`](../docs/api/frontend-contract.md).
 
 | Method | Path                 | Returns                 |
 | ------ | -------------------- | ----------------------- |

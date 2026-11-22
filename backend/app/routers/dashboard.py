@@ -5,12 +5,17 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.alert_engine import evaluate_all_devices
+from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.device_status import is_device_online
 from app.models import AlertModel, DeviceModel
 from app.schemas import DashboardSummary
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/dashboard",
+    tags=["dashboard"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/summary", response_model=DashboardSummary)
