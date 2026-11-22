@@ -1,0 +1,145 @@
+# Continuous deployment to the AWS dev server (task A4). Owner: Aaron.
+#
+# On every push to main (= every merged PR; PRs must pass CI before merging):
+#   1. sign in to AWS with GitHub OIDC (no AWS keys stored in GitHub)
+#   2. build the backend and frontend images and push them to ECR, tagged with the commit SHA
+#   3. tell the server (SSM Run Command) to pull them and restart; it health-checks and rolls back on failure
+#   4. record the SHA as the live version, so a rebuilt server starts on it
+#
+# Infrastructure: infra/terraform/envs/dev/cd.tf · Server script: infra/scripts/deploy.sh
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # "Run workflow" on main to redeploy by hand
+
+permissions:
+  contents: read
+  id-token: write # for the OIDC sign-in only
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false # never interrupt a deploy halfway
+
+env:
+  AWS_REGION: us-east-2
+  DEPLOY_ROLE: arn:aws:iam::451513982298:role/cloudopshub-dev-github-deploy
+  REGISTRY: 451513982298.dkr.ecr.us-east-2.amazonaws.com
+  SERVER_NAME: cloudopshub-dev
+  TAG_PARAM: /cloudopshub/dev/image_tag
+  TAG: ${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Sign in to AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sign in to ECR
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
+
+      - name: Check which images already exist
+        # Tags are immutable, so a re-run for the same commit reuses the images instead of failing
+        id: existing
+        run: |
+          for repo in backend frontend; do
+            if aws ecr describe-images --repository-name "cloudopshub/$repo" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+              echo "$repo=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$repo=false" >> "$GITHUB_OUTPUT"
+            fi
+          done
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build and push backend
+        if: steps.existing.outputs.backend != 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: backend
+          file: infra/docker/backend.Dockerfile
+          push: true
+          provenance: false
+          tags: ${{ env.REGISTRY }}/cloudopshub/backend:${{ env.TAG }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: Build and push frontend
+        if: steps.existing.outputs.frontend != 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: frontend
+          file: infra/docker/frontend.Dockerfile
+          build-contexts: infra=infra/docker
+          push: true
+          provenance: false
+          tags: ${{ env.REGISTRY }}/cloudopshub/frontend:${{ env.TAG }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+      - name: Find the server
+        id: server
+        run: |
+          id="$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$SERVER_NAME" "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)"
+          if [ -z "$id" ] || [ "$id" = "None" ]; then
+            echo "::error::No running server named $SERVER_NAME (stopped to save credits?)"
+            exit 1
+          fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy on the server (health check + automatic rollback)
+        env:
+          INSTANCE_ID: ${{ steps.server.outputs.id }}
+        run: |
+          commands=$(jq -nc --arg tag "$TAG" '[
+            "cd /opt/cloudopshub",
+            "PREV=$(git rev-parse HEAD)",
+            "git fetch -q --depth 1 origin \($tag)",
+            "git checkout -q --force \($tag)",
+            "bash infra/scripts/deploy.sh \($tag) $PREV"
+          ]')
+          cmd_id="$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy $TAG" \
+            --timeout-seconds 900 \
+            --parameters "{\"commands\": $commands, \"executionTimeout\": [\"900\"]}" \
+            --query Command.CommandId --output text)"
+          echo "SSM command: $cmd_id"
+
+          status=Pending
+          for _ in $(seq 1 120); do
+            sleep 5
+            status="$(aws ssm get-command-invocation --command-id "$cmd_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)"
+            case "$status" in Pending|InProgress|Delayed) ;; *) break ;; esac
+          done
+
+          echo "----- server output -----"
+          aws ssm get-command-invocation --command-id "$cmd_id" --instance-id "$INSTANCE_ID" \
+            --query '[StandardOutputContent, StandardErrorContent]' --output text
+          echo "-------------------------"
+          echo "Result: $status"
+          [ "$status" = "Success" ]
+
+      - name: Record the live version
+        run: aws ssm put-parameter --name "$TAG_PARAM" --value "$TAG" --overwrite >/dev/null
+
+      - name: Summary
+        run: |
+          {
+            echo "### Deployed \`${TAG:0:7}\` to the dev server"
+            echo "Images: \`$REGISTRY/cloudopshub/{backend,frontend}:$TAG\`"
+          } >> "$GITHUB_STEP_SUMMARY"
