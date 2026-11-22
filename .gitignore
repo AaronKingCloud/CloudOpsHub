@@ -249,3 +249,6 @@ Thumbs.db
 # Database backups (scripts/backup_db.py) and pre-restore copies
 backend/backups/
 *.before-restore
+
+# Coverage reports (npm run test:coverage, pytest --cov)
+frontend/coverage/

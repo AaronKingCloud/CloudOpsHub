@@ -1,0 +1,57 @@
+# Code quality: runs both test suites with coverage and sends the results to SonarCloud,
+# which posts a quality-gate check on every pull request. Setup: docs/quality/SONARQUBE.md
+# Until the SONAR_TOKEN secret exists (and on Dependabot PRs, which can't read secrets),
+# the scan is skipped with a notice instead of failing the PR.
+name: SonarCloud
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history: SonarCloud uses it to tell new code from old
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Frontend tests with coverage
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:coverage
+          # Report paths are relative to frontend/; SonarCloud needs them relative to the repo root.
+          sed -i 's#^SF:src/#SF:frontend/src/#' coverage/lcov.info
+
+      - name: Backend tests with coverage
+        working-directory: backend
+        run: |
+          pip install -r requirements-dev.txt
+          pytest -q --cov=app --cov=scripts --cov-report=xml:coverage.xml
+
+      - name: SonarCloud scan
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v8.4.1
+
+      - name: SonarCloud not set up yet
+        if: env.SONAR_TOKEN == ''
+        run: echo "::notice title=SonarCloud skipped::SONAR_TOKEN secret is not set. See docs/quality/SONARQUBE.md"

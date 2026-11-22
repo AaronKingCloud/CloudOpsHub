@@ -81,7 +81,7 @@ These block almost everything else. Do them first.
 | C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
 | C7 | 🟡 **Local part done 2026-11-22**: backup/restore tool covers both databases + passed drill with both lost (`docs/operations/DISASTER_RECOVERY.md`); cloud drill needs A3 (persistent `/app/data`). Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
 | C8 | ✅ **Done 2026-11-22**: guide updated to real data + AWS deployment diagram (Figure 11); refresh it after A3–A5 change the setup. Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
-| C9 | ⬜ SonarQube / SonarCloud code-quality scan on every PR (NFR-M5, professor requirement): scanner config + CI job + coverage; needs a SonarCloud project and `SONAR_TOKEN` secret | S | – | Every PR shows a SonarCloud quality-gate check |
+| C9 | 🟡 **Ready 2026-11-22** (`ci/sonarcloud`): workflow, config and coverage done; **Aaron** must import the repo in SonarCloud and add the `SONAR_TOKEN` secret (`docs/quality/SONARQUBE.md`). SonarQube / SonarCloud code-quality scan on every PR (NFR-M5, professor requirement): scanner config + CI job + coverage; needs a SonarCloud project and `SONAR_TOKEN` secret | S | – | Every PR shows a SonarCloud quality-gate check |
 
 ---
 

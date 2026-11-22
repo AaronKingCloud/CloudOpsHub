@@ -143,7 +143,7 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 | NFR-M2 | Every PR is approved by one other team member before merge, and adds a `docs/PROGRESS.md` entry | 🟡 rule agreed, not enforced in GitHub | Team process |
 | NFR-M3 | **All** cloud resources are created by Terraform with remote state; no hand-made resources | 🟡 | A2, A3 |
 | NFR-M4 | Merging to `main` deploys automatically | ⬜ | A4 |
-| NFR-M5 | Code quality scanned with **SonarQube** on every PR | ⬜ | Professor requirement; Tirth (CI owner) |
+| NFR-M5 | Code quality scanned with **SonarQube** on every PR | 🟡 workflow ready; needs SonarCloud setup by the repo owner (docs/quality/SONARQUBE.md) | Professor requirement; Tirth (CI owner) |
 
 ### Usability and compatibility
 

@@ -15,7 +15,7 @@ Updated 2026-11-22. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 | Frontend            | ✅ 7 pages + device page, roles, user management; works on mock or real data |
 | Backend             | ✅ Real database, device API, metrics agent, alert engine, notifications, login everywhere |
 | Authentication/RBAC | ✅ JWT, roles, lockout, password change, disable users                  |
-| Tests / quality     | ✅ 90 backend + 65 frontend tests; security scans; ⬜ SonarQube (C9)    |
+| Tests / quality     | ✅ 90 backend + 65 frontend tests; coverage 96 % / 73 %; security scans; 🟡 SonarCloud ready, needs setup (C9) |
 | CI/CD               | 🟡 CI on every PR; no CD yet (A4)                                       |
 | Docker              | ✅ Tested end to end; app-database path fix waiting for Aaron's check   |
 | Cloud (AWS)         | 🟡 Terraform foundation + dev EC2 running; persistent storage, CD, HTTPS, monitoring to do (A3–A6) |
@@ -24,12 +24,27 @@ Updated 2026-11-22. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 ## Next Up
 
 - **Aaron:** A3 persistent `/app/data`, A4 CD, A5 HTTPS, A6 monitoring; review `fix/docker-app-db-path`
-- **Tirth:** C9 SonarQube; cloud DR drill and deployment diagram once A3 is done
+- **Aaron:** SonarCloud one-time setup (C9, `docs/quality/SONARQUBE.md`)
+- **Tirth:** cloud DR drill once A3 is done
 - **Team:** decide FR-8 (who manages devices: admins only today); end-to-end demo (F1), report, slides, video (F2)
 
 ---
 
 ## Log
+
+### 2026-11-22 — SonarQube (SonarCloud) code-quality scan (`ci/sonarcloud`) — Tirth
+
+- Task **C9** / requirement **NFR-M5** (professor). New `.github/workflows/sonarcloud.yml`: runs both test suites
+  **with coverage** and sends them to SonarCloud, which checks bugs, vulnerabilities, security hotspots, code smells,
+  duplication and coverage, and posts a **Quality Gate** check on every PR
+- Coverage tooling: `@vitest/coverage-v8` + `npm run test:coverage`, `pytest-cov` in `requirements-dev.txt`.
+  Coverage today: **backend 96 %, frontend 73 %** (lines). Reports are git-ignored
+- `sonar-project.properties`: what is analysed (frontend, backend, scripts, agent), tests, coverage paths, exclusions
+- Until the `SONAR_TOKEN` secret exists the workflow still runs the tests but **skips the scan with a notice**,
+  so nobody's PR fails; Dependabot PRs skip it too (they can't read secrets)
+- **Needs Aaron (repo owner), about 5 minutes:** import the repo at sonarcloud.io, switch off Automatic Analysis,
+  add the `SONAR_TOKEN` repo secret. Step by step: `docs/quality/SONARQUBE.md`
+- Fixed on the way: `backend/requirements-dev.txt` had no final newline (appending a line would merge two packages)
 
 ### 2026-11-22 — Status refresh across the docs + deployment diagram (`docs/status-refresh`) — Tirth
 
