@@ -54,6 +54,12 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | GET    | `/health`            | `{"status": "ok"}`      |
 | GET    | `/api/dashboard/summary` | Device / alert counts |
 | GET    | `/api/devices`       | List of devices         |
+| GET    | `/api/devices/{id}`  | Single device details (requires login) |
+| POST   | `/api/devices`       | Create device + one-time agent key (admin) |
+| PUT    | `/api/devices/{id}`  | Update device metadata (admin) |
+| DELETE | `/api/devices/{id}`  | Delete device and its history (admin) |
+| POST   | `/api/devices/{id}/agent-key` | Rotate device agent key (admin) |
+| GET    | `/api/devices/{id}/metrics` | Per-device CPU/memory/storage history (requires login) |
 | GET    | `/api/metrics/cpu`   | CPU time series         |
 | GET    | `/api/metrics/memory` | Memory time series     |
 | GET    | `/api/metrics/storage` | Storage time series   |

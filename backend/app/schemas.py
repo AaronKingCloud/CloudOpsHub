@@ -5,9 +5,9 @@ Fields are snake_case in Python and serialized as camelCase in JSON
 If you change a model here, update the contract and frontend/src/types/ too.
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from pydantic.alias_generators import to_camel
 
 
@@ -22,6 +22,9 @@ class DashboardSummary(CamelModel):
     total_devices: int
 
 
+DeviceType = Literal["server", "vm", "container", "nas", "service"]
+
+
 class Device(CamelModel):
     id: int
     hostname: str
@@ -29,6 +32,26 @@ class Device(CamelModel):
     cpu: int = Field(ge=0, le=100)
     memory: int = Field(ge=0, le=100)
     storage: int = Field(ge=0, le=100)
+    type: DeviceType = "server"
+    ip_address: str | None = None
+    description: str | None = None
+    last_seen: str | None = None
+
+
+class DeviceInput(CamelModel):
+    hostname: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+    type: DeviceType = "server"
+    ip_address: str | None = Field(default=None, max_length=64)
+    description: str | None = Field(default=None, max_length=1000)
+
+
+class AgentKeyResponse(CamelModel):
+    agent_key: str
+
+
+class DeviceCreateResponse(CamelModel):
+    device: Device
+    agent_key: str
 
 
 class MetricPoint(CamelModel):

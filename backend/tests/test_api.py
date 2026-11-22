@@ -24,7 +24,10 @@ def test_dashboard_summary_is_consistent():
 def test_devices_shape():
     devices = client.get("/api/devices").json()
     assert devices
-    assert set(devices[0]) == {"id", "hostname", "status", "cpu", "memory", "storage"}
+    assert set(devices[0]) == {
+        "id", "hostname", "status", "cpu", "memory", "storage",
+        "type", "ipAddress", "description", "lastSeen",
+    }
 
 
 def test_cpu_metrics_shape():

@@ -34,6 +34,15 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-21 — Device API (`feature/device-api`) — pshrestha49
+
+- Task **B2** from `docs/REMAINING_WORK.md`
+- Extended `Device` schema (`type`, `ipAddress`, `description`, `lastSeen`) and added `DeviceInput`, `AgentKeyResponse`, and `DeviceCreateResponse` matching `docs/api/frontend-contract.md`
+- Built `backend/app/routers/devices.py`: `GET /devices/{id}`, `POST /devices` (returns `coa_...` agent key once, stores only SHA-256 hash, `409` on duplicate hostname), `PUT /devices/{id}`, `DELETE /devices/{id}` (cascades metrics/alerts), `POST /devices/{id}/agent-key`, and `GET /devices/{id}/metrics?metric=...&hours=...` (5-min buckets up to 24 h, hourly beyond)
+- Added `backend/tests/test_devices.py` covering every endpoint, role check (`admin` vs `operator`/`viewer`/signed out), key hashing, cascade delete, and metric bucketing; updated `test_api.py` and `backend/README.md`
+- Verified with `pytest -q` (all backend tests passing)
+- For Tirth: `C1` device management screens now have the full matching backend API (no frontend changes needed)
+
 ### 2026-11-21 — Real database for devices, metrics and alerts (`feature/database`) — pshrestha49
 
 - Task **B1** from `docs/REMAINING_WORK.md`
