@@ -54,6 +54,18 @@ variable "github_repo" {
   default     = "AaronKingCloud/CloudOpsHub"
 }
 
+variable "data_volume_size_gb" {
+  description = "Size of the separate disk holding both databases (/app/data)"
+  type        = number
+  default     = 5
+}
+
+variable "snapshot_retention_days" {
+  description = "How many daily snapshots of the data disk to keep"
+  type        = number
+  default     = 7
+}
+
 variable "root_volume_size_gb" {
   description = "Root disk size. Also holds the SQLite database volume while we're on SQLite."
   type        = number
