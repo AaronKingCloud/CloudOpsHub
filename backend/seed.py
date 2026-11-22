@@ -23,7 +23,7 @@ SEED_USERS = [
 
 
 def seed() -> None:
-    print("Initialising auth database…")
+    print("Initialising auth database...")
     init_db()
 
     now = datetime.now(timezone.utc).isoformat()
@@ -34,7 +34,7 @@ def seed() -> None:
                 "SELECT id FROM users WHERE username = ?", (u["username"],)
             ).fetchone()
             if exists:
-                print(f"  ⏭  '{u['username']}' already exists — skipping")
+                print(f"  [skip] '{u['username']}' already exists - skipping")
                 continue
 
             conn.execute(
@@ -44,11 +44,11 @@ def seed() -> None:
                 (str(uuid.uuid4()), u["username"], u["email"],
                  hash_password(u["password"]), u["role"], now),
             )
-            print(f"  ✅ Created '{u['username']}' ({u['role']})")
+            print(f"  [ok]   Created '{u['username']}' ({u['role']})")
 
     print("\nDefault credentials:")
     for u in SEED_USERS:
-        print(f"  {u['role']:>10}  →  {u['username']} / {u['password']}")
+        print(f"  {u['role']:>10}  ->  {u['username']} / {u['password']}")
 
 
 if __name__ == "__main__":
