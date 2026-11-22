@@ -59,15 +59,15 @@ These block almost everything else. Do them first.
 
 | # | Task | Size | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| B1 | Real database for devices, metric history and alerts; replace `mock_data.py` | L | 0.2 | Dashboard data survives a restart; sample data only in tests |
-| B2 | Device / asset API: add, edit, delete devices (servers, VMs, containers, NAS, services) | M | B1 | Devices can be managed through the API |
-| B3 | Metrics agent: small Python script (psutil) on a device that sends CPU, memory, disk and uptime every minute with a per-device key | L | B1, B2 | A homelab VM shows real numbers on the dashboard |
-| B4 | Alert engine: offline after X minutes, storage > 90%, CPU/memory thresholds; alerts open and resolve automatically; operator can acknowledge | M | B3 | Stopping the agent raises "device offline" |
-| B5 | Require login on all dashboard endpoints; viewer read-only, operator acknowledges alerts, admin manages | M | – | Signed-out calls get 401; roles enforced |
-| B6 | Cache `/api/billing/summary` for 6–12 h and require login (Cost Explorer costs ~$0.01 per call) | S | – | Reloading the page doesn't call AWS again |
-| B7 | User management extras: change role, disable user, change own password | S | – | Admin can disable a user; user can change password |
-| B8 | Fix `seed.py` crashing on Windows when output is redirected (emoji in `print`) | XS | – | `python -m seed > out.txt` works on Windows |
-| B9 | *(Stretch)* Notifications for critical alerts (email, SNS or Discord webhook) | M | B4 | Critical alert sends a message |
+| B1 | ✅ **Done 2026-11-21** (`feature/database`). Real database for devices, metric history and alerts; replace `mock_data.py` | L | 0.2 | Dashboard data survives a restart; sample data only in tests |
+| B2 | ✅ **Done 2026-11-21** (`feature/device-api`). Device / asset API: add, edit, delete devices (servers, VMs, containers, NAS, services) | M | B1 | Devices can be managed through the API |
+| B3 | ✅ **Done 2026-11-21** (`feature/metrics-agent`). Metrics agent: small Python script (psutil) on a device that sends CPU, memory, disk and uptime every minute with a per-device key | L | B1, B2 | A homelab VM shows real numbers on the dashboard |
+| B4 | ✅ **Done 2026-11-21** (`feature/alert-engine`). Alert engine: offline after X minutes, storage > 90%, CPU/memory thresholds; alerts open and resolve automatically; operator can acknowledge | M | B3 | Stopping the agent raises "device offline" |
+| B5 | ✅ **Done 2026-11-21** (`feature/login-everywhere`). Require login on all dashboard endpoints; viewer read-only, operator acknowledges alerts, admin manages | M | – | Signed-out calls get 401; roles enforced |
+| B6 | ✅ **Done 2026-11-21** (`feature/billing-cache`). Cache `/api/billing/summary` for 6–12 h and require login (Cost Explorer costs ~$0.01 per call) | S | – | Reloading the page doesn't call AWS again |
+| B7 | ✅ **Done 2026-11-21** (`feature/user-management`). User management extras: change role, disable user, change own password | S | – | Admin can disable a user; user can change password |
+| B8 | ✅ **Done 2026-11-20** (`fix/seed-windows-output`). Fix `seed.py` crashing on Windows when output is redirected (emoji in `print`) | XS | – | `python -m seed > out.txt` works on Windows |
+| B9 | ✅ **Done 2026-11-21** (`feature/alert-notifications`). *(Stretch)* Notifications for critical alerts (email, SNS or Discord webhook) | M | B4 | Critical alert sends a message |
 
 ## Track C: Frontend, quality & docs (suggested: Tirth)
 

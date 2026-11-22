@@ -5,12 +5,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.database import init_db
-from app.routers import dashboard, resources, aws, auth, billing
+from app.database import init_app_db
+from app.routers import agent, alerts, auth, aws, billing, dashboard, devices, resources
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    init_app_db()
     yield
 
 
@@ -44,6 +46,9 @@ app.add_middleware(
 )
 
 app.include_router(dashboard.router, prefix="/api")
+app.include_router(agent.router, prefix="/api")
+app.include_router(devices.router, prefix="/api")
+app.include_router(alerts.router, prefix="/api")
 app.include_router(resources.router, prefix="/api")
 app.include_router(aws.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")

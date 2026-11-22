@@ -4,10 +4,9 @@ The agent is a small Python program that runs on each device you want to monitor
 NAS, Raspberry Pi…). Every minute it sends CPU, memory, disk and uptime to CloudOps Hub, which
 updates the dashboard and raises alerts (offline, disk nearly full, high CPU or memory).
 
-> **Status:** the dashboard side is ready (Devices → device page → "Connect the agent").
-> The agent script (`agent/cloudops_agent.py`) and the `POST /api/agent/metrics` endpoint are
-> REMAINING_WORK task **B3**. This guide describes how it will be installed once they land; update
-> it if B3 changes the commands.
+> **Status:** Both the dashboard setup screen and the agent (`agent/cloudops_agent.py` +
+> `POST /api/agent/metrics`) are implemented. Follow the steps below to connect any Linux,
+> macOS, or Windows host.
 
 ## 1. Add the device in CloudOps Hub
 

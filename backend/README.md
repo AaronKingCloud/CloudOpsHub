@@ -1,8 +1,8 @@
 # CloudOps Hub — Backend
 
-REST API for the dashboard, built with **Python + FastAPI**.
-It currently serves in-memory mock data (`app/mock_data.py`); a database
-and real metrics collection will replace it later.
+REST API for the dashboard, built with **Python + FastAPI** and **SQLAlchemy**.
+Devices, metric history, and alerts are stored in a SQLite/Postgres database (`DATABASE_URL`);
+cloud accounts still use sample data in `app/mock_data.py`.
 
 ## Run it
 
@@ -20,7 +20,10 @@ python -m venv .venv
 # 3. Install dependencies
 pip install -r requirements-dev.txt
 
-# 4. Start the API with auto-reload
+# 4. Seed demo users + sample devices, metrics and alerts (first time only)
+python -m seed
+
+# 5. Start the API with auto-reload
 fastapi dev app/main.py        # http://localhost:8000
 ```
 
@@ -44,16 +47,32 @@ VITE_API_URL=http://localhost:8000/api
 
 ## Endpoints
 
-All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](../docs/api/frontend-contract.md).
+All endpoints are under `/api` and require a signed-in Bearer token (`Authorization: Bearer <accessToken>`),
+except `/health`, `/api/auth/login`, `/api/auth/refresh`, and `/api/agent/metrics` (`X-Agent-Key`).
+Full shapes: [`docs/api/frontend-contract.md`](../docs/api/frontend-contract.md).
 
 | Method | Path                 | Returns                 |
 | ------ | -------------------- | ----------------------- |
 | GET    | `/health`            | `{"status": "ok"}`      |
 | GET    | `/api/dashboard/summary` | Device / alert counts |
 | GET    | `/api/devices`       | List of devices         |
+| GET    | `/api/devices/{id}`  | Single device details (requires login) |
+| POST   | `/api/devices`       | Create device + one-time agent key (admin) |
+| PUT    | `/api/devices/{id}`  | Update device metadata (admin) |
+| DELETE | `/api/devices/{id}`  | Delete device and its history (admin) |
+| POST   | `/api/devices/{id}/agent-key` | Rotate device agent key (admin) |
+| GET    | `/api/devices/{id}/metrics` | Per-device CPU/memory/storage history (requires login) |
+| POST   | `/api/agent/metrics` | Ingest device CPU/memory/disk/uptime (`X-Agent-Key`) |
 | GET    | `/api/metrics/cpu`   | CPU time series         |
-| GET    | `/api/alerts`        | Active alerts           |
+| GET    | `/api/metrics/memory` | Memory time series     |
+| GET    | `/api/metrics/storage` | Storage time series   |
+| GET    | `/api/alerts`        | Active alerts (`?status=all` includes resolved) |
+| POST   | `/api/alerts/{id}/acknowledge` | Mark alert acknowledged (operator, admin) |
+| POST   | `/api/alerts/{id}/resolve` | Mark alert resolved (operator, admin) |
 | GET    | `/api/accounts`      | Cloud accounts          |
+| GET    | `/api/billing/summary` | AWS cost summary (cached, requires login) |
+| PATCH  | `/api/auth/users/{id}` | Change a user's role or active status (admin) |
+| POST   | `/api/auth/me/password` | Change the signed-in user's password |
 
 ## Configuration
 
@@ -61,12 +80,17 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | -------------- | ----------------------- | ----------------------------------------- |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated origins allowed to call the API |
 | `APP_ENV`      | `development`           | Set to `production` when deployed          |
+| `DATABASE_URL` | `sqlite:///./cloudopshub.db` | SQLAlchemy database URL for devices, metrics and alerts (SQLite locally, Postgres in RDS) |
 | `JWT_SECRET`   | dev-only placeholder    | Token signing key. **Required** when `APP_ENV=production`; the backend refuses to start without it |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30`     | Access token lifetime (the frontend refreshes it automatically) |
 | `REFRESH_TOKEN_EXPIRE_DAYS`   | `7`      | How long a user stays signed in        |
 | `AUTH_DB_PATH` | `cloudopshub_auth.db`   | SQLite file holding user accounts          |
 | `LOGIN_MAX_ATTEMPTS` | `5`               | Failed logins per username + address before a lockout |
 | `LOGIN_WINDOW_SECONDS` | `900`           | Lockout window in seconds (15 minutes)     |
+| `BILLING_CACHE_SECONDS` | `21600`        | How long `/api/billing/summary` caches AWS Cost Explorer results in memory (6 hours; set `0` to disable) |
+| `AGENT_OFFLINE_SECONDS` | `180`          | Seconds without an agent report before a device is marked `offline` (3 minutes) |
+| `ALERT_WEBHOOK_URL`   | unset                   | Optional `https://` Discord/JSON webhook URL notified on new critical alerts |
+| `ALERT_SNS_TOPIC_ARN` | unset                   | Optional AWS SNS topic ARN notified on new critical alerts |
 
 Generate a production secret with:
 

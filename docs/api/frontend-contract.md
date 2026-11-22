@@ -158,6 +158,8 @@ and `userService.ts`. Protected endpoints need `Authorization: Bearer <accessTok
 | GET    | `/auth/me`        | signed in      | —                                           | `User` |
 | GET    | `/auth/users`     | admin          | —                                           | `User[]` (newest first) |
 | POST   | `/auth/register`  | admin          | `{ "username", "email", "password", "role" }` | `User` (201); `409` if username/email exists |
+| PATCH  | `/auth/users/{id}` | admin         | `{ "role"?, "isActive"? }`                  | `User` (`400` if empty or self-demote/self-disable; `404` if missing) |
+| POST   | `/auth/me/password` | signed in    | `{ "currentPassword", "newPassword" }`      | `204` (`400` if current password is wrong; `422` if newPassword not 8–128 chars) |
 
 Access tokens last 30 minutes, refresh tokens 7 days. The frontend refreshes access tokens
 automatically on a `401`.

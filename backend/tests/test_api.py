@@ -1,10 +1,28 @@
-"""Checks that every endpoint responds and matches the API contract shapes."""
+"""Checks that every endpoint responds, requires login, and matches contract shapes."""
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.auth.dependencies import get_current_user
+from app.auth.schemas import UserResponse
 from app.main import app
 
 client = TestClient(app)
+
+
+@pytest.fixture
+def logged_in():
+    """Authenticate as a viewer for shape/header checks (auth itself is in test_auth.py)."""
+    app.dependency_overrides[get_current_user] = lambda: UserResponse(
+        id="user-viewer",
+        username="viewer",
+        email="viewer@test.local",
+        role="viewer",
+        is_active=True,
+        created_at="2026-11-21T00:00:00+00:00",
+    )
+    yield
+    app.dependency_overrides.clear()
 
 
 def test_health():
@@ -13,7 +31,29 @@ def test_health():
     assert response.json() == {"status": "ok"}
 
 
-def test_dashboard_summary_is_consistent():
+def test_all_data_endpoints_require_login():
+    protected_paths = (
+        "/api/dashboard/summary",
+        "/api/devices",
+        "/api/devices/1",
+        "/api/devices/1/metrics",
+        "/api/alerts",
+        "/api/alerts?status=all",
+        "/api/accounts",
+        "/api/metrics/cpu",
+        "/api/metrics/memory",
+        "/api/metrics/storage",
+        "/api/billing/summary",
+        "/api/aws/account",
+        "/api/aws/ec2",
+        "/api/auth/me",
+        "/api/auth/users",
+    )
+    for path in protected_paths:
+        assert client.get(path).status_code == 401, f"Expected 401 for {path}"
+
+
+def test_dashboard_summary_is_consistent(logged_in):
     summary = client.get("/api/dashboard/summary").json()
     assert set(summary) == {"onlineDevices", "offlineDevices", "activeAlerts", "totalDevices"}
     assert summary["onlineDevices"] + summary["offlineDevices"] == summary["totalDevices"]
@@ -21,25 +61,31 @@ def test_dashboard_summary_is_consistent():
     assert summary["activeAlerts"] == len(client.get("/api/alerts").json())
 
 
-def test_devices_shape():
+def test_devices_shape(logged_in):
     devices = client.get("/api/devices").json()
     assert devices
-    assert set(devices[0]) == {"id", "hostname", "status", "cpu", "memory", "storage"}
+    assert set(devices[0]) == {
+        "id", "hostname", "status", "cpu", "memory", "storage",
+        "type", "ipAddress", "description", "lastSeen",
+    }
 
 
-def test_cpu_metrics_shape():
+def test_cpu_metrics_shape(logged_in):
     points = client.get("/api/metrics/cpu").json()
     assert points
     assert set(points[0]) == {"timestamp", "value"}
 
 
-def test_alerts_shape():
+def test_alerts_shape(logged_in):
     alerts = client.get("/api/alerts").json()
     assert alerts
-    assert set(alerts[0]) == {"id", "severity", "message"}
+    assert set(alerts[0]) == {
+        "id", "severity", "message", "deviceId",
+        "status", "createdAt", "acknowledgedBy", "resolvedAt",
+    }
 
 
-def test_accounts_use_camel_case():
+def test_accounts_use_camel_case(logged_in):
     accounts = client.get("/api/accounts").json()
     assert accounts
     assert set(accounts[0]) == {
@@ -47,12 +93,12 @@ def test_accounts_use_camel_case():
     }
 
 
-def test_cors_allows_frontend_dev_server():
+def test_cors_allows_frontend_dev_server(logged_in):
     response = client.get("/api/devices", headers={"Origin": "http://localhost:5173"})
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
 
 
-def test_security_headers_on_api_responses():
+def test_security_headers_on_api_responses(logged_in):
     response = client.get("/api/devices")
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"

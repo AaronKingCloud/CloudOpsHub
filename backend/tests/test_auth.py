@@ -162,3 +162,97 @@ def test_list_users_forbidden_for_operator():
     op_token = _login("op1", "Operator1!").json()["accessToken"]
     assert client.get("/api/auth/users", headers={"Authorization": f"Bearer {op_token}"}).status_code == 403
 
+
+# ── user updates & password change ───────────────────────────────────
+
+def test_patch_user_role_and_disable_and_reenable():
+    admin_headers = {"Authorization": f"Bearer {_admin_token()}"}
+    created = client.post(
+        "/api/auth/register",
+        json={"username": "bob", "email": "bob@test.local", "password": "BobPass123!", "role": "viewer"},
+        headers=admin_headers,
+    )
+    assert created.status_code == 201
+    bob_id = created.json()["id"]
+    bob_token = _login("bob", "BobPass123!").json()["accessToken"]
+
+    # Promote to operator
+    promoted = client.patch(
+        f"/api/auth/users/{bob_id}",
+        json={"role": "operator"},
+        headers=admin_headers,
+    )
+    assert promoted.status_code == 200
+    assert promoted.json()["role"] == "operator"
+    assert promoted.json()["isActive"] is True
+
+    # Disable user -> existing token rejected & login fails
+    disabled = client.patch(
+        f"/api/auth/users/{bob_id}",
+        json={"isActive": False},
+        headers=admin_headers,
+    )
+    assert disabled.status_code == 200
+    assert disabled.json()["isActive"] is False
+    assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {bob_token}"}).status_code == 401
+    assert _login("bob", "BobPass123!").status_code == 401
+
+    # Re-enable user -> login works again with promoted role
+    enabled = client.patch(
+        f"/api/auth/users/{bob_id}",
+        json={"isActive": True},
+        headers=admin_headers,
+    )
+    assert enabled.status_code == 200
+    assert enabled.json()["isActive"] is True
+    assert _login("bob", "BobPass123!").json()["user"]["role"] == "operator"
+
+
+def test_patch_user_permissions_and_self_protection():
+    admin_headers = {"Authorization": f"Bearer {_admin_token()}"}
+    me = client.get("/api/auth/me", headers=admin_headers).json()
+    admin_id = me["id"]
+
+    client.post(
+        "/api/auth/register",
+        json={"username": "op2", "email": "op2@test.local", "password": "Operator1!", "role": "operator"},
+        headers=admin_headers,
+    )
+    op_headers = {"Authorization": f"Bearer {_login('op2', 'Operator1!').json()['accessToken']}"}
+
+    assert client.patch(f"/api/auth/users/{admin_id}", json={"role": "viewer"}, headers=op_headers).status_code == 403
+    assert client.patch(f"/api/auth/users/{admin_id}", json={"role": "viewer"}, headers=admin_headers).status_code == 400
+    assert client.patch(f"/api/auth/users/{admin_id}", json={"isActive": False}, headers=admin_headers).status_code == 400
+    assert client.patch(f"/api/auth/users/{admin_id}", json={}, headers=admin_headers).status_code == 400
+    assert client.patch("/api/auth/users/no-such-id", json={"role": "viewer"}, headers=admin_headers).status_code == 404
+
+
+def test_change_own_password():
+    assert client.post(
+        "/api/auth/me/password",
+        json={"currentPassword": "Admin123!", "newPassword": "NewAdmin123!"},
+    ).status_code == 401
+
+    headers = {"Authorization": f"Bearer {_admin_token()}"}
+    assert client.post(
+        "/api/auth/me/password",
+        json={"currentPassword": "WrongPassword!", "newPassword": "NewAdmin123!"},
+        headers=headers,
+    ).status_code == 400
+
+    assert client.post(
+        "/api/auth/me/password",
+        json={"currentPassword": "Admin123!", "newPassword": "short"},
+        headers=headers,
+    ).status_code == 422
+
+    ok = client.post(
+        "/api/auth/me/password",
+        json={"currentPassword": "Admin123!", "newPassword": "NewAdmin123!"},
+        headers=headers,
+    )
+    assert ok.status_code == 204
+    assert _login("testadmin", "Admin123!").status_code == 401
+    assert _login("testadmin", "NewAdmin123!").status_code == 200
+
+

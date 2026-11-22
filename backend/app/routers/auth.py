@@ -8,18 +8,20 @@ import math
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.auth.database import get_db
 from app.auth.dependencies import get_current_user, require_role
 from app.auth.rate_limit import login_limiter
 from app.auth.schemas import (
     AccessTokenResponse,
+    PasswordChange,
     TokenRefresh,
     TokenResponse,
     UserCreate,
     UserLogin,
     UserResponse,
+    UserUpdate,
 )
 from app.auth.utils import (
     create_access_token,
@@ -152,6 +154,29 @@ def get_profile(user: UserResponse = Depends(get_current_user)) -> UserResponse:
     return user
 
 
+@router.post("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_own_password(
+    body: PasswordChange,
+    user: UserResponse = Depends(get_current_user),
+) -> Response:
+    """Change the currently signed-in user's password."""
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT hashed_password FROM users WHERE id = ?",
+            (user.id,),
+        ).fetchone()
+        if row is None or not verify_password(body.current_password, row["hashed_password"]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect",
+            )
+        conn.execute(
+            "UPDATE users SET hashed_password = ? WHERE id = ?",
+            (hash_password(body.new_password), user.id),
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 # ── User management (admin-only) ─────────────────────────────────────
 
 @router.get("/users", response_model=list[UserResponse])
@@ -170,4 +195,54 @@ def list_users(
         )
         for r in rows
     ]
+
+
+@router.patch("/users/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: str,
+    body: UserUpdate,
+    admin: UserResponse = Depends(require_role("admin")),
+) -> UserResponse:
+    """Update a user's role or active status.  Admins cannot demote or disable themselves."""
+    if body.role is None and body.is_active is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide role or isActive to update",
+        )
+    if user_id == admin.id:
+        if body.role is not None and body.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Admins cannot demote themselves",
+            )
+        if body.is_active is False:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Admins cannot disable themselves",
+            )
+
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if row is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        new_role = body.role if body.role is not None else row["role"]
+        new_active = int(body.is_active) if body.is_active is not None else row["is_active"]
+        conn.execute(
+            "UPDATE users SET role = ?, is_active = ? WHERE id = ?",
+            (new_role, new_active, user_id),
+        )
+
+    return UserResponse(
+        id=row["id"],
+        username=row["username"],
+        email=row["email"],
+        role=new_role,
+        is_active=bool(new_active),
+        created_at=row["created_at"],
+        last_login=row["last_login"],
+    )
 

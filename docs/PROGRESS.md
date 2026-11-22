@@ -13,7 +13,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Architecture docs   | 🟡 Started (`docs/architecture/`)                      |
 | API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)           |
 | Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
-| Backend             | 🟡 FastAPI: auth + live AWS; dashboard data still mock |
+| Backend             | 🟡 FastAPI: auth + live AWS + SQLAlchemy DB (devices/metrics/alerts) |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
 | CI/CD               | 🟡 CI on PRs (lint, build, tests); no CD yet           |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
@@ -26,12 +26,6 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 - Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
 - Requirements specification document
 - Replace mock data with real metrics collection (agent or cloud APIs)
-- Cache `/api/billing/summary` (Cost Explorer costs ~$0.01 per call) and require login for it
-- Require login for the dashboard endpoints (devices, alerts, metrics, accounts). Only `/aws/*`
-  requires login today. Waiting until `feature-cost` is merged so the billing endpoint is covered too
-  and nobody gets merge conflicts. Team to agree first, since everyone will need to sign in locally.
-- `backend/seed.py` crashes on Windows when its output is redirected (emoji in `print`).
-  Workaround: set `PYTHONIOENCODING=utf-8`.
 
 ---
 
@@ -48,6 +42,82 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
   "offline after 3 missed reports" (API contract), $10 budget. Performance numbers are marked as *targets* to measure in F1
 - **For the team:** section 6 lists gaps with no task yet (audit log, token revocation, service health, **SonarQube owner**).
   Please check your track's rows and approve or comment on the PR
+### 2026-11-21 — Critical alert notifications (`feature/alert-notifications`) — pshrestha49
+
+- Task **B9** (stretch) from `docs/REMAINING_WORK.md`
+- Added `backend/app/notifications.py`: dispatches new or escalated `critical` alerts to an HTTPS webhook (`ALERT_WEBHOOK_URL`, e.g. Discord) and/or AWS SNS (`ALERT_SNS_TOPIC_ARN`); rejects non-HTTPS webhook URLs and logs delivery errors without breaking metric ingestion
+- Wired `notify_critical_alert` into `backend/app/alert_engine.py` so notifications fire only when a critical alert opens or escalates from warning (never on repeats or recoveries)
+- Added 5 tests in `backend/tests/test_notifications.py` and documented both env vars in `backend/README.md`; verified with `pytest -q` (88 passed)
+- For Aaron: `ALERT_WEBHOOK_URL` / `ALERT_SNS_TOPIC_ARN` are optional runtime env vars (never committed to Git); for Tirth: item **A10** in `docs/security/SECURITY_CHECKLIST.md` can be rechecked (webhook URL comes only from env var and enforces `https://`)
+
+### 2026-11-21 — User management extras (`feature/user-management`) — pshrestha49
+
+- Task **B7** from `docs/REMAINING_WORK.md`
+- Documented `PATCH /api/auth/users/{id}` and `POST /api/auth/me/password` in `docs/api/frontend-contract.md`
+- Added `UserUpdate` and `PasswordChange` schemas (`backend/app/auth/schemas.py`) and endpoints in `backend/app/routers/auth.py`: admins can change roles or disable/re-enable users (blocked from demoting or disabling themselves), and any signed-in user can change their password
+- Added 3 tests in `backend/tests/test_auth.py` and updated `backend/README.md`; verified with `pytest -q` (83 passed)
+- For Tirth: contract updated in `docs/api/frontend-contract.md` so UI screens can hook into both endpoints, and item **A07** in `docs/security/SECURITY_CHECKLIST.md` (password change) can be updated
+
+### 2026-11-21 — Login on every endpoint (`feature/login-everywhere`) — pshrestha49
+
+- Task **B5** from `docs/REMAINING_WORK.md`
+- Added `Depends(get_current_user)` to `dashboard`, `resources`, `devices`, and `alerts` routers so every data endpoint returns `401` when signed out; `/health`, `/api/auth/login`, `/api/auth/refresh`, and `/api/agent/metrics` (`X-Agent-Key`) remain public
+- Role enforcement preserved: device add/edit/delete/rotate-key = `admin`, alert acknowledge/resolve = `admin` + `operator`, viewing = any signed-in user
+- Updated `tests/test_api.py` (with `test_all_data_endpoints_require_login`), `tests/test_metrics.py`, `tests/test_database.py`, and `backend/README.md`; verified with `pytest -q` (80 passed)
+- Team heads-up: everyone now needs `python -m seed` locally to sign in (`C3` frontend sign-in screen activates automatically on `401`); Tirth can mark **A01** complete in `docs/security/SECURITY_CHECKLIST.md`
+
+### 2026-11-21 — Alert engine and acknowledge/resolve API (`feature/alert-engine`) — pshrestha49
+
+- Task **B4** from `docs/REMAINING_WORK.md`
+- Added `backend/app/alert_engine.py`: evaluates `offline` (> 3 min), `storage` (>= 90% critical), and `cpu` / `memory` (>= 70% warning, >= 90% critical) on every agent report and device/alert/summary read; keeps one active alert per `(device, rule)` and auto-resolves when conditions clear
+- Extended `Alert` schema (`deviceId`, `status`, `createdAt`, `acknowledgedBy`, `resolvedAt`) and `AlertModel.rule` column (with safe `ALTER TABLE` check in `init_app_db()` for existing DBs); updated `seed.py`
+- Created `backend/app/routers/alerts.py`: `GET /api/alerts` (open + acknowledged; `?status=all` includes resolved) and `POST /api/alerts/{id}/acknowledge` + `/resolve` (`operator` and `admin`)
+- Added 4 tests in `backend/tests/test_alerts.py` and updated `test_api.py` + `backend/README.md`; verified with `pytest -q` (all 79 backend tests passing)
+- For Tirth: `C2` frontend Alerts page (acknowledge, resolve, alert history) now works against the real backend with no frontend changes needed
+
+### 2026-11-21 — Metrics agent and ingestion endpoint (`feature/metrics-agent`) — pshrestha49
+
+- Task **B3** from `docs/REMAINING_WORK.md`
+- Added `POST /api/agent/metrics` (`backend/app/routers/agent.py`) authenticated by per-device `X-Agent-Key` hash (no user login); sets the device `online`, updates current CPU/memory/storage and `lastSeen`, and appends a `MetricModel` history point
+- Added shared `app/device_status.py` (`AGENT_OFFLINE_SECONDS`, default `180` s = 3 missed reports) so `/api/devices`, `/api/devices/{id}`, `/api/dashboard/summary`, and overview metrics treat stale devices as `offline`
+- Created `agent/cloudops_agent.py` and `agent/requirements.txt` (`psutil`, `requests`) supporting `--server`, `--key` / `--key-file`, `--interval` (default 60 s), and `--once`; retries quietly when the server is down and prints a clear error on `401`
+- Added 7 tests in `backend/tests/test_agent.py`, updated `docs/agent/INSTALL.md` and `backend/README.md`, and verified live end-to-end against local Uvicorn with `cloudops_agent.py --once` + `pytest -q` (75 passed)
+- For Tirth: `C4` agent setup screens and `docs/agent/INSTALL.md` commands match the implemented script
+
+### 2026-11-21 — Device API (`feature/device-api`) — pshrestha49
+
+- Task **B2** from `docs/REMAINING_WORK.md`
+- Extended `Device` schema (`type`, `ipAddress`, `description`, `lastSeen`) and added `DeviceInput`, `AgentKeyResponse`, and `DeviceCreateResponse` matching `docs/api/frontend-contract.md`
+- Built `backend/app/routers/devices.py`: `GET /devices/{id}`, `POST /devices` (returns `coa_...` agent key once, stores only SHA-256 hash, `409` on duplicate hostname), `PUT /devices/{id}`, `DELETE /devices/{id}` (cascades metrics/alerts), `POST /devices/{id}/agent-key`, and `GET /devices/{id}/metrics?metric=...&hours=...` (5-min buckets up to 24 h, hourly beyond)
+- Added `backend/tests/test_devices.py` covering every endpoint, role check (`admin` vs `operator`/`viewer`/signed out), key hashing, cascade delete, and metric bucketing; updated `test_api.py` and `backend/README.md`
+- Verified with `pytest -q` (all backend tests passing)
+- For Tirth: `C1` device management screens now have the full matching backend API (no frontend changes needed)
+
+### 2026-11-21 — Real database for devices, metrics and alerts (`feature/database`) — pshrestha49
+
+- Task **B1** from `docs/REMAINING_WORK.md`
+- Added SQLAlchemy (`app/database.py`, `app/models.py`) configured via `DATABASE_URL` (defaults to `sqlite:///./cloudopshub.db`; drop-in compatible with RDS Postgres) with `devices`, `metrics` (indexed on `device_id + timestamp`), and `alerts` tables
+- Replaced `mock_data.py` in `/api/dashboard/summary`, `/api/devices`, `/api/alerts`, and `/api/metrics/{cpu,memory,storage}` with database queries; overview metrics now average online devices in 5-minute buckets; `/api/accounts` remains sample data
+- Moved sample devices, metric history, and alerts into `backend/seed.py` (`seed_app_data()`, idempotent) and an `isolated_app_db` fixture in `tests/conftest.py`
+- Added 5 database tests in `tests/test_database.py` (persistence across restarts, 5-min bucket averaging, active alert counts, empty DB, cascade deletes) and updated `test_seed.py`; verified with `pytest -q` (59 passed) and `pip-audit -r requirements.txt` (0 vulnerabilities)
+- Documented `DATABASE_URL` and seeding in `backend/README.md` (for Aaron's deployment)
+- Kept user accounts on `AUTH_DB_PATH` (`app/auth/database.py`) so Tirth's `scripts/backup_db.py` and DR workflow keep working unchanged
+
+### 2026-11-21 — Billing cache and login (`feature/billing-cache`) — pshrestha49
+
+- Task **B6** from `docs/REMAINING_WORK.md`
+- Added in-memory TTL caching (default 6 h via `BILLING_CACHE_SECONDS`, default `21600`) to `GET /api/billing/summary` so repeated dashboard reloads make at most one AWS Cost Explorer call per cache window
+- Added `Depends(get_current_user)` to the billing router so signed-out requests return `401`
+- Documented `BILLING_CACHE_SECONDS` and `/api/billing/summary` in `backend/README.md`
+- Added 3 tests in `backend/tests/test_billing.py` (401 when signed out, two calls hit AWS once, cache expiry refreshes); verified with `pytest -q` (54 passed)
+- For Tirth: `docs/security/SECURITY_CHECKLIST.md` items A01 and A04 (billing login + cache) can be updated
+
+### 2026-11-20 — Fix seed.py Windows output (`fix/seed-windows-output`) — pshrestha49
+
+- Task **B8** from `docs/REMAINING_WORK.md`
+- Replaced emoji and non-ASCII characters in `backend/seed.py` output with plain ASCII so redirecting output on Windows (`python -m seed > out.txt`) works without `UnicodeEncodeError`
+- Added `backend/tests/test_seed.py` verifying cp1252 encoding, idempotency, and CLI execution
+- Verified on Windows PowerShell with `python -m seed > out.txt` (temp DB) and `pytest -q` (all 51 backend tests passing)
 
 ### 2026-11-20 — Docker follow-ups (`infra/docker-followups`) — Aaron
 
