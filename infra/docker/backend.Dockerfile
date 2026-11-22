@@ -2,9 +2,12 @@
 # Build context is backend/ (see infra/docker-compose.yml).
 FROM python:3.13-slim
 
+# Both databases live in /app/data: writable by appuser and mounted as a volume, so they survive rebuilds.
+# Without DATABASE_URL the app database would default to /app/cloudopshub.db, which appuser can't create.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    AUTH_DB_PATH=/app/data/cloudopshub_auth.db
+    AUTH_DB_PATH=/app/data/cloudopshub_auth.db \
+    DATABASE_URL=sqlite:////app/data/cloudopshub.db
 
 WORKDIR /app
 
