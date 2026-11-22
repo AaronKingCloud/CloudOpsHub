@@ -64,7 +64,9 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | GET    | `/api/metrics/cpu`   | CPU time series         |
 | GET    | `/api/metrics/memory` | Memory time series     |
 | GET    | `/api/metrics/storage` | Storage time series   |
-| GET    | `/api/alerts`        | Active alerts           |
+| GET    | `/api/alerts`        | Active alerts (`?status=all` includes resolved) |
+| POST   | `/api/alerts/{id}/acknowledge` | Mark alert acknowledged (operator, admin) |
+| POST   | `/api/alerts/{id}/resolve` | Mark alert resolved (operator, admin) |
 | GET    | `/api/accounts`      | Cloud accounts          |
 | GET    | `/api/billing/summary` | AWS cost summary (cached, requires login) |
 

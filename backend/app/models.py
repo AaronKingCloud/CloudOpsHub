@@ -64,6 +64,7 @@ class AlertModel(Base):
     )
     severity: Mapped[str] = mapped_column(String(20), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
+    rule: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     acknowledged_by: Mapped[str | None] = mapped_column(String(100), nullable=True)

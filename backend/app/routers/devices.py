@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.alert_engine import evaluate_all_devices, evaluate_offline_alert
 from app.auth.dependencies import get_current_user, require_role
 from app.database import get_db
 from app.device_status import effective_device_status, to_utc
@@ -60,6 +61,7 @@ def _get_device_or_404(db: Session, device_id: int) -> DeviceModel:
 
 @router.get("", response_model=list[Device])
 def list_devices(db: Session = Depends(get_db)) -> list[Device]:
+    evaluate_all_devices(db)
     rows = db.scalars(select(DeviceModel).order_by(DeviceModel.id)).all()
     return [_serialize_device(d) for d in rows]
 
@@ -70,7 +72,10 @@ def get_device(
     _user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Device:
-    return _serialize_device(_get_device_or_404(db, device_id))
+    device = _get_device_or_404(db, device_id)
+    if evaluate_offline_alert(db, device):
+        db.commit()
+    return _serialize_device(device)
 
 
 @router.post("", response_model=DeviceCreateResponse, status_code=status.HTTP_201_CREATED)

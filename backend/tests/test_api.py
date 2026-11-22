@@ -39,7 +39,10 @@ def test_cpu_metrics_shape():
 def test_alerts_shape():
     alerts = client.get("/api/alerts").json()
     assert alerts
-    assert set(alerts[0]) == {"id", "severity", "message"}
+    assert set(alerts[0]) == {
+        "id", "severity", "message", "deviceId",
+        "status", "createdAt", "acknowledgedBy", "resolvedAt",
+    }
 
 
 def test_accounts_use_camel_case():

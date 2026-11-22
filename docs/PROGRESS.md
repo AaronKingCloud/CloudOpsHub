@@ -34,6 +34,15 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-21 — Alert engine and acknowledge/resolve API (`feature/alert-engine`) — pshrestha49
+
+- Task **B4** from `docs/REMAINING_WORK.md`
+- Added `backend/app/alert_engine.py`: evaluates `offline` (> 3 min), `storage` (>= 90% critical), and `cpu` / `memory` (>= 70% warning, >= 90% critical) on every agent report and device/alert/summary read; keeps one active alert per `(device, rule)` and auto-resolves when conditions clear
+- Extended `Alert` schema (`deviceId`, `status`, `createdAt`, `acknowledgedBy`, `resolvedAt`) and `AlertModel.rule` column (with safe `ALTER TABLE` check in `init_app_db()` for existing DBs); updated `seed.py`
+- Created `backend/app/routers/alerts.py`: `GET /api/alerts` (open + acknowledged; `?status=all` includes resolved) and `POST /api/alerts/{id}/acknowledge` + `/resolve` (`operator` and `admin`)
+- Added 4 tests in `backend/tests/test_alerts.py` and updated `test_api.py` + `backend/README.md`; verified with `pytest -q` (all 79 backend tests passing)
+- For Tirth: `C2` frontend Alerts page (acknowledge, resolve, alert history) now works against the real backend with no frontend changes needed
+
 ### 2026-11-21 — Metrics agent and ingestion endpoint (`feature/metrics-agent`) — pshrestha49
 
 - Task **B3** from `docs/REMAINING_WORK.md`
