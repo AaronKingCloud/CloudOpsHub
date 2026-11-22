@@ -31,6 +31,20 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-22 — Backups cover the new database (`ops/backup-app-db`) — Tirth
+
+- Track C task **C7**. Since B1, devices, metric history, alerts and agent key hashes live in a second database
+  (`DATABASE_URL`), and **the backup tool only backed up user accounts**. Now `scripts/backup_db.py backup` backs up
+  **both** in one run; `restore` tells from the file's tables which database it is and replaces the right one;
+  Postgres is skipped with a message (use the managed database's backups)
+- Fixed Aaron's report: checking a backup left `-wal` / `-shm` files next to it. Backups are now stored without WAL
+  and opened read-only (`immutable`), so nothing is left behind
+- `restore` closes the backend's own connections to the app database first, so the file can be replaced on Windows
+- 8 backup tests (was 6), all 90 backend tests pass
+- **New drill passed:** created a user, a device and an agent report, backed up while running, deleted **both**
+  database files, restored: user signs in, device and its history are back. Total recovery **3.7 s** (target 30 min).
+  Logged in `docs/operations/DISASTER_RECOVERY.md`, which now lists both databases
+
 ### 2026-11-20 — Requirements specification draft (`docs/requirements-spec`) — Aaron
 
 - Task **0.3** from `docs/REMAINING_WORK.md` (draft done, **needs review from everyone**)
