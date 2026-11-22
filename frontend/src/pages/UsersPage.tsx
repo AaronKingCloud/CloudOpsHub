@@ -3,6 +3,7 @@ import PageHeader from "../components/layout/PageHeader";
 import { ErrorState, Skeleton } from "../components/PanelStatus";
 import StatusBadge from "../components/StatusBadge";
 import AddUserDialog from "../components/users/AddUserDialog";
+import EditUserDialog from "../components/users/EditUserDialog";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../hooks/useAuth";
 import { listUsers } from "../services/userService";
@@ -28,14 +29,33 @@ function UsersPage() {
   return <UserManagement />;
 }
 
+// What changed, in words, for the confirmation message.
+function describeChange(before: User, after: User): string {
+  const parts = [];
+  if (before.role !== after.role) parts.push(`role ${before.role} → ${after.role}`);
+  if (before.isActive !== after.isActive) parts.push(after.isActive ? "re-enabled" : "disabled (can't sign in)");
+  return `${after.username}: ${parts.join(", ")}.`;
+}
+
 function UserManagement() {
+  const { user: me } = useAuth();
   const { data: users, loading, error, refreshing, reload } = useApi(listUsers);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [created, setCreated] = useState<User | null>(null);
+  const [editing, setEditing] = useState<User | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   const handleCreated = (user: User) => {
     setDialogOpen(false);
-    setCreated(user);
+    setMessage(`Created ${user.username} as ${user.role}. Share their temporary password privately.`);
+    setHighlightId(user.id);
+    reload();
+  };
+
+  const handleSaved = (before: User, after: User) => {
+    setEditing(null);
+    setMessage(`Updated ${describeChange(before, after)}`);
+    setHighlightId(after.id);
     reload();
   };
 
@@ -49,11 +69,9 @@ function UserManagement() {
         }
       />
 
-      {created && (
+      {message && (
         <div className="notice ok" role="status">
-          <p className="notice-title">
-            Created <strong>{created.username}</strong> as {created.role}. Share their temporary password privately.
-          </p>
+          <p className="notice-title">{message}</p>
         </div>
       )}
 
@@ -78,13 +96,19 @@ function UserManagement() {
                   <th>Status</th>
                   <th>Created</th>
                   <th>Last sign-in</th>
+                  <th>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <tr key={u.id} className={u.id === created?.id ? "highlight" : ""}>
+                  <tr key={u.id} className={u.id === highlightId ? "highlight" : ""}>
                     <td>
-                      <span className="row-title">{u.username}</span>
+                      <span className="row-title">
+                        {u.username}
+                        {u.id === me?.id && <span className="you-tag"> (you)</span>}
+                      </span>
                       <span className="row-sub">{u.email}</span>
                     </td>
                     <td>
@@ -97,6 +121,16 @@ function UserManagement() {
                     <td title={u.lastLogin ? new Date(u.lastLogin).toLocaleString() : undefined}>
                       {u.lastLogin ? timeAgo(u.lastLogin) : <span className="state-message">Never</span>}
                     </td>
+                    <td className="row-actions">
+                      <button
+                        type="button"
+                        className="btn small"
+                        onClick={() => setEditing(u)}
+                        aria-label={`Edit ${u.username}`}
+                      >
+                        Edit
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -106,6 +140,14 @@ function UserManagement() {
       </section>
 
       {dialogOpen && <AddUserDialog onClose={() => setDialogOpen(false)} onCreated={handleCreated} />}
+      {editing && (
+        <EditUserDialog
+          user={editing}
+          isSelf={editing.id === me?.id}
+          onClose={() => setEditing(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
 }

@@ -43,3 +43,9 @@ export const USER_LIMITS = {
   email: { min: 5, max: 255 },
   password: { min: 8, max: 128 },
 } as const;
+
+// Body of PATCH /auth/users/{id} (admin). Send only what changes.
+export interface UserChanges {
+  role?: UserRole;
+  isActive?: boolean;
+}

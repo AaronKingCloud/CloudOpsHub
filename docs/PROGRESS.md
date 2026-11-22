@@ -31,6 +31,21 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-22 — User management screens and history fix (`feature/user-management-ui`) — Tirth
+
+- Screens for pshrestha49's **B7** endpoints (`PATCH /auth/users/{id}`, `POST /auth/me/password`)
+- **Users page:** each row has **Edit** (admins) to change the role or disable / re-enable the account; a message
+  says exactly what changed ("Updated viewer: role viewer → operator."). Your own row is marked "(you)" and locked,
+  matching the backend rule that admins can't demote or disable themselves
+- **Change password** in the top bar for every signed-in user: current, new and confirm; checks length, "same as
+  current" and mismatch before sending, shows the backend's reason for a wrong current password
+- **Device history fix:** a device with a single report showed an empty chart; it now says
+  "One report so far: CPU 12.5% at 18:15. The chart fills in as the agent keeps reporting"
+- Mock mode: user list now returns copies like a real API (the page was holding the mock's own objects, which made
+  the "what changed" message empty); mock password change checks the demo passwords from `seed.py`
+- 7 new tests (65 frontend tests passing). Checked against the real backend: role changed, a disabled user really
+  can't sign in, own account locked, wrong current password rejected, old password stops working after a change
+
 ### 2026-11-22 — Docker: app database on the volume (`fix/docker-app-db-path`) — Tirth, **for Aaron to review**
 
 - Found while checking the new database: `infra/docker/backend.Dockerfile` sets `AUTH_DB_PATH` to `/app/data` but not
