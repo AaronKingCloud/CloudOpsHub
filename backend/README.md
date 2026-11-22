@@ -1,8 +1,8 @@
 # CloudOps Hub — Backend
 
-REST API for the dashboard, built with **Python + FastAPI**.
-It currently serves in-memory mock data (`app/mock_data.py`); a database
-and real metrics collection will replace it later.
+REST API for the dashboard, built with **Python + FastAPI** and **SQLAlchemy**.
+Devices, metric history, and alerts are stored in a SQLite/Postgres database (`DATABASE_URL`);
+cloud accounts still use sample data in `app/mock_data.py`.
 
 ## Run it
 
@@ -20,7 +20,10 @@ python -m venv .venv
 # 3. Install dependencies
 pip install -r requirements-dev.txt
 
-# 4. Start the API with auto-reload
+# 4. Seed demo users + sample devices, metrics and alerts (first time only)
+python -m seed
+
+# 5. Start the API with auto-reload
 fastapi dev app/main.py        # http://localhost:8000
 ```
 
@@ -52,6 +55,8 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | GET    | `/api/dashboard/summary` | Device / alert counts |
 | GET    | `/api/devices`       | List of devices         |
 | GET    | `/api/metrics/cpu`   | CPU time series         |
+| GET    | `/api/metrics/memory` | Memory time series     |
+| GET    | `/api/metrics/storage` | Storage time series   |
 | GET    | `/api/alerts`        | Active alerts           |
 | GET    | `/api/accounts`      | Cloud accounts          |
 | GET    | `/api/billing/summary` | AWS cost summary (cached, requires login) |
@@ -62,6 +67,7 @@ All endpoints are under `/api`. Full shapes: [`docs/api/frontend-contract.md`](.
 | -------------- | ----------------------- | ----------------------------------------- |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated origins allowed to call the API |
 | `APP_ENV`      | `development`           | Set to `production` when deployed          |
+| `DATABASE_URL` | `sqlite:///./cloudopshub.db` | SQLAlchemy database URL for devices, metrics and alerts (SQLite locally, Postgres in RDS) |
 | `JWT_SECRET`   | dev-only placeholder    | Token signing key. **Required** when `APP_ENV=production`; the backend refuses to start without it |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30`     | Access token lifetime (the frontend refreshes it automatically) |
 | `REFRESH_TOKEN_EXPIRE_DAYS`   | `7`      | How long a user stays signed in        |

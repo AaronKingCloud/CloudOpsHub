@@ -59,7 +59,7 @@ These block almost everything else. Do them first.
 
 | # | Task | Size | Depends on | Done when |
 | --- | --- | --- | --- | --- |
-| B1 | Real database for devices, metric history and alerts; replace `mock_data.py` | L | 0.2 | Dashboard data survives a restart; sample data only in tests |
+| B1 | ✅ **Done 2026-11-21** (`feature/database`). Real database for devices, metric history and alerts; replace `mock_data.py` | L | 0.2 | Dashboard data survives a restart; sample data only in tests |
 | B2 | Device / asset API: add, edit, delete devices (servers, VMs, containers, NAS, services) | M | B1 | Devices can be managed through the API |
 | B3 | Metrics agent: small Python script (psutil) on a device that sends CPU, memory, disk and uptime every minute with a per-device key | L | B1, B2 | A homelab VM shows real numbers on the dashboard |
 | B4 | Alert engine: offline after X minutes, storage > 90%, CPU/memory thresholds; alerts open and resolve automatically; operator can acknowledge | M | B3 | Stopping the agent raises "device offline" |

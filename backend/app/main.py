@@ -5,12 +5,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.database import init_db
+from app.database import init_app_db
 from app.routers import dashboard, resources, aws, auth, billing
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    init_app_db()
     yield
 
 
