@@ -31,6 +31,17 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-22 — Docker: app database on the volume (`fix/docker-app-db-path`) — Tirth, **for Aaron to review**
+
+- Found while checking the new database: `infra/docker/backend.Dockerfile` sets `AUTH_DB_PATH` to `/app/data` but not
+  `DATABASE_URL`, so the devices/metrics/alerts database defaults to `/app/cloudopshub.db`. `/app` isn't writable for
+  `appuser`, so the backend would fail on startup (same problem as PR #32), and the data would not be on the volume
+- The Docker files predate B1, so this combination was never run. The EC2 dev server still runs the older code and works,
+  but **the next rebuild or deploy would hit this**
+- Fix: one line, `DATABASE_URL=sqlite:////app/data/cloudopshub.db` (four slashes = absolute path; checked with SQLAlchemy)
+- Not run in Docker (Docker isn't installed on my machine). Aaron: please `docker compose up --build`, seed, sign in,
+  add a device, `down`/`up`, and confirm the device is still there before merging
+
 ### 2026-11-22 — Backups cover the new database (`ops/backup-app-db`) — Tirth
 
 - Track C task **C7**. Since B1, devices, metric history, alerts and agent key hashes live in a second database
