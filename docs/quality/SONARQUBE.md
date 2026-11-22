@@ -19,6 +19,8 @@ Coverage on 2026-11-22: backend **96 %**, frontend **73 %** (lines).
 
 ## One-time setup (needs the repo owner, Aaron)
 
+**Done by Aaron on 2026-11-22.** The steps are kept here in case it ever needs redoing.
+
 The repo belongs to the `AaronKingCloud` account, so the SonarCloud import and the secret need that
 account (collaborators can't add repository secrets).
 

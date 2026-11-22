@@ -15,22 +15,33 @@ Updated 2026-11-22. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 | Frontend            | ✅ 7 pages + device page, roles, user management; works on mock or real data |
 | Backend             | ✅ Real database, device API, metrics agent, alert engine, notifications, login everywhere |
 | Authentication/RBAC | ✅ JWT, roles, lockout, password change, disable users                  |
-| Tests / quality     | ✅ 90 backend + 65 frontend tests; coverage 96 % / 73 %; security scans; 🟡 SonarCloud ready, needs setup (C9) |
+| Tests / quality     | ✅ 90 backend + 65 frontend tests; coverage 96 % / 73 %; security scans; ✅ SonarCloud set up by Aaron (C9) |
 | CI/CD               | 🟡 CI on every PR; no CD yet (A4)                                       |
-| Docker              | ✅ Tested end to end; app-database path fix waiting for Aaron's check   |
+| Docker              | ✅ Tested end to end; app-database path fix verified by Aaron (`fix/docker-app-db-path`) |
 | Cloud (AWS)         | 🟡 Terraform foundation + dev EC2 running; persistent storage, CD, HTTPS, monitoring to do (A3–A6) |
 | Disaster recovery   | 🟡 Both databases backed up, local drill passed; cloud drill after A3   |
 
 ## Next Up
 
-- **Aaron:** A3 persistent `/app/data`, A4 CD, A5 HTTPS, A6 monitoring; review `fix/docker-app-db-path`
-- **Aaron:** SonarCloud one-time setup (C9, `docs/quality/SONARQUBE.md`)
+- **Aaron:** A3 persistent `/app/data`, A4 CD, A5 HTTPS, A6 monitoring; FR-8 wording in the requirements spec
+- **Everyone:** look at the SonarCloud issues in the files you own
 - **Tirth:** cloud DR drill once A3 is done
-- **Team:** decide FR-8 (who manages devices: admins only today); end-to-end demo (F1), report, slides, video (F2)
+- **Team:** end-to-end demo (F1), report, slides, video (F2)
 
 ---
 
 ## Log
+
+### 2026-11-22 — Docker fix verified, FR-8 decided, SonarCloud set up (`ci/sonarcloud`) — Tirth
+- **Aaron checked `fix/docker-app-db-path` in Docker** and it passed:
+  - `compose up` is healthy, seeded, signed in, added a device
+  - after `down` and `up` the device is still there
+  - both databases are in `/app/data` on the volume
+- **Aaron also found that `main` is broken in Docker right now:** the backend crashes with "unable to open database file". So that PR merges first.
+- **FR-8 decided:** admins add, edit and delete devices, and operators acknowledge and resolve alerts. This is how the app already works, and it matches B5.
+  - Aaron is fixing the requirements spec, which wrongly says operators manage devices.
+- **SonarCloud set up by Aaron (C9).** The scan starts working once this branch is merged: you get the Quality Gate and coverage (about 96 % backend, 73 % frontend).
+  - The first automatic run found 39 issues, probably mostly small style warnings. Each person looks at the ones in the files they own.
 
 ### 2026-11-22 — SonarQube (SonarCloud) code-quality scan (`ci/sonarcloud`) — Tirth
 
