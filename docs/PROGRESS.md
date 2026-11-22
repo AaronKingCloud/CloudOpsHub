@@ -34,6 +34,15 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-21 — Metrics agent and ingestion endpoint (`feature/metrics-agent`) — pshrestha49
+
+- Task **B3** from `docs/REMAINING_WORK.md`
+- Added `POST /api/agent/metrics` (`backend/app/routers/agent.py`) authenticated by per-device `X-Agent-Key` hash (no user login); sets the device `online`, updates current CPU/memory/storage and `lastSeen`, and appends a `MetricModel` history point
+- Added shared `app/device_status.py` (`AGENT_OFFLINE_SECONDS`, default `180` s = 3 missed reports) so `/api/devices`, `/api/devices/{id}`, `/api/dashboard/summary`, and overview metrics treat stale devices as `offline`
+- Created `agent/cloudops_agent.py` and `agent/requirements.txt` (`psutil`, `requests`) supporting `--server`, `--key` / `--key-file`, `--interval` (default 60 s), and `--once`; retries quietly when the server is down and prints a clear error on `401`
+- Added 7 tests in `backend/tests/test_agent.py`, updated `docs/agent/INSTALL.md` and `backend/README.md`, and verified live end-to-end against local Uvicorn with `cloudops_agent.py --once` + `pytest -q` (75 passed)
+- For Tirth: `C4` agent setup screens and `docs/agent/INSTALL.md` commands match the implemented script
+
 ### 2026-11-21 — Device API (`feature/device-api`) — pshrestha49
 
 - Task **B2** from `docs/REMAINING_WORK.md`

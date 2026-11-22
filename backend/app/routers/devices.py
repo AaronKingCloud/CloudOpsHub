@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user, require_role
 from app.database import get_db
+from app.device_status import effective_device_status, to_utc
 from app.models import DeviceModel, MetricModel
 from app.schemas import (
     AgentKeyResponse,
@@ -35,24 +36,18 @@ def generate_agent_key() -> tuple[str, str]:
     return plain, hash_agent_key(plain)
 
 
-def _to_utc(dt: datetime) -> datetime:
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
-
-
 def _serialize_device(d: DeviceModel) -> Device:
     return Device(
         id=d.id,
         hostname=d.hostname,
-        status=d.status,
+        status=effective_device_status(d),
         cpu=round(d.cpu),
         memory=round(d.memory),
         storage=round(d.storage),
         type=d.type,
         ip_address=d.ip_address,
         description=d.description,
-        last_seen=_to_utc(d.last_seen).isoformat() if d.last_seen is not None else None,
+        last_seen=to_utc(d.last_seen).isoformat() if d.last_seen is not None else None,
     )
 
 
@@ -189,7 +184,7 @@ def get_device_metrics(
     use_hourly = hours > 24
 
     for raw_ts, value in rows:
-        ts = _to_utc(raw_ts)
+        ts = to_utc(raw_ts)
         if ts < cutoff:
             continue
         if use_hourly:

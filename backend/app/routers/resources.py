@@ -1,13 +1,14 @@
 """List endpoints for alerts, accounts and overview metrics."""
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.device_status import is_device_online
 from app.mock_data import ACCOUNTS
 from app.models import AlertModel, DeviceModel, MetricModel
 from app.schemas import Account, Alert, MetricPoint
@@ -17,11 +18,16 @@ router = APIRouter()
 
 def _overview_metrics(db: Session, field: str) -> list[MetricPoint]:
     """Average a metric across all online devices grouped into 5-minute buckets."""
+    now = datetime.now(timezone.utc)
+    devices = db.scalars(select(DeviceModel)).all()
+    online_ids = [d.id for d in devices if is_device_online(d, now)]
+    if not online_ids:
+        return []
+
     metric_col = getattr(MetricModel, field)
     rows = db.execute(
         select(MetricModel.timestamp, metric_col)
-        .join(DeviceModel, MetricModel.device_id == DeviceModel.id)
-        .where(DeviceModel.status == "online")
+        .where(MetricModel.device_id.in_(online_ids))
         .order_by(MetricModel.timestamp.asc())
     ).all()
 

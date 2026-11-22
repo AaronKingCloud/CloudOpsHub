@@ -104,3 +104,10 @@ class BillingSummary(CamelModel):
     period_end: str
     service_breakdown: list[ServiceCost]
     source: Literal["aws", "mock"]
+
+
+class AgentMetricReport(CamelModel):
+    cpu: float = Field(ge=0, le=100)
+    memory: float = Field(ge=0, le=100)
+    storage: float = Field(ge=0, le=100)
+    uptime_seconds: float | None = Field(default=None, ge=0)
