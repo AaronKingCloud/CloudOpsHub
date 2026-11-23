@@ -54,7 +54,7 @@ Per risk **R001 (scope creep)**, anything not needed for that story is *Should*,
 
 | ID | Requirement | Priority | Status | Maps to |
 | --- | --- | --- | --- | --- |
-| FR-8 | Operators can add, edit and delete devices of type server, VM, container, NAS or service | MVP | 🟡 admins only (spec says operators): team to decide | B2, C1 |
+| FR-8 | Admins can add, edit and delete devices of type server, VM, container, NAS or service | MVP | ✅ | B2, C1 |
 | FR-9 | Each device shows status (online / offline), CPU %, memory %, storage % and last-seen time | MVP | ✅ | B1, B3 |
 | FR-10 | A device detail page shows that device's metric history as charts | MVP | ✅ | B1, C1 |
 
@@ -63,7 +63,7 @@ Per risk **R001 (scope creep)**, anything not needed for that story is *Should*,
 | ID | Requirement | Priority | Status | Maps to |
 | --- | --- | --- | --- | --- |
 | FR-11 | An agent installed on a Linux device sends CPU, memory, disk and uptime **every 60 seconds**, authenticated with a per-device key | MVP | ✅ (tested on Windows; Linux at the demo) | B3, C4 |
-| FR-12 | Metric history and device data are stored in a database and survive a backend restart or redeploy | MVP | 🟡 survives restarts; redeploy needs persistent `/app/data` (A3) | B1, A3 |
+| FR-12 | Metric history and device data are stored in a database and survive a backend restart or redeploy | MVP | ✅ on a separate disk (A3) | B1, A3 |
 | FR-13 | The overview shows online, offline and total devices, active alerts, and CPU / memory / storage charts | MVP | ✅ | B1 (screen done) |
 | FR-14 | The dashboard refreshes automatically (default every 30 s) and can be refreshed manually | Should | ✅ | Frontend (done) |
 
@@ -97,11 +97,11 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 
 | ID | Requirement | Status | Maps to |
 | --- | --- | --- | --- |
-| NFR-S1 | All traffic to the deployed site uses **HTTPS**; HTTP redirects to HTTPS | ⬜ | A5 |
+| NFR-S1 | All traffic to the deployed site uses **HTTPS**; HTTP redirects to HTTPS | ✅ | A5 |
 | NFR-S2 | Passwords are stored only as bcrypt hashes | ✅ | Auth (done) |
 | NFR-S3 | Access tokens expire after **30 min**, refresh tokens after **7 days**; the deployed backend refuses to start with the development signing key | ✅ | Auth, A2/A3 (`APP_ENV=production`) |
 | NFR-S4 | **No secrets in Git**: every push is scanned (gitleaks) and fails on a finding; deployed secrets live in SSM Parameter Store / Secrets Manager | ✅ | C6, A2 |
-| NFR-S5 | **No long-lived AWS keys** in the cloud or in GitHub: the server uses an IAM role, CD uses GitHub OIDC; every AWS permission is read-only and listed in `docs/architecture/aws-integration.md` | 🟡 role done, CD pending | A2, A4 |
+| NFR-S5 | **No long-lived AWS keys** in the cloud or in GitHub: the server uses an IAM role, CD uses GitHub OIDC; every AWS permission is read-only and listed in `docs/architecture/aws-integration.md` | ✅ | A2, A4 |
 | NFR-S6 | Dependency audits block the build on any **high or critical** vulnerability (npm) / any known vulnerability (pip) | ✅ | C6 |
 | NFR-S7 | Only the web port is reachable from the internet; the API container, database and SSH are not exposed (admin access via SSM Session Manager) | ✅ | A2 |
 | NFR-S8 | Browser security headers on every page (CSP without inline scripts, `X-Frame-Options: DENY`, `nosniff`, `no-referrer`) | ✅ | C6, A1 |
@@ -111,11 +111,11 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 
 | ID | Requirement | Status | Maps to |
 | --- | --- | --- | --- |
-| NFR-A1 | **RTO ≤ 30 min**: the service can be fully restored within 30 minutes of a failure | 🟡 local drill passed (both databases, 3.7 s); cloud drill needs A3 | C7, A3 |
-| NFR-A2 | **RPO ≤ 24 h** now (daily backups); **≤ 5 min** once the managed cloud database exists | 🟡 | C7, B1, A3 |
+| NFR-A1 | **RTO ≤ 30 min**: the service can be fully restored within 30 minutes of a failure | 🟡 local drill passed (both databases, 3.7 s); cloud drill ready to run | C7, A3 |
+| NFR-A2 | **RPO ≤ 24 h** now (daily backups); **≤ 5 min** once the managed cloud database exists | 🟡 daily cloud snapshots set up (A3); cloud drill to confirm | C7, B1, A3 |
 | NFR-A3 | Containers restart automatically after a crash or server reboot; each exposes a health check (`GET /health`) | ✅ | A1 |
-| NFR-A4 | If `/health` fails, the team gets an email alarm **within 5 minutes** | ⬜ | A6 |
-| NFR-A5 | A failed deployment leaves the previous version running | ⬜ | A4 |
+| NFR-A4 | If `/health` fails, the team gets an email alarm **within 5 minutes** | ✅ tested, 4 min | A6 |
+| NFR-A5 | A failed deployment leaves the previous version running | ✅ rollback tested | A4 |
 | NFR-A6 | MVP runs as a **single instance** (no high-availability guarantee); recovery is covered by NFR-A1 | ✅ by design | 0.2 decision |
 
 ### Cost
@@ -140,10 +140,10 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 | ID | Requirement | Status | Maps to |
 | --- | --- | --- | --- |
 | NFR-M1 | Every pull request runs lint, type-check, tests and security scans; nothing merges with a failing check | ✅ | CI, C5, C6 |
-| NFR-M2 | Every PR is approved by one other team member before merge, and adds a `docs/PROGRESS.md` entry | 🟡 rule agreed, not enforced in GitHub | Team process |
+| NFR-M2 | Every PR is approved by one other team member before merge, and adds a `docs/PROGRESS.md` entry | ✅ approval enforced by branch protection on `main` | Team process |
 | NFR-M3 | **All** cloud resources are created by Terraform with remote state; no hand-made resources | 🟡 | A2, A3 |
-| NFR-M4 | Merging to `main` deploys automatically | ⬜ | A4 |
-| NFR-M5 | Code quality scanned with **SonarQube** on every PR | 🟡 workflow ready; needs SonarCloud setup by the repo owner (docs/quality/SONARQUBE.md) | Professor requirement; Tirth (CI owner) |
+| NFR-M4 | Merging to `main` deploys automatically | ✅ | A4 |
+| NFR-M5 | Code quality scanned with **SonarQube** on every PR | ✅ (docs/quality/SONARQUBE.md) | Professor requirement; Tirth (CI owner) |
 
 ### Usability and compatibility
 

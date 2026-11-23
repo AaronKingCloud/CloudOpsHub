@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { changeOwnPassword } from "../../services/userService";
 import { USER_LIMITS } from "../../types/Auth";
 import { getErrorMessage } from "../../utils/errors";
+import Modal from "../Modal";
 
 interface ChangePasswordDialogProps {
   onClose: () => void;
@@ -16,12 +17,12 @@ function ChangePasswordDialog({ onClose }: ChangePasswordDialogProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const doneButton = useRef<HTMLButtonElement>(null);
 
+  // The form is replaced by a confirmation; move focus to its button instead of losing it.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    if (done) doneButton.current?.focus();
+  }, [done]);
 
   const update = (field: Field, value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
@@ -62,7 +63,6 @@ function ChangePasswordDialog({ onClose }: ChangePasswordDialogProps) {
         id={`password-${name}`}
         type="password"
         autoComplete={autoComplete}
-        autoFocus={name === "current"}
         value={values[name]}
         onChange={(e) => update(name, e.target.value)}
         aria-invalid={!!errors[name]}
@@ -76,56 +76,48 @@ function ChangePasswordDialog({ onClose }: ChangePasswordDialogProps) {
   );
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-dialog panel form-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="password-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="panel-header">
-          <h2 id="password-title">Change password</h2>
-          <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
+    <Modal className="panel form-dialog" labelledBy="password-title" onClose={onClose}>
+      <div className="panel-header">
+        <h2 id="password-title">Change password</h2>
+        <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      </div>
 
-        {done ? (
-          <>
-            <div className="notice ok" role="status">
-              <p className="notice-title">Password changed. Use the new one next time you sign in.</p>
+      {done ? (
+        <>
+          <div className="notice ok" role="status">
+            <p className="notice-title">Password changed. Use the new one next time you sign in.</p>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn primary" onClick={onClose} ref={doneButton}>
+              Done
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          {serverError && (
+            <div className="notice warn" role="alert">
+              <p className="notice-title">{serverError}</p>
             </div>
+          )}
+          <form className="stack-form" onSubmit={handleSubmit} noValidate>
+            {field("current", "Current password", "current-password")}
+            {field("next", "New password", "new-password", `At least ${USER_LIMITS.password.min} characters.`)}
+            {field("confirm", "Confirm new password", "new-password")}
             <div className="form-actions">
-              <button type="button" className="btn primary" onClick={onClose} autoFocus>
-                Done
+              <button type="button" className="btn" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="submit" className="btn primary" disabled={saving}>
+                {saving ? "Saving…" : "Change password"}
               </button>
             </div>
-          </>
-        ) : (
-          <>
-            {serverError && (
-              <div className="notice warn" role="alert">
-                <p className="notice-title">{serverError}</p>
-              </div>
-            )}
-            <form className="stack-form" onSubmit={handleSubmit} noValidate>
-              {field("current", "Current password", "current-password")}
-              {field("next", "New password", "new-password", `At least ${USER_LIMITS.password.min} characters.`)}
-              {field("confirm", "Confirm new password", "new-password")}
-              <div className="form-actions">
-                <button type="button" className="btn" onClick={onClose}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn primary" disabled={saving}>
-                  {saving ? "Saving…" : "Change password"}
-                </button>
-              </div>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+          </form>
+        </>
+      )}
+    </Modal>
   );
 }
 

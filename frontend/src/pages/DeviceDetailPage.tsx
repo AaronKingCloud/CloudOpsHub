@@ -44,7 +44,7 @@ function DeviceDetailPage() {
   // browser history so a reload doesn't show it again.
   const [agentKey] = useState(() => (location.state as LocationState | null)?.agentKey);
   useEffect(() => {
-    if (location.state) navigate(location.pathname, { replace: true, state: null });
+    if (location.state) void navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
 
   const fetchDevice = useCallback(() => getDevice(id), [id]);

@@ -96,10 +96,14 @@ GitHub Actions runs automatically on every Pull Request:
 | Frontend CI   | `frontend/**`        | `npm run lint`, `npm test`, `npm run build` |
 | Backend CI    | `backend/**`         | `pytest`                        |
 | Security      | every push and PR    | `npm audit`, `pip-audit`, secret scan (gitleaks) |
-| SonarCloud    | every push and PR    | tests with coverage, then code quality + Quality Gate (once set up, see `docs/quality/SONARQUBE.md`) |
+| SonarCloud    | every push and PR    | tests with coverage, then code quality + Quality Gate (see `docs/quality/SONARQUBE.md`) |
+| Deploy        | every merge to `main` | builds the images and deploys them to the live site (rolls back if unhealthy) |
 
 A red ❌ on your PR means a check failed. Click **Details** to see the log, fix it,
 and push again. Please don't merge PRs with failing checks.
+
+**`main` is protected:** a PR needs 1 approval from someone else and green Security checks before it can merge.
+Merging deploys to the live site, so merge only what is ready.
 
 ## 6. Where things live
 

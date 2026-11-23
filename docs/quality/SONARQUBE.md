@@ -15,7 +15,7 @@ On every push and every PR, `.github/workflows/sonarcloud.yml`:
 
 Settings: `sonar-project.properties` (what is analysed, where the coverage reports are, what is excluded).
 
-Coverage on 2026-11-22: backend **96 %**, frontend **73 %** (lines).
+Coverage on 2026-11-23: backend **96 %**, frontend **73 %** (lines).
 
 ## One-time setup (needs the repo owner, Aaron)
 
@@ -38,8 +38,11 @@ account (collaborators can't add repository secrets).
    **SonarCloud Code Analysis** check.
 7. *(Optional)* **Settings → Branches → Branch protection** for `main`: require the SonarCloud check.
 
-Until step 5 is done, the workflow still runs the tests but **skips the scan with a notice**, so nobody's
-PR fails because SonarCloud isn't set up yet. Dependabot PRs can't read secrets, so they skip the scan too.
+Without the token the workflow still runs the tests but **skips the scan with a notice**. Dependabot PRs can't
+read secrets, so they skip the scan.
+
+The job installs Python packages from `backend/requirements-ci.lock` (exact versions + hashes). After changing
+`requirements.txt` or `requirements-dev.txt`, regenerate it with the command at the top of that file.
 
 ## Reading the results
 

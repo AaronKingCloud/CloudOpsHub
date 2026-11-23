@@ -1,5 +1,6 @@
 import type { Account } from "../types/Account";
 import { accountTone } from "../utils/status";
+import Modal from "./Modal";
 import StatusBadge from "./StatusBadge";
 
 interface AccountDetailModalProps {
@@ -15,45 +16,43 @@ const STATUS_GUIDANCE: Record<Account["status"], string> = {
 
 export default function AccountDetailModal({ account, onClose }: AccountDetailModalProps) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-dialog panel" onClick={(e) => e.stopPropagation()}>
-        <div className="account-modal-header">
+    <Modal className="panel" labelledBy="account-title" onClose={onClose}>
+      <div className="account-modal-header">
+        <div>
+          <h2 id="account-title">{account.accountName}</h2>
+          <span className="billing-period">
+            {account.provider} Environment • ID #{account.id}
+          </span>
+        </div>
+        <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      </div>
+
+      <div className="account-detail-grid">
+        <div className="account-detail-item">
+          <span className="label">Provider</span>
+          <strong>{account.provider}</strong>
+        </div>
+        <div className="account-detail-item">
+          <span className="label">Health Status</span>
           <div>
-            <h2>{account.accountName}</h2>
-            <span className="billing-period">
-              {account.provider} Environment • ID #{account.id}
-            </span>
-          </div>
-          <button type="button" className="modal-close-btn" onClick={onClose} title="Close">
-            ✕
-          </button>
-        </div>
-
-        <div className="account-detail-grid">
-          <div className="account-detail-item">
-            <span className="label">Provider</span>
-            <strong>{account.provider}</strong>
-          </div>
-          <div className="account-detail-item">
-            <span className="label">Health Status</span>
-            <div>
-              <StatusBadge label={account.status} tone={accountTone(account.status)} />
-            </div>
-          </div>
-          <div className="account-detail-item">
-            <span className="label">Active Alerts</span>
-            <strong>{account.alertCount}</strong>
-          </div>
-          <div className="account-detail-item">
-            <span className="label">Last Synced</span>
-            <strong>{account.lastUpdated}</strong>
+            <StatusBadge label={account.status} tone={accountTone(account.status)} />
           </div>
         </div>
-
-        <div className="account-guidance">
-          {STATUS_GUIDANCE[account.status]}
+        <div className="account-detail-item">
+          <span className="label">Active Alerts</span>
+          <strong>{account.alertCount}</strong>
+        </div>
+        <div className="account-detail-item">
+          <span className="label">Last Synced</span>
+          <strong>{account.lastUpdated}</strong>
         </div>
       </div>
-    </div>
+
+      <div className="account-guidance">
+        {STATUS_GUIDANCE[account.status]}
+      </div>
+    </Modal>
   );
 }

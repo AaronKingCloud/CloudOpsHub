@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import type { UserRole } from "../types/Auth";
 import LoginPage from "./LoginPage";
+import Modal from "./Modal";
 import ChangePasswordDialog from "./users/ChangePasswordDialog";
 
 const ROLE_BADGES: Record<UserRole, { label: string; toneClass: string }> = {
@@ -60,11 +61,9 @@ export default function UserNav() {
       {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <LoginPage onClose={() => setShowModal(false)} />
-          </div>
-        </div>
+        <Modal label="Sign in" onClose={() => setShowModal(false)}>
+          <LoginPage onClose={() => setShowModal(false)} />
+        </Modal>
       )}
     </>
   );

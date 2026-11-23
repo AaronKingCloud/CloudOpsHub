@@ -25,7 +25,14 @@ function AppLayout() {
     <RefreshProvider>
       <div className="app-shell">
         <Sidebar open={drawerOpen} onNavigate={() => setDrawerOpen(false)} />
-        {drawerOpen && <div className="drawer-backdrop" onClick={() => setDrawerOpen(false)} />}
+        {drawerOpen && (
+          <button
+            type="button"
+            className="drawer-backdrop"
+            aria-label="Close menu"
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
 
         <div className="app-main">
           <TopBar title={title} onMenuClick={() => setDrawerOpen(true)} />

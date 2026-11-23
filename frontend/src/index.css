@@ -301,9 +301,18 @@ tr:last-child td {
 
 /* ---------- Modal Overlay ---------- */
 
+/* A native <dialog> stretched over the whole screen (components/Modal.tsx); the panel sits inside it. */
 .modal-overlay {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  color: inherit;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(2px);
   display: flex;
@@ -311,6 +320,10 @@ tr:last-child td {
   justify-content: center;
   z-index: 1000;
   padding: 16px;
+}
+
+.modal-overlay::backdrop {
+  background: transparent;
 }
 
 .modal-dialog {

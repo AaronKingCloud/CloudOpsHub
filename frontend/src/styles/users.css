@@ -132,7 +132,7 @@ tr.highlight td {
 
 /* Edit user / change password */
 
-.check-row {
+.stack-form > .check-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -142,12 +142,12 @@ tr.highlight td {
   cursor: pointer;
 }
 
-.check-row input {
+.stack-form > .check-row input {
   margin-top: 3px;
   accent-color: var(--accent);
 }
 
-.check-row span {
+.stack-form > .check-row span {
   display: grid;
   gap: 2px;
 }

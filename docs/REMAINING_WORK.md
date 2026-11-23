@@ -4,7 +4,7 @@ Everything left to finish CloudOps Hub, split into three tracks so the team can 
 Owners are a **suggestion** based on what each person has built so far. Swap freely, then put your
 name next to the task in your PR and log it in `docs/PROGRESS.md`.
 
-Last updated: 2026-11-20
+Last updated: 2026-11-23
 
 **Size:** S = about a day · M = 2–4 days · L = a week or more (rough estimates)
 
@@ -14,17 +14,14 @@ Last updated: 2026-11-20
 
 | Area | Status |
 | --- | --- |
-| Planning docs (charter, risk register, SWOT) | ✅ Done |
-| Frontend: 6 pages, charts, login, roles, themes, mobile | ✅ Done (merged, PRs #14–#15) |
-| Backend API + 35 tests | ✅ Done, but dashboard data is **sample data** |
-| Login, JWT, roles, user management | ✅ Done |
+| Planning docs, requirements spec | ✅ Done |
+| Frontend: 7 pages + device page, charts, roles, user management, themes, mobile | ✅ Done |
+| Backend: database, device API, agent, alert engine, notifications, login everywhere | ✅ Done (90 tests) |
 | Live AWS: account, EC2, CloudWatch CPU, cost | ✅ Done |
-| CI on pull requests | ✅ Done |
-| Docker | 🟡 Written, never run |
-| Real metrics collection, database, alert engine | ⬜ Not started |
-| Terraform, deployment, CD | ⬜ Not started |
-| Security validation, DR testing, frontend tests | ⬜ Not started |
-| Requirements spec, final report, demo | ⬜ Not started |
+| CI, security scans, SonarCloud, frontend tests (70) | ✅ Done |
+| Docker, Terraform, deployment, CD, HTTPS, monitoring | ✅ Done, live on AWS |
+| Disaster recovery | 🟡 Local drill passed; cloud drill ready to run (C7) |
+| End-to-end demo, final report, slides, video | ⬜ Not started (F1, F2) |
 
 ---
 
@@ -36,7 +33,7 @@ These block almost everything else. Do them first.
 | --- | --- | --- | --- |
 | 0.1 | ✅ **Done 2026-11-20.** Merge the 5 open frontend PRs, in order: `fix/auth-and-docs-cleanup` → `feature/frontend-app-shell` → `feature/frontend-aws-page` → `feature/frontend-admin-users` → `feature/frontend-dashboard-polish` ("Create a merge commit") | Tirth | S |
 | 0.2 | ✅ **Decided 2026-11-20** (proposed by Aaron, no objections; recorded at the top of `infra/terraform/README.md`): AWS, account Console Dot Dream in us-east-2, one EC2 instance with Docker Compose, SQLite on a persistent disk (B1 kept SQLite). **Team decisions** (one meeting): cloud provider (AWS or Azure); which AWS account (Free plan blocks listing EC2 from code); hosting (ECS Fargate, App Runner or EC2); database (RDS Postgres or DynamoDB); how real metrics are collected (agent on devices, cloud APIs, or both); MVP scope | All | S |
-| 0.3 | ✅ **Done 2026-11-22** (`docs/requirements-spec`, #35): `docs/requirements/REQUIREMENTS.md` (status column refresh pending in #47). Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
+| 0.3 | ✅ **Done 2026-11-22** (`docs/requirements-spec`, #35): `docs/requirements/REQUIREMENTS.md` (status column kept current). Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
 
 ---
 
@@ -79,9 +76,9 @@ These block almost everything else. Do them first.
 | C4 | ✅ **Done 2026-11-22**: real agent reported using the key and command from the device page (B3). Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
 | C5 | ✅ **Done 2026-11-20** (`test/frontend-tests`). Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
 | C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
-| C7 | 🟡 **Local part done 2026-11-22**: backup/restore tool covers both databases + passed drill with both lost (`docs/operations/DISASTER_RECOVERY.md`); cloud drill needs A3 (persistent `/app/data`). Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
-| C8 | ✅ **Done 2026-11-22**: guide updated to real data + AWS deployment diagram (Figure 11); refresh it after A3–A5 change the setup. Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
-| C9 | ✅ **Done 2026-11-22**: workflow, config and coverage (`ci/sonarcloud`); Aaron imported the repo in SonarCloud and added the `SONAR_TOKEN` secret. The scan runs once `ci/sonarcloud` is merged; the 39 issues from the first run go to each file's owner. SonarQube / SonarCloud code-quality scan on every PR (NFR-M5, professor requirement): scanner config + CI job + coverage; needs a SonarCloud project and `SONAR_TOKEN` secret | S | – | Every PR shows a SonarCloud quality-gate check |
+| C7 | 🟡 **Local part done 2026-11-22**: backup/restore tool covers both databases + passed drill with both lost (`docs/operations/DISASTER_RECOVERY.md`); A3 is done, so the **cloud drill is ready to run** (steps in the same doc, with Aaron). Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
+| C8 | ✅ **Done 2026-11-22**: guide updated to real data + AWS deployment diagram (Figure 11, redrawn 2026-11-23 for A3–A6). Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
+| C9 | ✅ **Done 2026-11-22**: workflow, config and coverage (`ci/sonarcloud`); Aaron imported the repo in SonarCloud and added the `SONAR_TOKEN` secret. The 39 issues from the first run on `main` go to each file's owner. SonarQube / SonarCloud code-quality scan on every PR (NFR-M5, professor requirement): scanner config + CI job + coverage; needs a SonarCloud project and `SONAR_TOKEN` secret | S | – | Every PR shows a SonarCloud quality-gate check |
 
 ---
 

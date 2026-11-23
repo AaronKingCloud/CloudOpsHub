@@ -32,12 +32,12 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: backend/requirements*.txt
+          cache-dependency-path: backend/requirements-ci.lock
 
       - name: Frontend tests with coverage
         working-directory: frontend
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run test:coverage
           # Report paths are relative to frontend/; SonarCloud needs them relative to the repo root.
           sed -i 's#^SF:src/#SF:frontend/src/#' coverage/lcov.info
@@ -45,12 +45,13 @@ jobs:
       - name: Backend tests with coverage
         working-directory: backend
         run: |
-          pip install -r requirements-dev.txt
+          # Exact versions + hashes, prebuilt wheels only: no package code runs during installation.
+          pip install --only-binary :all: --require-hashes -r requirements-ci.lock
           pytest -q --cov=app --cov=scripts --cov-report=xml:coverage.xml
 
       - name: SonarCloud scan
         if: env.SONAR_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v8.4.1
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
 
       - name: SonarCloud not set up yet
         if: env.SONAR_TOKEN == ''

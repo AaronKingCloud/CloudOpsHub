@@ -10,7 +10,7 @@ through a unified interface.
 
 ## Project Status
 
-🚀 MVP: feature-complete, deploying to AWS (see `docs/PROGRESS.md`)
+🚀 MVP: feature-complete and live on AWS (see `docs/PROGRESS.md`)
 
 CloudOps Hub is currently being developed as a capstone project
 for the Cloud Architecture and Administration program at Seneca.
@@ -177,8 +177,8 @@ Project planning documentation can be found in:
 | Backend        | Python 3.13, FastAPI, SQLAlchemy (SQLite / Postgres) |
 | Agent          | Python, psutil (`agent/`)                    |
 | Containers     | Docker, docker-compose                       |
-| CI/CD          | GitHub Actions                               |
-| Infrastructure | Terraform, AWS (EC2, S3 state, SSM, Budgets) |
+| CI/CD          | GitHub Actions, SonarCloud, ECR, OIDC deploys |
+| Infrastructure | Terraform, AWS (EC2, CloudFront, EBS, SSM, CloudWatch, SNS, Budgets) |
 
 ## AWS Integration
 
@@ -217,11 +217,13 @@ GET /api/billing/summary
 - [x] Proof of concept
 - [x] Real database, device API, metrics agent and alert engine
 - [x] Infrastructure as Code (Terraform foundation + dev environment)
-- [ ] CD (automated deployment)
-- [ ] MVP deployment
-- [ ] Monitoring and observability
+- [x] CD (automated deployment)
+- [x] MVP deployment
+- [x] Monitoring and observability
 - [x] Security validation (OWASP checklist, scans, lockout)
-- [x] Disaster recovery testing (local; cloud drill after persistent storage)
+- [x] Disaster recovery testing (local drill passed)
+- [ ] Cloud restore drill
+- [ ] End-to-end demo, final report and video
 
 ## Disclaimer
 
