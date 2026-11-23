@@ -125,6 +125,7 @@ resource "aws_instance" "app" {
     tag_param      = aws_ssm_parameter.image_tag.name
     ecr_registry   = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
     site_url       = local.site_url
+    log_prefix     = "/cloudopshub/dev" # log groups in monitoring.tf
   })
   # The boot script only runs on first boot, so a changed script means a fresh server.
   # Safe since A3: the data lives on the separate volume (storage.tf), not on this server.
@@ -149,6 +150,9 @@ resource "aws_instance" "app" {
     # A new Ubuntu AMI is published often; don't replace the server every time.
     ignore_changes = [ami]
   }
+
+  # The containers log to these groups at startup (awslogs driver), so they and the permission must exist first
+  depends_on = [aws_cloudwatch_log_group.app, aws_iam_role_policy.server_monitoring]
 }
 
 # The address exists on its own and is attached separately, so CloudFront (https.tf) can point at it

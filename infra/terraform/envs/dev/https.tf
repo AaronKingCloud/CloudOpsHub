@@ -67,8 +67,9 @@ resource "aws_cloudfront_distribution" "app" {
   }
 
   viewer_certificate {
+    # The *.cloudfront.net certificate's TLS settings are managed by AWS (a minimum version
+    # can only be set with a custom domain certificate).
     cloudfront_default_certificate = true
-    minimum_protocol_version       = "TLSv1.2_2021" # ignored with the default certificate (AWS manages it)
   }
 }
 
