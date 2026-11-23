@@ -117,15 +117,16 @@ resource "aws_instance" "app" {
   iam_instance_profile   = module.iam.instance_profile_name
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    repo_url       = var.repo_url
-    git_ref        = var.git_ref
-    region         = var.region
-    jwt_param      = aws_ssm_parameter.jwt_secret.name
-    data_volume_id = aws_ebs_volume.data.id
-    tag_param      = aws_ssm_parameter.image_tag.name
-    ecr_registry   = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
-    site_url       = local.site_url
-    log_prefix     = "/cloudopshub/dev" # log groups in monitoring.tf
+    repo_url        = var.repo_url
+    git_ref         = var.git_ref
+    region          = var.region
+    jwt_param       = aws_ssm_parameter.jwt_secret.name
+    data_volume_id  = aws_ebs_volume.data.id
+    tag_param       = aws_ssm_parameter.image_tag.name
+    ecr_registry    = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
+    site_url        = local.site_url
+    log_prefix      = "/cloudopshub/dev"       # log groups in monitoring.tf
+    alert_topic_arn = aws_sns_topic.alarms.arn # backend sends critical device alerts here
   })
   # The boot script only runs on first boot, so a changed script means a fresh server.
   # Safe since A3: the data lives on the separate volume (storage.tf), not on this server.

@@ -4,7 +4,7 @@
 #   server timer (every minute) ──▶ metric CloudOpsHub/AppHealthy (1 = backend healthy AND site serves 200)
 #   nginx access log ──metric filter──▶ CloudOpsHub/Http5xx
 #
-#   Alarms → SNS topic → email to var.alert_emails (each person confirms the subscription email once)
+#   Alarms and the app's critical device alerts → SNS topic → email to var.alert_emails (each person confirms the subscription email once)
 #     • app unhealthy for 3 minutes, or no health reports at all (server down)
 #     • 5+ server errors (HTTP 5xx) in 5 minutes
 #     • EC2 status check failed
@@ -70,6 +70,13 @@ data "aws_iam_policy_document" "server_monitoring" {
       variable = "cloudwatch:namespace"
       values   = [local.metrics_namespace]
     }
+  }
+
+  # The backend's alert engine emails critical device alerts (offline, or CPU, memory or disk at 90%+) through the same topic
+  statement {
+    sid       = "SendDeviceAlerts"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.alarms.arn]
   }
 }
 
