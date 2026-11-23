@@ -1,0 +1,29 @@
+// CloudFront viewer-request function: only let approved IPv4 ranges in.
+// Rendered by Terraform from var.allowed_cidrs (envs/dev/https.tf). Change the list in terraform.tfvars.
+var ALLOWED = ${allowed_cidrs};
+
+function ipToNumber(ip) {
+  var p = ip.split('.');
+  return ((+p[0]) * 16777216) + ((+p[1]) * 65536) + ((+p[2]) * 256) + (+p[3]);
+}
+
+function inRange(ip, cidr) {
+  var parts = cidr.split('/');
+  var block = Math.pow(2, 32 - (+parts[1])); // addresses in the range
+  return Math.floor(ipToNumber(ip) / block) === Math.floor(ipToNumber(parts[0]) / block);
+}
+
+function handler(event) {
+  var ip = event.viewer.ip;
+  for (var i = 0; i < ALLOWED.length; i++) {
+    if (inRange(ip, ALLOWED[i])) {
+      return event.request;
+    }
+  }
+  return {
+    statusCode: 403,
+    statusDescription: 'Forbidden',
+    headers: { 'content-type': { value: 'text/plain' } },
+    body: 'CloudOps Hub dev is limited to approved networks. Ask Aaron to add your IP.'
+  };
+}

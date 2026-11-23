@@ -35,15 +35,18 @@ resource "aws_security_group" "app" {
   vpc_id      = module.network.vpc_id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "http" {
-  for_each = toset(var.allowed_cidrs)
+# Since A5 the server only accepts traffic from CloudFront (https.tf); the IP allowlist runs at CloudFront.
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
 
+resource "aws_vpc_security_group_ingress_rule" "from_cloudfront" {
   security_group_id = aws_security_group.app.id
-  description       = "HTTP from allowed IP"
+  description       = "HTTP from CloudFront only"
   ip_protocol       = "tcp"
   from_port         = 80
   to_port           = 80
-  cidr_ipv4         = each.value
+  prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "all" {
@@ -121,6 +124,7 @@ resource "aws_instance" "app" {
     data_volume_id = aws_ebs_volume.data.id
     tag_param      = aws_ssm_parameter.image_tag.name
     ecr_registry   = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
+    site_url       = local.site_url
   })
   # The boot script only runs on first boot, so a changed script means a fresh server.
   # Safe since A3: the data lives on the separate volume (storage.tf), not on this server.
@@ -147,11 +151,17 @@ resource "aws_instance" "app" {
   }
 }
 
+# The address exists on its own and is attached separately, so CloudFront (https.tf) can point at it
+# while the server's boot script gets CloudFront's URL, without a dependency loop.
 resource "aws_eip" "app" {
-  instance = aws_instance.app.id
-  domain   = "vpc"
+  domain = "vpc"
 
   tags = {
     Name = local.name
   }
+}
+
+resource "aws_eip_association" "app" {
+  instance_id   = aws_instance.app.id
+  allocation_id = aws_eip.app.id
 }

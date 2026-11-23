@@ -80,6 +80,7 @@ services:
     environment:
       APP_ENV: production
       JWT_SECRET: $${JWT_SECRET}
+      CORS_ORIGINS: ${site_url} # the HTTPS site only (A5)
       AWS_DEFAULT_REGION: ${region}
     ports: !reset []          # backend is reached only through nginx
     volumes: !override        # /app/data on the persistent EBS volume instead of a Docker volume
@@ -109,7 +110,7 @@ chown -R "$APP_UID:$APP_UID" "$DATA_DIR"
 $COMPOSE up -d --no-build
 
 # Demo users (admin / operator / viewer); skipped for users that already exist on the data volume.
-# Port 80 is limited to allowed_cidrs.
+# The site is limited to allowed_cidrs by CloudFront (https.tf).
 for i in $(seq 1 30); do
   docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" && break
   sleep 5
