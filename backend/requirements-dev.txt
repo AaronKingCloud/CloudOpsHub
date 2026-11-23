@@ -1,3 +1,4 @@
 -r requirements.txt
 pytest>=9.2.0
 moto[ec2,cloudwatch]>=5.2.5
+pytest-cov>=7.1.0

@@ -44,7 +44,7 @@ function DeviceDetailPage() {
   // browser history so a reload doesn't show it again.
   const [agentKey] = useState(() => (location.state as LocationState | null)?.agentKey);
   useEffect(() => {
-    if (location.state) navigate(location.pathname, { replace: true, state: null });
+    if (location.state) void navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
 
   const fetchDevice = useCallback(() => getDevice(id), [id]);
@@ -223,7 +223,14 @@ function DeviceHistory({ device }: { device: Device }) {
           <ErrorState what="history" message={error} onRetry={reload} />
         ))}
       {data && data.length === 0 && <p className="state-message">No reports in this period.</p>}
-      {data && data.length > 0 && <MetricChart data={data} label={current.label} color={current.color} />}
+      {data && data.length === 1 && (
+        // A single point draws no line, so say what we have instead of showing an empty chart.
+        <p className="state-message">
+          One report so far: {current.label} {data[0].value}% at {data[0].timestamp}. The chart fills in as the agent
+          keeps reporting (about one point every 5 minutes).
+        </p>
+      )}
+      {data && data.length > 1 && <MetricChart data={data} label={current.label} color={current.color} />}
     </section>
   );
 }

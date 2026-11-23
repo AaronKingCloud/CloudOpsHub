@@ -7,28 +7,107 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Current Status
 
-| Area                | Status                                                  |
-| ------------------- | ----------------------------------------------------    |
-| Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow)      |
-| Architecture docs   | 🟡 Started (`docs/architecture/`)                      |
-| API contract        | 🟡 Updated (`docs/api/frontend-contract.md`)           |
-| Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
-| Backend             | 🟡 FastAPI: auth + live AWS + SQLAlchemy DB (devices/metrics/alerts) |
-| Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
-| CI/CD               | ✅ CI on PRs; CD deploys every merge to `main` (OIDC, ECR, rollback) |
-| Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
-| Terraform / Cloud   | ✅ HTTPS (CloudFront), persistent data, CD, monitoring + email alarms |
+Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
+
+| Area                | Status                                                                 |
+| ------------------- | ---------------------------------------------------------------------- |
+| Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow), requirements spec merged (#35) |
+| Architecture docs   | ✅ Guide (PDF) and diagrams match the live deployment                   |
+| Frontend            | ✅ 7 pages + device page, roles, user management; works on mock or real data |
+| Backend             | ✅ Real database, device API, metrics agent, alert engine, notifications, login everywhere |
+| Authentication/RBAC | ✅ JWT, roles, lockout, password change, disable users                  |
+| Tests / quality     | ✅ 90 backend + 70 frontend tests; coverage 96 % / 73 %; security scans; SonarCloud on every PR |
+| CI/CD               | ✅ CI on PRs; CD deploys every merge to `main` (OIDC, ECR, rollback); `main` is protected |
+| Docker              | ✅ Tested end to end; both databases on the volume                      |
+| Cloud (AWS)         | ✅ HTTPS (CloudFront), persistent data, CD, monitoring + email alarms   |
+| Disaster recovery   | 🟡 Both databases backed up, local drill passed; cloud drill ready to run (C7) |
 
 ## Next Up
 
-Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
-
-- Team: confirm or object to the infrastructure decisions in the 2026-11-20 Terraform entry (AWS, EC2 + Docker, SQLite for now)
-- Replace mock data with real metrics collection (agent or cloud APIs)
+- **Tirth + Aaron:** cloud DR drill (C7), steps in `docs/operations/DISASTER_RECOVERY.md`
+- **Everyone:** confirm the AWS alarm email; look at the SonarCloud issues in the files you own
+- **Team:** end-to-end demo (F1, `docs/demo/DEMO_SCRIPT.md`), then report, slides, video (F2)
 
 ---
 
 ## Log
+
+### 2026-11-23 — Accessible pop-ups, SonarCloud fixes, cloud drill steps (`ci/sonarcloud`, #47) — Tirth
+
+- Merged `main` (Aaron's #48–#54) into #47 and kept both sides of this log
+- **SonarCloud Quality Gate:** fixed all 8 issues in #47's new code:
+  - `sonarcloud.yml`: scan action pinned to a full commit SHA, `npm ci --ignore-scripts`, and Python packages installed
+    from the new `backend/requirements-ci.lock` (exact versions + hashes, prebuilt wheels only)
+  - pop-ups: no `autoFocus` and no clickable `div`s; `DeviceDetailPage`: the unawaited promise
+- **New `components/Modal.tsx`, used by every pop-up** (sign in, change password, add/edit user, add/edit/delete device,
+  account details). It's a native `<dialog>`: keyboard focus stays inside, Esc or a click outside closes it, and focus goes
+  back to the button that opened it. This also clears the same older issue in 5 other files; the phone menu's backdrop
+  is now a real button
+- Fixed on the way: in **Edit user** the "Account active" checkbox was on its own line above its text
+- ESLint ignores `coverage/`; SQLite `-shm` / `-wal` files are git-ignored
+- **Docs:** FR-8 is now "Admins can add, edit and delete devices…" (team decision); NFR statuses and
+  `docs/security/SECURITY_CHECKLIST.md` (A02, A05, A08, A09) updated for A3–A6; `docs/REMAINING_WORK.md` overview brought up
+  to date; architecture guide **Figure 11 redrawn** (CloudFront, data disk + snapshots, ECR/CD, CloudWatch alarms), PDF
+  regenerated; README roadmap and tech stack
+- **C7:** `docs/operations/DISASTER_RECOVERY.md` now has the real cloud setup and a step-by-step **cloud drill that doesn't
+  touch the live site**. Not run yet: it needs AWS access (Aaron) and the first snapshot
+- Checked: 70 frontend + 90 backend tests (5 new for `Modal`), lint and build pass; the lock installs on Windows and
+  all its Linux wheels exist; every pop-up driven in Edge with real keys and mouse, desktop and phone size
+
+### 2026-11-22 — Docker fix verified, FR-8 decided, SonarCloud set up (`ci/sonarcloud`) — Tirth
+- **Aaron checked `fix/docker-app-db-path` in Docker** and it passed:
+  - `compose up` is healthy, seeded, signed in, added a device
+  - after `down` and `up` the device is still there
+  - both databases are in `/app/data` on the volume
+- **Aaron also found that `main` is broken in Docker right now:** the backend crashes with "unable to open database file". So that PR merges first.
+- **FR-8 decided:** admins add, edit and delete devices, and operators acknowledge and resolve alerts. This is how the app already works, and it matches B5.
+  - Aaron is fixing the requirements spec, which wrongly says operators manage devices.
+- **SonarCloud set up by Aaron (C9).** The scan starts working once this branch is merged: you get the Quality Gate and coverage (about 96 % backend, 73 % frontend).
+  - The first automatic run found 39 issues, probably mostly small style warnings. Each person looks at the ones in the files they own.
+
+### 2026-11-22 — SonarQube (SonarCloud) code-quality scan (`ci/sonarcloud`) — Tirth
+
+- Task **C9** / requirement **NFR-M5** (professor). New `.github/workflows/sonarcloud.yml`: runs both test suites
+  **with coverage** and sends them to SonarCloud, which checks bugs, vulnerabilities, security hotspots, code smells,
+  duplication and coverage, and posts a **Quality Gate** check on every PR
+- Coverage tooling: `@vitest/coverage-v8` + `npm run test:coverage`, `pytest-cov` in `requirements-dev.txt`.
+  Coverage today: **backend 96 %, frontend 73 %** (lines). Reports are git-ignored
+- `sonar-project.properties`: what is analysed (frontend, backend, scripts, agent), tests, coverage paths, exclusions
+- Until the `SONAR_TOKEN` secret exists the workflow still runs the tests but **skips the scan with a notice**,
+  so nobody's PR fails; Dependabot PRs skip it too (they can't read secrets)
+- **Needs Aaron (repo owner), about 5 minutes:** import the repo at sonarcloud.io, switch off Automatic Analysis,
+  add the `SONAR_TOKEN` repo secret. Step by step: `docs/quality/SONARQUBE.md`
+- Fixed on the way: `backend/requirements-dev.txt` had no final newline (appending a line would merge two packages)
+
+### 2026-11-22 — Status refresh across the docs + deployment diagram (`docs/status-refresh`) — Tirth
+
+- `docs/REMAINING_WORK.md`: **C1–C4 done** (checked end to end against the real backend and agent), **C8 done**, and a
+  new task **C9 SonarQube** (professor requirement NFR-M5, owner Tirth, as suggested in the requirements spec)
+- `docs/requirements/REQUIREMENTS.md`: refreshed the **status column only** (18 rows) now that Track B is merged;
+  requirement text unchanged. FR-8 flagged: the spec says operators manage devices, the app allows admins only. **Team to decide**
+- `docs/api/frontend-contract.md`: "Proposed endpoints" → "Devices, agent and alerts (implemented)"
+- `docs/security/SECURITY_CHECKLIST.md`: A01 now ✅ (login on every endpoint); A04 (cost cache), A05 (Docker tested),
+  A07 (password change, disable users) and A10 (webhook URL only from env, https) updated
+- `docs/PROGRESS.md` Current Status / Next Up rewritten; `README.md` status, tech stack and roadmap brought up to date
+- Architecture guide: real data instead of sample, all new endpoints, roles, Docker "tested", and a new
+  **Figure 11: the AWS dev deployment** (EC2 + Docker Compose, security group, SSM, IAM, Budgets, S3 state), drawn from
+  `infra/terraform/`. PDF regenerated (18 pages)
+- For Aaron: rows 0.2 / 0.3 in REMAINING_WORK are yours to close (decisions recorded in your Terraform entry, spec merged as #35)
+
+### 2026-11-22 — User management screens and history fix (`feature/user-management-ui`) — Tirth
+
+- Screens for pshrestha49's **B7** endpoints (`PATCH /auth/users/{id}`, `POST /auth/me/password`)
+- **Users page:** each row has **Edit** (admins) to change the role or disable / re-enable the account; a message
+  says exactly what changed ("Updated viewer: role viewer → operator."). Your own row is marked "(you)" and locked,
+  matching the backend rule that admins can't demote or disable themselves
+- **Change password** in the top bar for every signed-in user: current, new and confirm; checks length, "same as
+  current" and mismatch before sending, shows the backend's reason for a wrong current password
+- **Device history fix:** a device with a single report showed an empty chart; it now says
+  "One report so far: CPU 12.5% at 18:15. The chart fills in as the agent keeps reporting"
+- Mock mode: user list now returns copies like a real API (the page was holding the mock's own objects, which made
+  the "what changed" message empty); mock password change checks the demo passwords from `seed.py`
+- 7 new tests (65 frontend tests passing). Checked against the real backend: role changed, a disabled user really
+  can't sign in, own account locked, wrong current password rejected, old password stops working after a change
 
 ### 2026-11-22 — Demo script and measurement helper (`docs/demo-script`) — Aaron
 

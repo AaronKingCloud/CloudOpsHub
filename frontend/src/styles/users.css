@@ -129,3 +129,48 @@ tr.highlight td {
   gap: 8px;
   margin-top: 4px;
 }
+
+/* Edit user / change password */
+
+.stack-form > .check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-h);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stack-form > .check-row input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.stack-form > .check-row span {
+  display: grid;
+  gap: 2px;
+}
+
+.role-picker:disabled {
+  opacity: 0.6;
+}
+
+.row-actions {
+  text-align: right;
+  width: 1%;
+}
+
+.you-tag {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

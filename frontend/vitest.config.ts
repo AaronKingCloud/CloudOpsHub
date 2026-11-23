@@ -13,6 +13,13 @@ export default mergeConfig(
       css: false,
       // Always test against mock data, even if a developer's .env.local points at a live backend.
       env: { VITE_USE_MOCK: "true" },
+      // npm run test:coverage → coverage/lcov.info (read by SonarCloud, see docs/quality/SONARQUBE.md)
+      coverage: {
+        provider: "v8",
+        reporter: ["text-summary", "lcov"],
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx", "src/vite-env.d.ts"],
+      },
     },
   }),
 );

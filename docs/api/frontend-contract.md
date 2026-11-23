@@ -184,18 +184,14 @@ email 5–255, password 8–128. Validation failures return `422` with a `detail
 
 ---
 
-# Proposed endpoints (frontend ready, backend to build)
+# Devices, agent and alerts (implemented)
 
-The frontend for these already exists and works in mock mode (`VITE_USE_MOCK=true`). The backend
-tasks are in `docs/REMAINING_WORK.md` (B2–B5). **Building to these shapes means the screens work
-with no frontend changes.** If something here doesn't fit the backend design, change it here first
-and tell Tirth, so both sides move together.
+Designed frontend-first, then built by the backend (B2–B5, 21 Nov) to these shapes; checked end to end
+on 2026-11-22 (screens + real backend + real agent). Change a shape here **and** in the code of both sides in
+the same PR. Backend: `backend/app/routers/devices.py`, `agent.py`, `alerts.py`. Frontend:
+`frontend/src/services/deviceService.ts`, `alertService.ts`.
 
-The frontend copes with today's backend in the meantime: missing optional fields are hidden, a `404`
-on device history shows "History isn't available from the backend yet", and alerts without `status`
-are treated as open.
-
-## Devices (proposed · B2)
+## Devices (B2)
 
 `Device` gains optional fields (existing fields unchanged):
 
@@ -233,7 +229,7 @@ are treated as open.
 - Metrics: 5-minute points up to 24 h, hourly beyond, oldest first, `timestamp` as `"HH:MM"`
   (or `"20 Nov 14:00"` beyond 24 h), same shape as `/metrics/cpu`.
 
-## Agent reports (proposed · B3)
+## Agent reports (B3)
 
 `POST /agent/metrics` with header `X-Agent-Key: coa_…` (no user login):
 
@@ -245,7 +241,7 @@ Returns `204`. `401` for an unknown key. Sets the device `online`, updates its c
 `lastSeen`, and stores a history point. The agent sends every 60 s; the backend marks a device
 `offline` after 3 missed reports. Install guide: `docs/agent/INSTALL.md`.
 
-## Alerts (proposed · B4)
+## Alerts (B4)
 
 `Alert` gains optional fields:
 
@@ -273,7 +269,7 @@ Returns `204`. `401` for an unknown key. Sets the device `online`, updates its c
 
 `/dashboard/summary` `activeAlerts` should count open + acknowledged.
 
-## Login on every endpoint (proposed · B5)
+## Login on every endpoint (B5)
 
 Every endpoint except `/health`, `/auth/login`, `/auth/refresh` and `/agent/metrics` should return
 `401` without a valid token. The frontend is ready: on a `401` with nobody signed in it shows the

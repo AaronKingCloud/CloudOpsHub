@@ -10,7 +10,7 @@ through a unified interface.
 
 ## Project Status
 
-🛠️ Proof of Concept / Development Phase
+🚀 MVP: feature-complete and live on AWS (see `docs/PROGRESS.md`)
 
 CloudOps Hub is currently being developed as a capstone project
 for the Cloud Architecture and Administration program at Seneca.
@@ -174,10 +174,11 @@ Project planning documentation can be found in:
 | Layer          | Technology                                   |
 | -------------- | -------------------------------------------- |
 | Frontend       | React 19, TypeScript, Vite, Recharts, Axios  |
-| Backend        | Python, FastAPI                              |
+| Backend        | Python 3.13, FastAPI, SQLAlchemy (SQLite / Postgres) |
+| Agent          | Python, psutil (`agent/`)                    |
 | Containers     | Docker, docker-compose                       |
-| CI/CD          | GitHub Actions                               |
-| Infrastructure | Terraform (planned), cloud provider TBD      |
+| CI/CD          | GitHub Actions, SonarCloud, ECR, OIDC deploys |
+| Infrastructure | Terraform, AWS (EC2, CloudFront, EBS, SSM, CloudWatch, SNS, Budgets) |
 
 ## AWS Integration
 
@@ -211,15 +212,18 @@ GET /api/billing/summary
 - [x] EC2 inventory and CloudWatch CPU endpoints
 - [x] Authentication and role-based access (JWT, admin / operator / viewer)
 - [x] CI on pull requests (frontend lint and build, backend tests)
-- [ ] Requirements specification
-- [ ] Architecture design
-- [ ] Proof of concept
-- [ ] Infrastructure as Code
-- [ ] CD (automated deployment)
-- [ ] MVP deployment
-- [ ] Monitoring and observability
-- [ ] Security validation
-- [ ] Disaster recovery testing
+- [x] Requirements specification
+- [x] Architecture design
+- [x] Proof of concept
+- [x] Real database, device API, metrics agent and alert engine
+- [x] Infrastructure as Code (Terraform foundation + dev environment)
+- [x] CD (automated deployment)
+- [x] MVP deployment
+- [x] Monitoring and observability
+- [x] Security validation (OWASP checklist, scans, lockout)
+- [x] Disaster recovery testing (local drill passed)
+- [ ] Cloud restore drill
+- [ ] End-to-end demo, final report and video
 
 ## Disclaimer
 
