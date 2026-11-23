@@ -29,38 +29,139 @@ systemctl enable --now docker
 # AWS CLI (to read the JWT secret from SSM via the instance role)
 snap install aws-cli --classic
 
+# Persistent data disk (A3): both databases live here, so they survive a server rebuild.
+# Terraform attaches the volume after the server starts, so wait for it (up to 5 min).
+DATA_DIR=/srv/cloudopshub-data
+DATA_DEV="/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_$(echo "${data_volume_id}" | tr -d '-')"
+for i in $(seq 1 60); do
+  [ -e "$DATA_DEV" ] && break
+  echo "waiting for data volume ${data_volume_id} ($i/60)"
+  sleep 5
+done
+[ -e "$DATA_DEV" ] || { echo "data volume ${data_volume_id} never attached"; exit 1; }
+
+# Format ONLY a brand-new, empty volume. An existing filesystem (= existing data) is never touched.
+if ! blkid "$DATA_DEV"; then
+  mkfs.ext4 -L cloudopsdata "$DATA_DEV"
+fi
+mkdir -p "$DATA_DIR"
+DATA_UUID="$(blkid -s UUID -o value "$DATA_DEV")"
+grep -q "$DATA_UUID" /etc/fstab || echo "UUID=$DATA_UUID $DATA_DIR ext4 defaults,nofail 0 2" >> /etc/fstab
+mount "$DATA_DIR"
+
 # App code
 git clone --depth 1 --branch "${git_ref}" "${repo_url}" /opt/cloudopshub
+
+# Which version to run: the last one CD deployed ("none" = never deployed → build here)
+IMAGE_TAG="$(aws ssm get-parameter --region "${region}" --name "${tag_param}" --query Parameter.Value --output text)"
+if [ "$IMAGE_TAG" = "none" ]; then
+  IMAGE_TAG=local
+else
+  # Match the compose files to the deployed images (stay on ${git_ref} if that commit can't be fetched)
+  if git -C /opt/cloudopshub fetch -q --depth 1 origin "$IMAGE_TAG"; then
+    git -C /opt/cloudopshub checkout -q FETCH_HEAD
+  fi
+fi
 
 # Production settings, layered on top of infra/docker-compose.yml
 JWT_SECRET="$(aws ssm get-parameter --region "${region}" --name "${jwt_param}" --with-decryption --query Parameter.Value --output text)"
 umask 077
 cat > /opt/cloudopshub/infra/.env <<EOF
 JWT_SECRET=$JWT_SECRET
+REGISTRY=${ecr_registry}
+IMAGE_TAG=$IMAGE_TAG
 EOF
 umask 022
 
 cat > /opt/cloudopshub/infra/docker-compose.prod.yml <<'EOF'
 services:
   backend:
+    image: $${REGISTRY}/cloudopshub/backend:$${IMAGE_TAG}
     environment:
       APP_ENV: production
       JWT_SECRET: $${JWT_SECRET}
+      CORS_ORIGINS: ${site_url} # the HTTPS site only (A5)
       AWS_DEFAULT_REGION: ${region}
     ports: !reset []          # backend is reached only through nginx
+    volumes: !override        # /app/data on the persistent EBS volume instead of a Docker volume
+      - /srv/cloudopshub-data:/app/data
+    logging:                  # container logs → CloudWatch Logs (A6); `docker logs` still works
+      driver: awslogs
+      options:
+        awslogs-region: ${region}
+        awslogs-group: ${log_prefix}/backend
+        mode: non-blocking
   frontend:
+    image: $${REGISTRY}/cloudopshub/frontend:$${IMAGE_TAG}
     ports: !override
       - "80:80"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${region}
+        awslogs-group: ${log_prefix}/frontend
+        mode: non-blocking
 EOF
 
 cd /opt/cloudopshub/infra
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+if [ "$IMAGE_TAG" != "local" ] && \
+   aws ecr get-login-password --region "${region}" | docker login --username AWS --password-stdin "${ecr_registry}" && \
+   $COMPOSE pull backend frontend; then
+  echo "Using deployed images $IMAGE_TAG"
+else
+  echo "Building images on the server"
+  sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=local/" .env
+  $COMPOSE build
+fi
 
-# Demo users (admin / operator / viewer). Port 80 is limited to allowed_cidrs.
+# The backend runs as a non-root user; give that user the data folder
+APP_UID="$($COMPOSE run --rm --no-deps --entrypoint id backend -u | tr -d '\r')"
+chown -R "$APP_UID:$APP_UID" "$DATA_DIR"
+
+$COMPOSE up -d --no-build
+
+# Demo users (admin / operator / viewer); skipped for users that already exist on the data volume.
+# The site is limited to allowed_cidrs by CloudFront (https.tf).
 for i in $(seq 1 30); do
   docker compose exec -T backend python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" && break
   sleep 5
 done
 docker compose exec -T backend python -m seed
+
+# Health reporter (A6): every minute, publish CloudOpsHub/AppHealthy = 1 if the backend is healthy AND the
+# site serves 200, else 0. The app-unhealthy alarm fires after 3 bad minutes or when reports stop.
+cat > /usr/local/bin/cloudopshub-health <<'EOF'
+#!/bin/bash
+export PATH="$PATH:/snap/bin"
+backend="$(docker inspect -f '{{.State.Health.Status}}' cloudops-backend 2>/dev/null)"
+site="$(curl -s -m 5 -o /dev/null -w '%%{http_code}' http://localhost/)"
+value=0
+[ "$backend" = "healthy" ] && [ "$site" = "200" ] && value=1
+aws cloudwatch put-metric-data --region "${region}" --namespace CloudOpsHub \
+  --metric-name AppHealthy --dimensions Environment=dev --value "$value"
+EOF
+chmod 755 /usr/local/bin/cloudopshub-health
+
+cat > /etc/systemd/system/cloudopshub-health.service <<'EOF'
+[Unit]
+Description=Report CloudOps Hub health to CloudWatch
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cloudopshub-health
+EOF
+
+cat > /etc/systemd/system/cloudopshub-health.timer <<'EOF'
+[Unit]
+Description=Report CloudOps Hub health every minute
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=5s
+[Install]
+WantedBy=timers.target
+EOF
+systemctl daemon-reload
+systemctl enable --now cloudopshub-health.timer
 
 echo "CloudOps Hub setup complete"

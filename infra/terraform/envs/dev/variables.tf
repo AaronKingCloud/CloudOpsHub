@@ -11,7 +11,7 @@ variable "instance_type" {
 }
 
 variable "allowed_cidrs" {
-  description = "Who may open the app on port 80, e.g. [\"203.0.113.10/32\"] (your public IP). Keeps the demo logins off the open internet."
+  description = "Who may open the app (checked by the CloudFront function in https.tf), e.g. [\"203.0.113.10/32\"] (your public IP). Keeps the demo logins off the open internet."
   type        = list(string)
 
   validation {
@@ -48,10 +48,40 @@ variable "monthly_budget_usd" {
   default     = 10
 }
 
+variable "github_immutable_subject_prefix" {
+  description = "GitHub OIDC immutable subject prefix for this repo (owner and repo IDs). From GET /repos/AaronKingCloud/CloudOpsHub/actions/oidc/customization/sub"
+  type        = string
+  default     = "repo:AaronKingCloud@179765889/CloudOpsHub@1375278413"
+}
+
 variable "github_repo" {
   description = "Repository whose main branch may assume the CD deploy role"
   type        = string
   default     = "AaronKingCloud/CloudOpsHub"
+}
+
+variable "data_volume_size_gb" {
+  description = "Size of the separate disk holding both databases (/app/data)"
+  type        = number
+  default     = 5
+}
+
+variable "snapshot_retention_days" {
+  description = "How many daily snapshots of the data disk to keep"
+  type        = number
+  default     = 7
+}
+
+variable "log_retention_days" {
+  description = "How long container logs are kept in CloudWatch Logs (short = cheap)"
+  type        = number
+  default     = 7
+}
+
+variable "images_to_keep" {
+  description = "Images kept per ECR repository (older ones expire)"
+  type        = number
+  default     = 10
 }
 
 variable "root_volume_size_gb" {

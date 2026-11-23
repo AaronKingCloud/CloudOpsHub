@@ -27,7 +27,7 @@ project and how we use branches and pull requests.
 CloudOpsHub/
 ├── frontend/          React + TypeScript dashboard (Vite)
 ├── backend/           REST API (Python / FastAPI)
-├── infra/             Docker, docker-compose, and future Terraform
+├── infra/             Docker, docker-compose, Terraform (AWS), deploy script
 ├── .github/workflows/ CI pipelines (GitHub Actions)
 └── docs/
     ├── api/           API contract shared by frontend and backend
@@ -63,6 +63,24 @@ docker compose up --build
 ```
 
 More detail in each folder's `README.md` and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Live Deployment
+
+**https://drk4col17f8z3.cloudfront.net** · AWS, us-east-2 · deployed with Terraform
+
+The dev site is **limited to approved IP addresses** (the demo logins in `backend/seed.py` are public),
+so ask the team to add yours. Everything else is automatic:
+
+| | How |
+| --- | --- |
+| **Deploy** | Merge a PR into `main` → GitHub Actions builds the images, pushes them to ECR and deploys within minutes. If the new version isn't healthy, the server **rolls back on its own** |
+| **HTTPS** | CloudFront with an AWS certificate; `http://` redirects to `https://` |
+| **Data** | Both databases live on a separate encrypted disk that survives server rebuilds, with **daily snapshots** kept 7 days |
+| **Monitoring** | Container logs in CloudWatch; the team is **emailed within ~4 minutes** if the site goes down or throws errors, and again when it recovers |
+| **Security** | No AWS keys anywhere (server uses an IAM role, GitHub uses OIDC); the server accepts traffic only from CloudFront; no SSH (SSM Session Manager) |
+| **Cost** | One t3.micro; budget alarm emails the team at $5 and $10 per month |
+
+How to run, change or rebuild it: [`infra/terraform/README.md`](infra/terraform/README.md).
 
 ## Objectives
 
@@ -120,9 +138,30 @@ operational visibility.
 
 ## Architecture
 
-Architecture documentation is available in:
+```mermaid
+flowchart LR
+    user([Browser]) -- HTTPS --> cf[CloudFront<br/>certificate + IP allowlist]
+    agent([Agent on a<br/>homelab device]) -- HTTPS, device key --> cf
+    cf -- HTTP, CloudFront only --> ec2
 
-`docs/architecture/`
+    subgraph aws [AWS us-east-2]
+        subgraph ec2 [EC2 t3.micro · Docker Compose]
+            nginx[frontend<br/>nginx + React] -- /api --> api[backend<br/>FastAPI]
+        end
+        api --- disk[(EBS data disk<br/>2 SQLite DBs<br/>daily snapshots)]
+        api -. instance role .-> awsapis[EC2 · CloudWatch<br/>Cost Explorer]
+        ec2 -. logs + health .-> cw[CloudWatch<br/>alarms] --> sns[SNS email<br/>to the team]
+    end
+
+    gh[GitHub Actions] -- OIDC --> ecr[ECR images] --> ec2
+```
+
+More detail:
+
+- [`docs/architecture/CloudOps_Hub_Architecture_Guide.pdf`](docs/architecture/CloudOps_Hub_Architecture_Guide.pdf): how the whole system works
+- [`infra/terraform/README.md`](infra/terraform/README.md): the AWS deployment, decisions and runbooks
+- [`docs/requirements/REQUIREMENTS.md`](docs/requirements/REQUIREMENTS.md): what the system must do
+- [`docs/api/frontend-contract.md`](docs/api/frontend-contract.md): the API
 
 ## Project Documentation
 
@@ -143,24 +182,21 @@ Project planning documentation can be found in:
 
 ## AWS Integration
 
-CloudOps Hub now includes initial AWS integration through a dedicated IAM
-service account and FastAPI endpoint.
+The dashboard shows the connected AWS account: identity, EC2 instances with their CloudWatch CPU,
+and this month's cost with a forecast (cached 6 h, since Cost Explorer charges per call).
 
-### Current AWS Features
+- **Deployed:** the backend uses the server's **IAM role** (read-only, 5 actions); no access keys
+- **Locally:** a read-only IAM user's named profile (`AWS_PROFILE`); see
+  [`docs/architecture/aws-integration.md`](docs/architecture/aws-integration.md) for setup, the exact policy,
+  and the one-Region limit of AWS Settings accounts
 
-- IAM service account (`cloudopshub-service`)
-- AWS SDK for Python (boto3) integration
-- Live AWS account information retrieval
-- FastAPI AWS endpoint documentation through Swagger/OpenAPI
-
-### Available Endpoints
-
-All require login. See `docs/api/frontend-contract.md` for response shapes.
+All endpoints require login. Response shapes: `docs/api/frontend-contract.md`.
 
 ```http
 GET /api/aws/account
 GET /api/aws/ec2
 GET /api/aws/ec2/{instanceId}/cpu?hours=3
+GET /api/billing/summary
 ```
 
 

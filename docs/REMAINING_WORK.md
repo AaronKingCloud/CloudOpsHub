@@ -35,8 +35,8 @@ These block almost everything else. Do them first.
 | # | Task | Owner | Size |
 | --- | --- | --- | --- |
 | 0.1 | ✅ **Done 2026-11-20.** Merge the 5 open frontend PRs, in order: `fix/auth-and-docs-cleanup` → `feature/frontend-app-shell` → `feature/frontend-aws-page` → `feature/frontend-admin-users` → `feature/frontend-dashboard-polish` ("Create a merge commit") | Tirth | S |
-| 0.2 | **Team decisions** (one meeting): cloud provider (AWS or Azure); which AWS account (Free plan blocks listing EC2 from code); hosting (ECS Fargate, App Runner or EC2); database (RDS Postgres or DynamoDB); how real metrics are collected (agent on devices, cloud APIs, or both); MVP scope | All | S |
-| 0.3 | 🟡 **Started 2026-11-20** (`docs/requirements-spec`): draft in `docs/requirements/REQUIREMENTS.md`, waiting for team review. Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
+| 0.2 | ✅ **Decided 2026-11-20** (proposed by Aaron, no objections; recorded at the top of `infra/terraform/README.md`): AWS, account Console Dot Dream in us-east-2, one EC2 instance with Docker Compose, SQLite on a persistent disk (B1 kept SQLite). **Team decisions** (one meeting): cloud provider (AWS or Azure); which AWS account (Free plan blocks listing EC2 from code); hosting (ECS Fargate, App Runner or EC2); database (RDS Postgres or DynamoDB); how real metrics are collected (agent on devices, cloud APIs, or both); MVP scope | All | S |
+| 0.3 | ✅ **Done 2026-11-22** (`docs/requirements-spec`, #35): `docs/requirements/REQUIREMENTS.md` (status column refresh pending in #47). Requirements specification: functional + non-functional requirements and MVP scope, based on 0.2 | Aaron (all review) | M |
 
 ---
 
@@ -46,10 +46,10 @@ These block almost everything else. Do them first.
 | --- | --- | --- | --- | --- |
 | A1 | ✅ **Done 2026-11-20** (`fix/docker-sqlite-path` #32, `infra/docker-followups`). Run `docker compose up --build` in `infra/`, fix whatever breaks | S | – | Frontend on :8080 shows live backend data |
 | A2 | ✅ **Done 2026-11-20** (`infra/terraform-foundation`). Terraform foundation: remote state, network (VPC/subnets), IAM roles | M | 0.2 | `terraform apply` creates the base, state stored remotely |
-| A3 | 🟡 **Started 2026-11-20** (`infra/terraform-foundation`): EC2 + Docker Compose, JWT secret in SSM and app IAM role done; left: persistent `/app/data`, ECR, database per B1, backups. Terraform app stack: container registry, backend compute, frontend hosting, database, secrets (`JWT_SECRET`) | L | A2, B1 | App reachable on a cloud URL |
-| A4 | CD pipeline: on merge to `main`, build images, push, deploy. GitHub OIDC, no long-lived AWS keys in GitHub | M | A3 | Merging a PR updates the live site |
-| A5 | HTTPS, production CORS, `APP_ENV=production`, real `JWT_SECRET` | S | A3 | Site loads over HTTPS; backend refuses the dev secret |
-| A6 | Monitoring the app itself: logs, health-check alarm, error alarm, **budget alarm** | M | A3 | Alarm fires when `/health` fails; billing alert set |
+| A3 | ✅ **Done 2026-11-22** (`infra/terraform-foundation`, `infra/terraform-app`): EC2 + Docker Compose, JWT secret in SSM, app IAM role, both SQLite databases on a persistent EBS disk with daily snapshots; data survives a redeploy. Container registry (ECR) moved to A4, where CD builds the images. Terraform app stack: container registry, backend compute, frontend hosting, database, secrets (`JWT_SECRET`) | L | A2, B1 | App reachable on a cloud URL |
+| A4 | ✅ **Done 2026-11-22** (`ci/deploy` #49, `fix/deploy-oidc-subject`): merging to `main` builds, pushes to ECR and deploys via GitHub OIDC; first real run deployed `732be5e`; automatic rollback tested. CD pipeline: on merge to `main`, build images, push, deploy. GitHub OIDC, no long-lived AWS keys in GitHub | M | A3 | Merging a PR updates the live site |
+| A5 | ✅ **Done 2026-11-22** (`infra/https`): HTTPS via CloudFront at https://drk4col17f8z3.cloudfront.net, HTTP → HTTPS redirect, IP allowlist at the edge, server reachable only from CloudFront, `CORS_ORIGINS` = the site only; backend refuses a missing or dev `JWT_SECRET` (tested). HTTPS, production CORS, `APP_ENV=production`, real `JWT_SECRET` | S | A3 | Site loads over HTTPS; backend refuses the dev secret |
+| A6 | ✅ **Done 2026-11-22** (`infra/monitoring`): container logs in CloudWatch (7 days), per-minute health metric, alarms for app down / 5xx errors / server status + budget (A2), all emailed via SNS; stopping the backend emailed an alarm after 4 min. Monitoring the app itself: logs, health-check alarm, error alarm, **budget alarm** | M | A3 | Alarm fires when `/health` fails; billing alert set |
 | A7 | *(Stretch)* Monitor several AWS accounts with `sts:AssumeRole` (see `docs/architecture/aws-integration.md`) | M | A3 | Second account's EC2 shows on the dashboard |
 
 ## Track B: Backend & data (suggested: pshrestha49)

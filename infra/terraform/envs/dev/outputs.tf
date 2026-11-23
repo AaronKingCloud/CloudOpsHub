@@ -1,6 +1,6 @@
 output "app_url" {
-  description = "Open this in a browser (only from an IP in allowed_cidrs)"
-  value       = "http://${aws_eip.app.public_ip}"
+  description = "Open this in a browser (only from an IP in allowed_cidrs; HTTP redirects to HTTPS)"
+  value       = local.site_url
 }
 
 output "instance_id" {
@@ -15,6 +15,11 @@ output "ssm_shell" {
 output "github_deploy_role_arn" {
   description = "Role for GitHub Actions CD (A4)"
   value       = module.iam.github_deploy_role_arn
+}
+
+output "ecr_registry" {
+  description = "Registry host for the deploy workflow"
+  value       = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
 }
 
 output "setup_log" {

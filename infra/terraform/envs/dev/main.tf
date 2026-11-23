@@ -35,15 +35,18 @@ resource "aws_security_group" "app" {
   vpc_id      = module.network.vpc_id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "http" {
-  for_each = toset(var.allowed_cidrs)
+# Since A5 the server only accepts traffic from CloudFront (https.tf); the IP allowlist runs at CloudFront.
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
 
+resource "aws_vpc_security_group_ingress_rule" "from_cloudfront" {
   security_group_id = aws_security_group.app.id
-  description       = "HTTP from allowed IP"
+  description       = "HTTP from CloudFront only"
   ip_protocol       = "tcp"
   from_port         = 80
   to_port           = 80
-  cidr_ipv4         = each.value
+  prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "all" {
@@ -75,6 +78,8 @@ module "iam" {
   name                  = local.name
   secret_parameter_arns = [aws_ssm_parameter.jwt_secret.arn]
   github_repo           = var.github_repo
+
+  github_immutable_subject_prefix = var.github_immutable_subject_prefix
 }
 
 # IAM resources moved from this file into modules/iam: keep them, don't recreate
@@ -107,16 +112,24 @@ data "aws_ssm_parameter" "ubuntu_ami" {
 resource "aws_instance" "app" {
   ami                    = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type          = var.instance_type
-  subnet_id              = module.network.public_subnet_ids[0]
+  subnet_id              = data.aws_subnet.app.id
   vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = module.iam.instance_profile_name
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    repo_url  = var.repo_url
-    git_ref   = var.git_ref
-    region    = var.region
-    jwt_param = aws_ssm_parameter.jwt_secret.name
+    repo_url       = var.repo_url
+    git_ref        = var.git_ref
+    region         = var.region
+    jwt_param      = aws_ssm_parameter.jwt_secret.name
+    data_volume_id = aws_ebs_volume.data.id
+    tag_param      = aws_ssm_parameter.image_tag.name
+    ecr_registry   = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
+    site_url       = local.site_url
+    log_prefix     = "/cloudopshub/dev" # log groups in monitoring.tf
   })
+  # The boot script only runs on first boot, so a changed script means a fresh server.
+  # Safe since A3: the data lives on the separate volume (storage.tf), not on this server.
+  user_data_replace_on_change = true
 
   metadata_options {
     http_tokens                 = "required" # IMDSv2 only
@@ -137,13 +150,22 @@ resource "aws_instance" "app" {
     # A new Ubuntu AMI is published often; don't replace the server every time.
     ignore_changes = [ami]
   }
+
+  # The containers log to these groups at startup (awslogs driver), so they and the permission must exist first
+  depends_on = [aws_cloudwatch_log_group.app, aws_iam_role_policy.server_monitoring]
 }
 
+# The address exists on its own and is attached separately, so CloudFront (https.tf) can point at it
+# while the server's boot script gets CloudFront's URL, without a dependency loop.
 resource "aws_eip" "app" {
-  instance = aws_instance.app.id
-  domain   = "vpc"
+  domain = "vpc"
 
   tags = {
     Name = local.name
   }
+}
+
+resource "aws_eip_association" "app" {
+  instance_id   = aws_instance.app.id
+  allocation_id = aws_eip.app.id
 }

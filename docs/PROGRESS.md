@@ -7,30 +7,52 @@ A running log of what the team has done, what is in progress, and what is next.
 
 ## Current Status
 
-Updated 2026-11-22. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
+Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 | Area                | Status                                                                 |
 | ------------------- | ---------------------------------------------------------------------- |
 | Planning docs       | ✅ Done (risk register, SWOT, mind map, workflow), requirements spec merged (#35) |
+| Architecture docs   | ✅ Guide (PDF) and diagrams match the live deployment                   |
 | Frontend            | ✅ 7 pages + device page, roles, user management; works on mock or real data |
 | Backend             | ✅ Real database, device API, metrics agent, alert engine, notifications, login everywhere |
 | Authentication/RBAC | ✅ JWT, roles, lockout, password change, disable users                  |
-| Tests / quality     | ✅ 90 backend + 65 frontend tests; coverage 96 % / 73 %; security scans; ✅ SonarCloud set up by Aaron (C9) |
-| CI/CD               | 🟡 CI on every PR; no CD yet (A4)                                       |
-| Docker              | ✅ Tested end to end; app-database path fix verified by Aaron (`fix/docker-app-db-path`) |
-| Cloud (AWS)         | 🟡 Terraform foundation + dev EC2 running; persistent storage, CD, HTTPS, monitoring to do (A3–A6) |
-| Disaster recovery   | 🟡 Both databases backed up, local drill passed; cloud drill after A3   |
+| Tests / quality     | ✅ 90 backend + 70 frontend tests; coverage 96 % / 73 %; security scans; SonarCloud on every PR |
+| CI/CD               | ✅ CI on PRs; CD deploys every merge to `main` (OIDC, ECR, rollback); `main` is protected |
+| Docker              | ✅ Tested end to end; both databases on the volume                      |
+| Cloud (AWS)         | ✅ HTTPS (CloudFront), persistent data, CD, monitoring + email alarms   |
+| Disaster recovery   | 🟡 Both databases backed up, local drill passed; cloud drill ready to run (C7) |
 
 ## Next Up
 
-- **Aaron:** A3 persistent `/app/data`, A4 CD, A5 HTTPS, A6 monitoring; FR-8 wording in the requirements spec
-- **Everyone:** look at the SonarCloud issues in the files you own
-- **Tirth:** cloud DR drill once A3 is done
-- **Team:** end-to-end demo (F1), report, slides, video (F2)
+- **Tirth + Aaron:** cloud DR drill (C7), steps in `docs/operations/DISASTER_RECOVERY.md`
+- **Everyone:** confirm the AWS alarm email; look at the SonarCloud issues in the files you own
+- **Team:** end-to-end demo (F1, `docs/demo/DEMO_SCRIPT.md`), then report, slides, video (F2)
 
 ---
 
 ## Log
+
+### 2026-11-23 — Accessible pop-ups, SonarCloud fixes, cloud drill steps (`ci/sonarcloud`, #47) — Tirth
+
+- Merged `main` (Aaron's #48–#54) into #47 and kept both sides of this log
+- **SonarCloud Quality Gate:** fixed all 8 issues in #47's new code:
+  - `sonarcloud.yml`: scan action pinned to a full commit SHA, `npm ci --ignore-scripts`, and Python packages installed
+    from the new `backend/requirements-ci.lock` (exact versions + hashes, prebuilt wheels only)
+  - pop-ups: no `autoFocus` and no clickable `div`s; `DeviceDetailPage`: the unawaited promise
+- **New `components/Modal.tsx`, used by every pop-up** (sign in, change password, add/edit user, add/edit/delete device,
+  account details). It's a native `<dialog>`: keyboard focus stays inside, Esc or a click outside closes it, and focus goes
+  back to the button that opened it. This also clears the same older issue in 5 other files; the phone menu's backdrop
+  is now a real button
+- Fixed on the way: in **Edit user** the "Account active" checkbox was on its own line above its text
+- ESLint ignores `coverage/`; SQLite `-shm` / `-wal` files are git-ignored
+- **Docs:** FR-8 is now "Admins can add, edit and delete devices…" (team decision); NFR statuses and
+  `docs/security/SECURITY_CHECKLIST.md` (A02, A05, A08, A09) updated for A3–A6; `docs/REMAINING_WORK.md` overview brought up
+  to date; architecture guide **Figure 11 redrawn** (CloudFront, data disk + snapshots, ECR/CD, CloudWatch alarms), PDF
+  regenerated; README roadmap and tech stack
+- **C7:** `docs/operations/DISASTER_RECOVERY.md` now has the real cloud setup and a step-by-step **cloud drill that doesn't
+  touch the live site**. Not run yet: it needs AWS access (Aaron) and the first snapshot
+- Checked: 70 frontend + 90 backend tests (5 new for `Modal`), lint and build pass; the lock installs on Windows and
+  all its Linux wheels exist; every pop-up driven in Edge with real keys and mouse, desktop and phone size
 
 ### 2026-11-22 — Docker fix verified, FR-8 decided, SonarCloud set up (`ci/sonarcloud`) — Tirth
 - **Aaron checked `fix/docker-app-db-path` in Docker** and it passed:
@@ -86,6 +108,108 @@ Updated 2026-11-22. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
   the "what changed" message empty); mock password change checks the demo passwords from `seed.py`
 - 7 new tests (65 frontend tests passing). Checked against the real backend: role changed, a disabled user really
   can't sign in, own account locked, wrong current password rejected, old password stops working after a change
+
+### 2026-11-22 — Demo script and measurement helper (`docs/demo-script`) — Aaron
+
+- Prep for **F1** (the team demo session) and **F2** (demo video). Built on `docs/readme-deployment`, so merge after it
+- `docs/demo/DEMO_SCRIPT.md`: a ~30 min script for the **live cloud site** with roles (Tirth: dashboard, pshrestha49: device,
+  Aaron: cloud), a before-the-session checklist, 5 parts (sign-in and roles, real agent, alerts, cloud side, measurements),
+  each step naming the requirement it proves, a results table to fill in, and troubleshooting
+- `infra/scripts/demo_check.py` (standard library only): `latency` measures API p95 (NFR-P2); `simulate` runs 20 fake agents
+  for 5 min, measures the dashboard under load and how fast a new reading shows (NFR-P3, NFR-P4), then deletes them
+- Checked: both commands run against the local Docker stack (p95 157 ms; 3 simulated devices, 0 failed reports, reading
+  visible immediately, cleanup left nothing). **Not run against the live site** until the team session
+
+### 2026-11-22 — README: live deployment and architecture (`docs/readme-deployment`) — Aaron
+
+- Part of **F3** (Aaron's README sections, per the briefing). Built on `infra/monitoring`, so merge after #52
+- `README.md`: new **Live Deployment** section (HTTPS address, how deploys, HTTPS, data, monitoring, security and cost work),
+  **Architecture** section with a diagram of the whole AWS setup, **AWS Integration** updated (instance role, billing endpoint)
+- Left Tirth's lines alone (status line, tech-stack table, roadmap) since #47 changes them
+- `docs/REMAINING_WORK.md`: **0.2** marked decided (Aaron's proposal, no objections, recorded in `infra/terraform/README.md`);
+  **0.3** marked done (#35)
+
+### 2026-11-22 — Monitoring the app itself (`infra/monitoring`) — Aaron
+
+- Task **A6** from `docs/REMAINING_WORK.md` (done). Built on `infra/https` (A5), so merge that first
+- `infra/terraform/envs/dev/monitoring.tf`: **SNS topic** emailing the team; **CloudWatch Logs** for both containers
+  (`/cloudopshub/dev/backend`, `/frontend`, kept 7 days); a log **metric filter** counting HTTP 5xx in nginx's access log
+- Server: containers log through Docker's `awslogs` driver (`docker logs` still works); a **systemd timer reports
+  `CloudOpsHub/AppHealthy` every minute** (1 = backend healthy and site serves 200)
+- **Alarms → email** (and an OK email on recovery): app unhealthy for 3 min **or no reports** (server down); 5+ HTTP 5xx in
+  5 min; EC2 status check; plus the A2 budget alarm. A normal deploy restart (~30 s) doesn't trigger anything
+- **Checked (the briefing's test):** stopped the backend at 01:39:33 UTC → site API 502 → **ALARM email at 01:43:32 (4 min)**;
+  restarted → **OK email at 01:45:30**; the 5xx filter counted the 502 (tested the pattern on sample lines first);
+  logs arriving in both log groups. Runbook for alarms in `infra/terraform/README.md` → Monitoring
+- ⚠️ **Teammates: confirm the "AWS Notification - Subscription Confirmation" email**, or you won't get alarms
+- For Tirth: `docs/security/SECURITY_CHECKLIST.md` A09 (logging and monitoring) now has logs and alerting (no audit log yet)
+
+### 2026-11-22 — HTTPS and production settings (`infra/https`) — Aaron
+
+- Task **A5** from `docs/REMAINING_WORK.md` (done). Built on `fix/deploy-oidc-subject`, so merge that PR first
+- **New site address: https://drk4col17f8z3.cloudfront.net** (the old `http://3.151.75.185` no longer works, on purpose)
+- `infra/terraform/envs/dev/https.tf`: **CloudFront** in front of the server, free AWS certificate, **HTTP → HTTPS redirect**,
+  no caching (dynamic app), forwards `Authorization` / `X-Agent-Key` so login and agents work
+- **IP allowlist moved to CloudFront** (`ip_allowlist.js.tftpl`, a free edge function): only `allowed_cidrs` get in, everyone else
+  gets 403. The server's security group now accepts **only CloudFront** (AWS-managed prefix list)
+- Production settings: `APP_ENV=production` and the real `JWT_SECRET` (since A2), **`CORS_ORIGINS` = the HTTPS site only**
+- Checked: HTTPS 200 with a valid certificate; `http://` → 301 to `https://`; old IP gets no response; login over HTTPS, data kept
+  (5 devices), AWS page works; CORS allows the site and nothing else; live edge function returns 403 for `8.8.8.8` and lets an
+  allowed IP through (unit-tested 9 cases first); backend **refuses to start** with no `JWT_SECRET` or the dev secret in production
+- Known limits: CloudFront → server is HTTP inside AWS; no custom domain; the backend sees CloudFront's address as the client
+  IP, so the login lockout's per-address part is per edge location
+- For teammates: use the new HTTPS address; send Aaron your IP to be added. For the agent (B3/C4), point it at the HTTPS address.
+  For Tirth: `docs/security/SECURITY_CHECKLIST.md` A02 / A05 (HTTPS, production CORS) can be ticked
+
+### 2026-11-22 — Fix CD sign-in: GitHub immutable OIDC subject (`fix/deploy-oidc-subject`) — Aaron
+
+- Task **A4** follow-up. The first Deploy run (after merging #49) failed at "Sign in to AWS":
+  `Not authorized to perform sts:AssumeRoleWithWebIdentity`. The site was unaffected (nothing reached the server)
+- Cause: this repo sends GitHub's newer **immutable OIDC subject**, `repo:AaronKingCloud@179765889/CloudOpsHub@1375278413:ref:refs/heads/main`
+  (owner and repo IDs added), but the role only trusted `repo:AaronKingCloud/CloudOpsHub:ref:refs/heads/main`
+- Fix: the deploy role trusts both formats, still `main` only (`modules/iam`, value in `envs/dev/variables.tf`).
+  The immutable form is safer: a deleted-and-recreated repo with the same name can't deploy
+- Checked: `terraform plan` = 1 in-place change (the trust rule only); applied, then re-ran the Deploy workflow:
+  **all steps green**, OIDC sign-in, both images built and pushed to ECR, deployed with the health check, live version
+  recorded as `732be5e` (= `main`); site up, login works, data kept. **A4 is done**: merging to `main` now deploys
+
+### 2026-11-22 — Continuous deployment (`ci/deploy`) — Aaron
+
+- Task **A4** from `docs/REMAINING_WORK.md` (built and tested; finished by its first run after merge). Includes A3's changes
+  (`infra/terraform-app`, branched on top), so merge that PR first
+- `.github/workflows/deploy.yml`: on every push to `main`, sign in with **GitHub OIDC (no AWS keys in GitHub)**, build both
+  images, push to **ECR** tagged with the commit SHA, deploy on the server through **SSM Run Command**, then record the SHA
+  as the live version. All actions pinned to full commit SHAs; permissions `contents: read`, `id-token: write`
+- `infra/scripts/deploy.sh` (runs on the server): pull, restart, wait for both containers to be healthy;
+  **if not healthy within 2 minutes it rolls back** and the workflow fails without recording the bad version
+- `infra/terraform/envs/dev/cd.tf`: ECR repos (immutable tags, scan on push, keep 10), live-version SSM parameter,
+  least-privilege policies (deploy role: push to 2 repos, run commands on this one server; server: pull only)
+- Boot script now starts a rebuilt server on the **last deployed version** from ECR (builds locally only before the first deploy)
+- **Checked on the live server:** real deploy from ECR succeeded (site 200, 5 devices kept); a deliberately **broken deploy
+  rolled back automatically** and the site stayed up. Not yet run: the workflow itself (its OIDC role only trusts `main`)
+- ⚠️ **Incident, fixed:** a Terraform plan file (contains state, including the JWT secret) was pushed to the `ci/deploy`
+  branch for ~2 minutes. Removed from the branch, `tfplan` now in `infra/terraform/.gitignore`, and the **JWT secret was
+  rotated** (old tokens now rejected: checked). Everyone signed in had to sign in again. Never on `main`
+- For Tirth: `docs/security/SECURITY_CHECKLIST.md` A08 ("CD signing not set up") can note pinned actions + OIDC + immutable tags
+
+### 2026-11-22 — Persistent data + daily snapshots on AWS (`infra/terraform-app`) — Aaron
+
+- Task **A3** from `docs/REMAINING_WORK.md` (persistent storage + backups part; ECR/images move to A4)
+- `infra/terraform/envs/dev/storage.tf`: separate 5 GB encrypted **EBS data disk** for `/app/data`, so **both databases**
+  (users; devices/metrics/alerts) survive server rebuilds; `prevent_destroy` guards it
+- **Daily snapshots** of the data disk (Data Lifecycle Manager, 07:00 UTC, keep 7): the cloud backups C7 needs
+- Boot script waits for the disk, **formats it only if brand new**, mounts it, and maps it to the backend's `/app/data`
+  (replaces the Docker volume on the server); demo users are only seeded if missing
+- Changing the boot script now replaces the server automatically (safe now that data lives on the disk);
+  redeploy latest `main` with `terraform apply -replace=aws_instance.app` (in `infra/terraform/README.md`)
+- Redeployed: the cloud server now runs today's `main` (device API, agent, alerts, login everywhere, notifications)
+- **Checked:** `terraform fmt`/`validate`/`plan` clean; boot script rendered and syntax-checked; on AWS both databases are on
+  the data disk (`/dev/nvme1n1`); added a test device, **replaced the whole server** (`-replace=aws_instance.app`, new
+  instance), and the device was still there after ~2 min; login and `/api/aws/*` (instance role) work. Test device deleted
+- Also verified Tirth's `fix/docker-app-db-path` (#46) locally: on the old `main` the backend crashed on startup;
+  with the fix: healthy, seeded, signed in, added a device, `down`/`up`, device still there
+- For Tirth (C7): snapshots exist from tomorrow 07:00 UTC; restore steps are in `infra/terraform/README.md`
+- Teammates: the site allows Aaron's home and Seneca campus IPs; send Aaron yours to be added
 
 ### 2026-11-22 — Docker: app database on the volume (`fix/docker-app-db-path`) — Tirth, **for Aaron to review**
 
