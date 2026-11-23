@@ -15,7 +15,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Frontend            | 🟡 Dashboard UI + login; mock or live backend          |
 | Backend             | 🟡 FastAPI: auth + live AWS + SQLAlchemy DB (devices/metrics/alerts) |
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
-| CI/CD               | 🟡 CI on PRs; CD built and tested (first run after merge) |
+| CI/CD               | ✅ CI on PRs; CD deploys every merge to `main` (OIDC, ECR, rollback) |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
 | Terraform / Cloud   | 🟡 Deployed (EC2) with persistent data + daily snapshots; CD/HTTPS next |
 
@@ -38,7 +38,9 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
   (owner and repo IDs added), but the role only trusted `repo:AaronKingCloud/CloudOpsHub:ref:refs/heads/main`
 - Fix: the deploy role trusts both formats, still `main` only (`modules/iam`, value in `envs/dev/variables.tf`).
   The immutable form is safer: a deleted-and-recreated repo with the same name can't deploy
-- Checked: `terraform plan` = 1 in-place change (the trust rule only)
+- Checked: `terraform plan` = 1 in-place change (the trust rule only); applied, then re-ran the Deploy workflow:
+  **all steps green**, OIDC sign-in, both images built and pushed to ECR, deployed with the health check, live version
+  recorded as `732be5e` (= `main`); site up, login works, data kept. **A4 is done**: merging to `main` now deploys
 
 ### 2026-11-22 — Continuous deployment (`ci/deploy`) — Aaron
 
