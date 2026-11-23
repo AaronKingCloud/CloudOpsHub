@@ -72,6 +72,12 @@ variable "snapshot_retention_days" {
   default     = 7
 }
 
+variable "log_retention_days" {
+  description = "How long container logs are kept in CloudWatch Logs (short = cheap)"
+  type        = number
+  default     = 7
+}
+
 variable "images_to_keep" {
   description = "Images kept per ECR repository (older ones expire)"
   type        = number

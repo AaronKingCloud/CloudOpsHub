@@ -29,6 +29,7 @@ terraform/
                       https.tf: CloudFront (HTTPS) + IP allowlist function
                       storage.tf: persistent data disk + daily snapshots
                       cd.tf: ECR repositories, deploy role permissions, live-version parameter
+                      monitoring.tf: logs, health metric, alarms → email (SNS)
 ```
 
 ## What `envs/dev` creates
@@ -91,6 +92,32 @@ terraform apply -replace=random_password.jwt_secret -replace=aws_instance.app
 Generates a new secret, stores it in SSM and rebuilds the server so it loads it. Everyone has to sign in again.
 
 > Never commit `tfplan` files: they contain the state, **including secrets**. `infra/terraform/.gitignore` blocks them.
+
+### Monitoring (A6)
+
+| What | Where |
+| --- | --- |
+| Container logs (7 days) | CloudWatch → Log groups → `/cloudopshub/dev/backend`, `/cloudopshub/dev/frontend` |
+| Health metric | `CloudOpsHub/AppHealthy` (1 = backend healthy **and** site serves 200), sent every minute by a systemd timer on the server (`cloudopshub-health.timer`) |
+| Server errors | `CloudOpsHub/Http5xx`, counted from nginx's access log by a metric filter |
+
+**Alarms** (each emails `alert_emails` through the SNS topic `cloudopshub-dev-alarms`, and again when it recovers):
+
+| Alarm | Fires when |
+| --- | --- |
+| `cloudopshub-dev-app-unhealthy` | 3 bad minutes in a row, **or no reports** (server down). A normal deploy (~30 s) doesn't trigger it; a server rebuild does |
+| `cloudopshub-dev-http-5xx` | 5+ HTTP 5xx responses within 5 minutes |
+| `cloudopshub-dev-server-status-check` | EC2 status check fails for 3 minutes |
+| Budget (A2) | $5, $10, or a forecast overrun this month |
+
+New subscribers must click **Confirm subscription** in the first email from AWS Notifications, or they get nothing.
+
+**When an alarm fires:**
+
+1. Open the site. If it loads, check the newest entries in the `/cloudopshub/dev/backend` log group.
+2. Shell on the server (`ssm_shell` output), then `cd /opt/cloudopshub/infra && docker compose ps` and `docker logs --tail 50 cloudops-backend`.
+3. A container down: `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-build`.
+4. A bad deploy: re-run the last good **Deploy** workflow, or roll forward with a fix. Server gone: `terraform apply -replace=aws_instance.app`.
 
 ### Restoring from a snapshot (for the DR drill, C7)
 

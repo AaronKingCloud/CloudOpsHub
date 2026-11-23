@@ -17,7 +17,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
 | CI/CD               | ✅ CI on PRs; CD deploys every merge to `main` (OIDC, ECR, rollback) |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
-| Terraform / Cloud   | ✅ Deployed over HTTPS (CloudFront), persistent data, CD; monitoring (A6) next |
+| Terraform / Cloud   | ✅ HTTPS (CloudFront), persistent data, CD, monitoring + email alarms |
 
 ## Next Up
 
@@ -29,6 +29,21 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 ---
 
 ## Log
+
+### 2026-11-22 — Monitoring the app itself (`infra/monitoring`) — Aaron
+
+- Task **A6** from `docs/REMAINING_WORK.md` (done). Built on `infra/https` (A5), so merge that first
+- `infra/terraform/envs/dev/monitoring.tf`: **SNS topic** emailing the team; **CloudWatch Logs** for both containers
+  (`/cloudopshub/dev/backend`, `/frontend`, kept 7 days); a log **metric filter** counting HTTP 5xx in nginx's access log
+- Server: containers log through Docker's `awslogs` driver (`docker logs` still works); a **systemd timer reports
+  `CloudOpsHub/AppHealthy` every minute** (1 = backend healthy and site serves 200)
+- **Alarms → email** (and an OK email on recovery): app unhealthy for 3 min **or no reports** (server down); 5+ HTTP 5xx in
+  5 min; EC2 status check; plus the A2 budget alarm. A normal deploy restart (~30 s) doesn't trigger anything
+- **Checked (the briefing's test):** stopped the backend at 01:39:33 UTC → site API 502 → **ALARM email at 01:43:32 (4 min)**;
+  restarted → **OK email at 01:45:30**; the 5xx filter counted the 502 (tested the pattern on sample lines first);
+  logs arriving in both log groups. Runbook for alarms in `infra/terraform/README.md` → Monitoring
+- ⚠️ **Teammates: confirm the "AWS Notification - Subscription Confirmation" email**, or you won't get alarms
+- For Tirth: `docs/security/SECURITY_CHECKLIST.md` A09 (logging and monitoring) now has logs and alerting (no audit log yet)
 
 ### 2026-11-22 — HTTPS and production settings (`infra/https`) — Aaron
 

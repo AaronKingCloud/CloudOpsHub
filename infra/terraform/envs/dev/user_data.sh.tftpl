@@ -85,10 +85,22 @@ services:
     ports: !reset []          # backend is reached only through nginx
     volumes: !override        # /app/data on the persistent EBS volume instead of a Docker volume
       - /srv/cloudopshub-data:/app/data
+    logging:                  # container logs → CloudWatch Logs (A6); `docker logs` still works
+      driver: awslogs
+      options:
+        awslogs-region: ${region}
+        awslogs-group: ${log_prefix}/backend
+        mode: non-blocking
   frontend:
     image: $${REGISTRY}/cloudopshub/frontend:$${IMAGE_TAG}
     ports: !override
       - "80:80"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${region}
+        awslogs-group: ${log_prefix}/frontend
+        mode: non-blocking
 EOF
 
 cd /opt/cloudopshub/infra
@@ -116,5 +128,40 @@ for i in $(seq 1 30); do
   sleep 5
 done
 docker compose exec -T backend python -m seed
+
+# Health reporter (A6): every minute, publish CloudOpsHub/AppHealthy = 1 if the backend is healthy AND the
+# site serves 200, else 0. The app-unhealthy alarm fires after 3 bad minutes or when reports stop.
+cat > /usr/local/bin/cloudopshub-health <<'EOF'
+#!/bin/bash
+export PATH="$PATH:/snap/bin"
+backend="$(docker inspect -f '{{.State.Health.Status}}' cloudops-backend 2>/dev/null)"
+site="$(curl -s -m 5 -o /dev/null -w '%%{http_code}' http://localhost/)"
+value=0
+[ "$backend" = "healthy" ] && [ "$site" = "200" ] && value=1
+aws cloudwatch put-metric-data --region "${region}" --namespace CloudOpsHub \
+  --metric-name AppHealthy --dimensions Environment=dev --value "$value"
+EOF
+chmod 755 /usr/local/bin/cloudopshub-health
+
+cat > /etc/systemd/system/cloudopshub-health.service <<'EOF'
+[Unit]
+Description=Report CloudOps Hub health to CloudWatch
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cloudopshub-health
+EOF
+
+cat > /etc/systemd/system/cloudopshub-health.timer <<'EOF'
+[Unit]
+Description=Report CloudOps Hub health every minute
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=5s
+[Install]
+WantedBy=timers.target
+EOF
+systemctl daemon-reload
+systemctl enable --now cloudopshub-health.timer
 
 echo "CloudOps Hub setup complete"
