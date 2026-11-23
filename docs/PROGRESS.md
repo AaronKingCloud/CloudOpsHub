@@ -30,6 +30,17 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-22 — Demo script and measurement helper (`docs/demo-script`) — Aaron
+
+- Prep for **F1** (the team demo session) and **F2** (demo video). Built on `docs/readme-deployment`, so merge after it
+- `docs/demo/DEMO_SCRIPT.md`: a ~30 min script for the **live cloud site** with roles (Tirth: dashboard, pshrestha49: device,
+  Aaron: cloud), a before-the-session checklist, 5 parts (sign-in and roles, real agent, alerts, cloud side, measurements),
+  each step naming the requirement it proves, a results table to fill in, and troubleshooting
+- `infra/scripts/demo_check.py` (standard library only): `latency` measures API p95 (NFR-P2); `simulate` runs 20 fake agents
+  for 5 min, measures the dashboard under load and how fast a new reading shows (NFR-P3, NFR-P4), then deletes them
+- Checked: both commands run against the local Docker stack (p95 157 ms; 3 simulated devices, 0 failed reports, reading
+  visible immediately, cleanup left nothing). **Not run against the live site** until the team session
+
 ### 2026-11-22 — README: live deployment and architecture (`docs/readme-deployment`) — Aaron
 
 - Part of **F3** (Aaron's README sections, per the briefing). Built on `infra/monitoring`, so merge after #52
