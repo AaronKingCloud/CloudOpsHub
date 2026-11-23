@@ -110,6 +110,10 @@ Generates a new secret, stores it in SSM and rebuilds the server so it loads it.
 | `cloudopshub-dev-server-status-check` | EC2 status check fails for 3 minutes |
 | Budget (A2) | $5, $10, or a forecast overrun this month |
 
+**Device alerts (B9):** the backend's alert engine publishes every **critical** device alert (device offline, or CPU,
+memory or disk at 90% or more) to the same topic, so the team gets an email titled `[CloudOps Hub] Critical: <hostname>`.
+The server gets the topic as `ALERT_SNS_TOPIC_ARN` and may publish only to that topic (`SendDeviceAlerts` in `monitoring.tf`).
+
 New subscribers must click **Confirm subscription** in the first email from AWS Notifications, or they get nothing.
 
 **When an alarm fires:**

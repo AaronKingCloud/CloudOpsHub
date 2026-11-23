@@ -32,6 +32,14 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-23 — Critical device alerts emailed from the cloud (`infra/alert-messaging`) — Aaron
+
+- Turns on **B9** in production: the cloud backend never had `ALERT_SNS_TOPIC_ARN` set, so critical alerts sent nothing.
+  The server now gets the existing `cloudopshub-dev-alarms` topic and may publish to that topic only (least privilege)
+- Result: device offline, or CPU, memory or disk at 90%+, emails the team (`[CloudOps Hub] Critical: <hostname>`). Config
+  only, no app code changed; covers the **Messaging** part of the final report
+- **A7** marked deferred to future work (needs backend + frontend code and a second account; code freeze is Nov 23)
+
 ### 2026-11-23 — Accessible pop-ups, SonarCloud fixes, cloud drill steps (`ci/sonarcloud`, #47) — Tirth
 
 - Merged `main` (Aaron's #48–#54) into #47 and kept both sides of this log
