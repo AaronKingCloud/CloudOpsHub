@@ -1,6 +1,6 @@
 output "app_url" {
-  description = "Open this in a browser (only from an IP in allowed_cidrs)"
-  value       = "http://${aws_eip.app.public_ip}"
+  description = "Open this in a browser (only from an IP in allowed_cidrs; HTTP redirects to HTTPS)"
+  value       = local.site_url
 }
 
 output "instance_id" {

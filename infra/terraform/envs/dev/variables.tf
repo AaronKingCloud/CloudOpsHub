@@ -11,7 +11,7 @@ variable "instance_type" {
 }
 
 variable "allowed_cidrs" {
-  description = "Who may open the app on port 80, e.g. [\"203.0.113.10/32\"] (your public IP). Keeps the demo logins off the open internet."
+  description = "Who may open the app (checked by the CloudFront function in https.tf), e.g. [\"203.0.113.10/32\"] (your public IP). Keeps the demo logins off the open internet."
   type        = list(string)
 
   validation {

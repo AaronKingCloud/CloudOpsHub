@@ -17,7 +17,7 @@ A running log of what the team has done, what is in progress, and what is next.
 | Authentication/RBAC | ✅ Done (JWT + Login UI + Admin/Operator/Viewer)       |
 | CI/CD               | ✅ CI on PRs; CD deploys every merge to `main` (OIDC, ECR, rollback) |
 | Docker / Infra      | ✅ Compose tested end-to-end (users persist, backups) |
-| Terraform / Cloud   | 🟡 Deployed (EC2) with persistent data + daily snapshots; CD/HTTPS next |
+| Terraform / Cloud   | ✅ Deployed over HTTPS (CloudFront), persistent data, CD; monitoring (A6) next |
 
 ## Next Up
 
@@ -29,6 +29,23 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 ---
 
 ## Log
+
+### 2026-11-22 — HTTPS and production settings (`infra/https`) — Aaron
+
+- Task **A5** from `docs/REMAINING_WORK.md` (done). Built on `fix/deploy-oidc-subject`, so merge that PR first
+- **New site address: https://drk4col17f8z3.cloudfront.net** (the old `http://3.151.75.185` no longer works, on purpose)
+- `infra/terraform/envs/dev/https.tf`: **CloudFront** in front of the server, free AWS certificate, **HTTP → HTTPS redirect**,
+  no caching (dynamic app), forwards `Authorization` / `X-Agent-Key` so login and agents work
+- **IP allowlist moved to CloudFront** (`ip_allowlist.js.tftpl`, a free edge function): only `allowed_cidrs` get in, everyone else
+  gets 403. The server's security group now accepts **only CloudFront** (AWS-managed prefix list)
+- Production settings: `APP_ENV=production` and the real `JWT_SECRET` (since A2), **`CORS_ORIGINS` = the HTTPS site only**
+- Checked: HTTPS 200 with a valid certificate; `http://` → 301 to `https://`; old IP gets no response; login over HTTPS, data kept
+  (5 devices), AWS page works; CORS allows the site and nothing else; live edge function returns 403 for `8.8.8.8` and lets an
+  allowed IP through (unit-tested 9 cases first); backend **refuses to start** with no `JWT_SECRET` or the dev secret in production
+- Known limits: CloudFront → server is HTTP inside AWS; no custom domain; the backend sees CloudFront's address as the client
+  IP, so the login lockout's per-address part is per edge location
+- For teammates: use the new HTTPS address; send Aaron your IP to be added. For the agent (B3/C4), point it at the HTTPS address.
+  For Tirth: `docs/security/SECURITY_CHECKLIST.md` A02 / A05 (HTTPS, production CORS) can be ticked
 
 ### 2026-11-22 — Fix CD sign-in: GitHub immutable OIDC subject (`fix/deploy-oidc-subject`) — Aaron
 

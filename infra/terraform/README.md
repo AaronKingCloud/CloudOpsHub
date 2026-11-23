@@ -26,6 +26,7 @@ terraform/
 │   └── iam/          App instance role + GitHub Actions OIDC deploy role
 └── envs/
     └── dev/          Wires the modules together + EC2, security group, secret, Elastic IP
+                      https.tf: CloudFront (HTTPS) + IP allowlist function
                       storage.tf: persistent data disk + daily snapshots
                       cd.tf: ECR repositories, deploy role permissions, live-version parameter
 ```
@@ -38,10 +39,11 @@ terraform/
 | VPC + 2 public subnets (`modules/network`) | Own network across 2 AZs; no NAT gateway (saves ~$32/month) |
 | GitHub OIDC deploy role (`modules/iam`) | For CD (A4): only `main` of this repo can assume it; no AWS keys in GitHub |
 | EC2 (Ubuntu 24.04, t3.micro) | Runs `infra/docker-compose.yml` plus production overrides |
-| Security group | Port 80 **only from `allowed_cidrs`**; no SSH |
+| CloudFront (`https.tf`) | **HTTPS** at `https://<id>.cloudfront.net` (free AWS certificate); `http://` redirects to `https://`; a viewer-request function lets only `allowed_cidrs` in (403 for everyone else) |
+| Security group | Port 80 **only from CloudFront** (AWS-managed prefix list); the server's IP can't be used directly; no SSH |
 | IAM instance role | SSM Session Manager + the app's read-only AWS permissions (no access keys on the server) |
 | SSM SecureString | Randomly generated `JWT_SECRET` |
-| Elastic IP | Stable address across stop/start and rebuilds |
+| Elastic IP | Stable server address across rebuilds (CloudFront's origin) |
 | Data disk (`storage.tf`) | 5 GB encrypted EBS volume mounted at `/srv/cloudopshub-data` = the backend's `/app/data` (both SQLite databases). Separate from the server, so it survives rebuilds; `prevent_destroy` guards it |
 | Daily snapshots (`storage.tf`) | Data Lifecycle Manager snapshots the data disk every day at 07:00 UTC, keeps 7 |
 
@@ -123,7 +125,10 @@ terraform plan
 terraform apply
 ```
 
-First boot takes ~10 minutes (Docker install + image builds). Then open the `app_url` output.
+First boot takes ~10 minutes (Docker install + image builds). Then open the `app_url` output (the HTTPS address).
+
+**Who can open the site:** the IPs in `allowed_cidrs`, checked by CloudFront. To add a teammate, add their
+`x.x.x.x/32` and run `terraform apply` (updates the function in ~1 minute, no rebuild).
 
 **Shell access / logs:** use the `ssm_shell` output (needs the
 [Session Manager plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)),
@@ -137,7 +142,9 @@ or `terraform destroy` to remove everything except the state bucket and the data
 
 - One server: no high availability (see NFR-A6 in `docs/requirements/REQUIREMENTS.md`).
 - Snapshots stay in us-east-2; a copy in another Region would need the account's Region guardrail lifted.
-- HTTP only (no domain/TLS yet).
+- HTTPS ends at CloudFront; CloudFront → server is HTTP inside AWS's network (the server only accepts CloudFront).
+- No custom domain (would need DNS + an ACM certificate in us-east-1); the `cloudfront.net` address is used instead.
+- The backend sees CloudFront's address as the client IP, so the login lockout's "per address" part is per CloudFront edge.
 - A deploy restarts the containers: ~10–30 s of downtime (one server, no load balancer).
 
 Never commit `*.tfstate` or `terraform.tfvars`; they are in `.gitignore`.
