@@ -48,6 +48,12 @@ variable "monthly_budget_usd" {
   default     = 10
 }
 
+variable "github_immutable_subject_prefix" {
+  description = "GitHub OIDC immutable subject prefix for this repo (owner and repo IDs). From GET /repos/AaronKingCloud/CloudOpsHub/actions/oidc/customization/sub"
+  type        = string
+  default     = "repo:AaronKingCloud@179765889/CloudOpsHub@1375278413"
+}
+
 variable "github_repo" {
   description = "Repository whose main branch may assume the CD deploy role"
   type        = string

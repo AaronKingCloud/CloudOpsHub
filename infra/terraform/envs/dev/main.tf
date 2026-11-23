@@ -75,6 +75,8 @@ module "iam" {
   name                  = local.name
   secret_parameter_arns = [aws_ssm_parameter.jwt_secret.arn]
   github_repo           = var.github_repo
+
+  github_immutable_subject_prefix = var.github_immutable_subject_prefix
 }
 
 # IAM resources moved from this file into modules/iam: keep them, don't recreate

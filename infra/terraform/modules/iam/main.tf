@@ -84,7 +84,12 @@ data "aws_iam_policy_document" "github_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main"]
+      # GitHub sends one of two formats. The repo uses the newer "immutable subject" (owner and repo IDs added,
+      # so a deleted-and-recreated repo with the same name can't deploy); the plain form is kept for compatibility.
+      values = compact([
+        "repo:${var.github_repo}:ref:refs/heads/main",
+        var.github_immutable_subject_prefix == "" ? "" : "${var.github_immutable_subject_prefix}:ref:refs/heads/main",
+      ])
     }
   }
 }

@@ -30,6 +30,16 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-22 — Fix CD sign-in: GitHub immutable OIDC subject (`fix/deploy-oidc-subject`) — Aaron
+
+- Task **A4** follow-up. The first Deploy run (after merging #49) failed at "Sign in to AWS":
+  `Not authorized to perform sts:AssumeRoleWithWebIdentity`. The site was unaffected (nothing reached the server)
+- Cause: this repo sends GitHub's newer **immutable OIDC subject**, `repo:AaronKingCloud@179765889/CloudOpsHub@1375278413:ref:refs/heads/main`
+  (owner and repo IDs added), but the role only trusted `repo:AaronKingCloud/CloudOpsHub:ref:refs/heads/main`
+- Fix: the deploy role trusts both formats, still `main` only (`modules/iam`, value in `envs/dev/variables.tf`).
+  The immutable form is safer: a deleted-and-recreated repo with the same name can't deploy
+- Checked: `terraform plan` = 1 in-place change (the trust rule only)
+
 ### 2026-11-22 — Continuous deployment (`ci/deploy`) — Aaron
 
 - Task **A4** from `docs/REMAINING_WORK.md` (built and tested; finished by its first run after merge). Includes A3's changes

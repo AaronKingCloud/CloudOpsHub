@@ -60,6 +60,11 @@ the demo users (skipped if they already exist). The backend port is not publishe
    so a bad merge never leaves the site down
 5. Records the SHA in SSM (`/cloudopshub/dev/image_tag`), so a rebuilt server starts on the same version
 
+The role trusts this repo's `main` branch in both GitHub token formats, including the repo's
+**immutable subject** (`repo:AaronKingCloud@179765889/CloudOpsHub@1375278413:…`, set in `envs/dev/variables.tf`).
+If the repo is ever transferred or recreated, update that value from
+`GET /repos/{owner}/{repo}/actions/oidc/customization/sub`.
+
 Redeploy by hand: **Actions → Deploy → Run workflow** (on `main`). The server must be running (not stopped).
 The deploy role's permissions: ECR push to the two repositories, `ssm:SendCommand` on this one server, and
 writing the live-version parameter. Nothing else.
