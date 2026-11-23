@@ -30,6 +30,15 @@ Full task list with owners: [`docs/REMAINING_WORK.md`](REMAINING_WORK.md)
 
 ## Log
 
+### 2026-11-22 — README: live deployment and architecture (`docs/readme-deployment`) — Aaron
+
+- Part of **F3** (Aaron's README sections, per the briefing). Built on `infra/monitoring`, so merge after #52
+- `README.md`: new **Live Deployment** section (HTTPS address, how deploys, HTTPS, data, monitoring, security and cost work),
+  **Architecture** section with a diagram of the whole AWS setup, **AWS Integration** updated (instance role, billing endpoint)
+- Left Tirth's lines alone (status line, tech-stack table, roadmap) since #47 changes them
+- `docs/REMAINING_WORK.md`: **0.2** marked decided (Aaron's proposal, no objections, recorded in `infra/terraform/README.md`);
+  **0.3** marked done (#35)
+
 ### 2026-11-22 — Monitoring the app itself (`infra/monitoring`) — Aaron
 
 - Task **A6** from `docs/REMAINING_WORK.md` (done). Built on `infra/https` (A5), so merge that first
