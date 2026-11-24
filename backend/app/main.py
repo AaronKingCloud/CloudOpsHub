@@ -1,9 +1,11 @@
+import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.alert_checker import run_alert_checker
 from app.auth.database import init_db
 from app.database import init_app_db
 from app.routers import agent, alerts, auth, aws, billing, dashboard, devices, resources
@@ -13,7 +15,11 @@ from app.routers import agent, alerts, auth, aws, billing, dashboard, devices, r
 async def lifespan(app: FastAPI):
     init_db()
     init_app_db()
+    checker = asyncio.create_task(run_alert_checker())
     yield
+    checker.cancel()
+    with suppress(asyncio.CancelledError):
+        await checker
 
 
 app = FastAPI(

@@ -32,6 +32,16 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-23 — Offline alerts no longer wait for someone to open the app (`fix/offline-alert-check`) — Aaron
+
+- Bug fix in **pshrestha49's backend (B4/B9), for their review**: the offline rule only ran when the dashboard, devices or alerts
+  page was loaded, so a device that died while nobody was signed in emailed no one
+- `backend/app/alert_checker.py`: checks every 60 s (`ALERT_CHECK_SECONDS`), starting 2 min after startup so a restart doesn't
+  report healthy devices as offline; a failed check is logged and the next one still runs. Started and stopped in `main.py`
+- Alert rules unchanged; one alert and one email per outage, as before
+- Checked: 99 backend tests (9 new). In a container with no API calls: 4 silent devices alerted at the first check, no duplicates
+  at the second, clean shutdown. **Not yet checked on the live site** (a real device going offline, for the demo session)
+
 ### 2026-11-23 — Critical device alerts emailed from the cloud (`infra/alert-messaging`) — Aaron
 
 - Turns on **B9** in production: the cloud backend never had `ALERT_SNS_TOPIC_ARN` set, so critical alerts sent nothing.
