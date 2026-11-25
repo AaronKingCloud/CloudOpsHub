@@ -41,7 +41,7 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 - `infra/terraform/envs/dev/accounts.tf`: account list in SSM, permission for exactly those roles
 - After the Nov 23 code freeze: replacing the sample data is a bug fix; connecting other accounts is the small part of **A7**
   needed for it. Choosing an account on the AWS Cloud page and billing per account stay deferred
-- Checked: 108 backend tests (9 new, no AWS calls). **Not yet checked live**
+- Checked: 108 backend tests (9 new, no AWS calls). On the live server (code run by hand before merging): both accounts read in 0.8 s
 
 ### 2026-11-24 — C7 cloud restore drill passed (`docs/c7-cloud-drill`) — Aaron
 
