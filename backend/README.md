@@ -2,7 +2,7 @@
 
 REST API for the dashboard, built with **Python + FastAPI** and **SQLAlchemy**.
 Devices, metric history, and alerts are stored in a SQLite/Postgres database (`DATABASE_URL`);
-cloud accounts still use sample data in `app/mock_data.py`.
+cloud accounts are read live from AWS (`app/cloud_accounts.py`).
 
 ## Run it
 
@@ -114,7 +114,7 @@ backend/
 ├── app/
 │   ├── main.py         App setup, CORS, router registration
 │   ├── schemas.py      Pydantic response models (snake_case in Python, camelCase in JSON)
-│   ├── mock_data.py    Temporary in-memory data
+│   ├── cloud_accounts.py  Live status of each connected AWS account
 │   └── routers/        One file per group of endpoints
 ├── tests/              pytest tests
 ├── requirements.txt    Runtime dependencies

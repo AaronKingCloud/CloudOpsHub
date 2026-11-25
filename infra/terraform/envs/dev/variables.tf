@@ -89,3 +89,25 @@ variable "root_volume_size_gb" {
   type        = number
   default     = 20
 }
+
+variable "account_name" {
+  description = "Name of the account the app runs in, as shown on the dashboard"
+  type        = string
+  default     = "Console Dot Dream"
+}
+
+variable "monitored_accounts" {
+  description = "Other AWS accounts shown on the dashboard, read through the CloudOpsHubReadOnly role in each. Set in terraform.tfvars (gitignored)."
+  type = list(object({
+    name        = string
+    account_id  = string
+    region      = string
+    external_id = string
+  }))
+  default = []
+
+  validation {
+    condition     = alltrue([for a in var.monitored_accounts : can(regex("^[0-9]{12}$", a.account_id)) && length(a.external_id) >= 16])
+    error_message = "Each monitored account needs a 12-digit account_id and an external_id of at least 16 characters."
+  }
+}

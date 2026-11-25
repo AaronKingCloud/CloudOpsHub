@@ -8,9 +8,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.cloud_accounts import get_accounts
 from app.database import get_db
 from app.device_status import is_device_online
-from app.mock_data import ACCOUNTS
 from app.models import DeviceModel, MetricModel
 from app.schemas import Account, MetricPoint
 
@@ -48,7 +48,7 @@ def _overview_metrics(db: Session, field: str) -> list[MetricPoint]:
 
 @router.get("/accounts", response_model=list[Account], tags=["accounts"])
 def list_accounts() -> list[Account]:
-    return ACCOUNTS
+    return get_accounts()
 
 
 @router.get("/metrics/cpu", response_model=list[MetricPoint], tags=["metrics"])

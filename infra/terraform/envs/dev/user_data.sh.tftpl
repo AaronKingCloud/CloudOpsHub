@@ -82,6 +82,8 @@ services:
       JWT_SECRET: $${JWT_SECRET}
       CORS_ORIGINS: ${site_url} # the HTTPS site only (A5)
       AWS_DEFAULT_REGION: ${region}
+      AWS_ACCOUNT_NAME: ${account_name}
+      AWS_ACCOUNTS_PARAM: ${accounts_param} # other AWS accounts on the dashboard (accounts.tf)
       ALERT_SNS_TOPIC_ARN: ${alert_topic_arn} # critical device alerts -> team email (B9)
     ports: !reset []          # backend is reached only through nginx
     volumes: !override        # /app/data on the persistent EBS volume instead of a Docker volume
