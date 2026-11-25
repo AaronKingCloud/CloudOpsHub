@@ -34,11 +34,12 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ### 2026-11-25 — Final group report drafted (`docs/final-report`) — Tirth
 
-- Final report for F2 written as a shared document (outside the repo): summary, introduction, requirements, architecture
+- Final report for F2: **`docs/report/CloudOps_Hub_Final_Report.pdf`** (19 pages, exported from the shared draft): summary, introduction, requirements, architecture
   diagram, implementation, cloud and DevOps, security, testing, disaster recovery, project management and contributions,
   demo plan, challenges, lessons, future work, references. It's also the source for the slides
 - Every number in it is taken from the repo docs (requirements, drill logs, test counts, security checklist)
-- **Open:** the demo results table (section 10) is filled in after the F1 session; the team reviews it before submission
+- **Open:** the demo results table (section 10) is filled in after the F1 session, then the PDF is exported again;
+  the team reviews it before submission (comments to Tirth, who edits the draft)
 
 ### 2026-11-24 — Accounts list shows real AWS accounts (`fix/real-cloud-accounts`) — Aaron
 
