@@ -24,7 +24,7 @@ Each step names the requirement it proves (`docs/requirements/REQUIREMENTS.md`).
 - [ ] The Linux machine is ready (WSL Ubuntu on a laptop is fine; its traffic uses that laptop's allowed IP) with Python 3.10+
 - [ ] Chrome, Edge and Firefox installed on at least one laptop
 - [ ] Screen recording on (OBS / Xbox Game Bar `Win+Alt+R`); this becomes the demo video (F2)
-- [ ] Demo passwords at hand (`backend/seed.py`); set `DEMO_PASSWORD` in the terminal for the measurement script
+- [ ] Live passwords at hand (changed 2026-11-23; in SSM under `/cloudopshub/dev/demo_passwords/`, **not** the ones in `backend/seed.py`); set `DEMO_PASSWORD` in the terminal for the measurement script
 
 ---
 

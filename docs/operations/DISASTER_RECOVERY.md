@@ -2,7 +2,7 @@
 
 What CloudOps Hub can lose, how we get it back, how long that takes, and proof that it works.
 
-Last drill: **2026-11-22 — PASS, both databases, local** (details at the end). Next: the cloud drill below. Update this file after every drill.
+Last drill: **2026-11-24 — PASS, both databases, cloud snapshot: RTO 55 s, RPO 17 h 55 min** (details at the end). Update this file after every drill.
 
 ## Targets
 
@@ -151,6 +151,32 @@ aws ec2 describe-volumes --filters Name=tag:Name,Values=cloudopshub-dr-drill --q
 | Copy deleted, nothing left behind | |
 
 ## Drill log
+
+### 2026-11-24 — both databases, cloud snapshot — PASS (Aaron, using Tirth's procedure)
+
+Newest daily snapshot restored to a new disk, with a second private backend running on it. Started 2026-11-25 01:23:41 UTC
+(8:23 p.m. Nov 24 ET). The live site stayed up throughout. Run through SSM Run Command instead of an interactive session.
+
+| Step | Result | Elapsed |
+| --- | --- | --- |
+| Live before the drill | 3 users, 1 device (`aaron-laptop`), 5 metric rows, 0 alerts | – |
+| Snapshot used | `snap-02a87c860c321d47c`, 2026-11-24 07:28:47 UTC | – |
+| Volume created from the snapshot and attached | `vol-017dc9ca03da1e698`, 5 GB gp3 | 7 s |
+| Copy mounted (checked: a different disk from the live one), private backend healthy | `{"status":"ok"}` | 31 s |
+| Users / devices / metrics / alerts on the copy | 3 / 5 / 24 / 7, `integrity_check` **ok** for both databases | – |
+| Sign in as admin on the copy | **200**, role admin | 55 s |
+| **Total recovery time (RTO)** | **55 s** — target 30 min | |
+| **Data loss (RPO)** | **17 h 55 min** since the snapshot — target 24 h | |
+| Live site during the drill | 200, backend healthy | |
+| Clean-up | Backend stopped, copy unmounted, detached and deleted; nothing left; `terraform plan`: no changes | |
+
+- **What would have been lost:** everything after 07:28 UTC. The copy doesn't have `aaron-laptop` or its readings, added that
+  evening, and still has the 5 sample devices deleted before the drill. All user accounts and current passwords were there
+- **What the 55 s doesn't include:** noticing the failure, and pointing the live site at the restored disk. It ran on the
+  existing server; a lost server also needs a rebuild
+- **What surprised us:** one attempt stopped on a wrong check command (`findmnt`) after the disk was mounted, so the second
+  attempt picked up from there; that delay is included in the 55 s. An extra API read after the sign-in failed because the
+  test script used the wrong field name (the API returns `accessToken`); the sign-in itself had already passed
 
 ### 2026-11-22 — both databases, local — PASS (Tirth)
 

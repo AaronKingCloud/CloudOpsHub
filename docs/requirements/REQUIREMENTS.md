@@ -111,8 +111,8 @@ Numbers marked *(target)* are new proposals; they get measured during the final 
 
 | ID | Requirement | Status | Maps to |
 | --- | --- | --- | --- |
-| NFR-A1 | **RTO ≤ 30 min**: the service can be fully restored within 30 minutes of a failure | 🟡 local drill passed (both databases, 3.7 s); cloud drill ready to run | C7, A3 |
-| NFR-A2 | **RPO ≤ 24 h** now (daily backups); **≤ 5 min** once the managed cloud database exists | 🟡 daily cloud snapshots set up (A3); cloud drill to confirm | C7, B1, A3 |
+| NFR-A1 | **RTO ≤ 30 min**: the service can be fully restored within 30 minutes of a failure | ✅ cloud drill 2026-11-24: 55 s on the existing server (detection and switching the live site not included) | C7, A3 |
+| NFR-A2 | **RPO ≤ 24 h** now (daily backups); **≤ 5 min** once the managed cloud database exists | ✅ ≤ 24 h: cloud drill 2026-11-24 lost 17 h 55 min; the 5 min target needs a managed database (future work) | C7, B1, A3 |
 | NFR-A3 | Containers restart automatically after a crash or server reboot; each exposes a health check (`GET /health`) | ✅ | A1 |
 | NFR-A4 | If `/health` fails, the team gets an email alarm **within 5 minutes** | ✅ tested, 4 min | A6 |
 | NFR-A5 | A failed deployment leaves the previous version running | ✅ rollback tested | A4 |
