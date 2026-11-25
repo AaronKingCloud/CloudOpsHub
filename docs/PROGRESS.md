@@ -32,6 +32,14 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-25 — Final group report drafted (`docs/final-report`) — Tirth
+
+- Final report for F2 written as a shared document (outside the repo): summary, introduction, requirements, architecture
+  diagram, implementation, cloud and DevOps, security, testing, disaster recovery, project management and contributions,
+  demo plan, challenges, lessons, future work, references. It's also the source for the slides
+- Every number in it is taken from the repo docs (requirements, drill logs, test counts, security checklist)
+- **Open:** the demo results table (section 10) is filled in after the F1 session; the team reviews it before submission
+
 ### 2026-11-24 — Accounts list shows real AWS accounts (`fix/real-cloud-accounts`) — Aaron
 
 - The live Accounts list was still **hard-coded sample data** (`mock_data.py`: 2 AWS and 2 Azure accounts). Removed
