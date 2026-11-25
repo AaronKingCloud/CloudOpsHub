@@ -125,7 +125,9 @@ resource "aws_instance" "app" {
     tag_param       = aws_ssm_parameter.image_tag.name
     ecr_registry    = split("/", aws_ecr_repository.app["backend"].repository_url)[0]
     site_url        = local.site_url
-    log_prefix      = "/cloudopshub/dev"       # log groups in monitoring.tf
+    log_prefix      = "/cloudopshub/dev" # log groups in monitoring.tf
+    account_name    = var.account_name
+    accounts_param  = aws_ssm_parameter.monitored_accounts.name
     alert_topic_arn = aws_sns_topic.alarms.arn # backend sends critical device alerts here
   })
   # The boot script only runs on first boot, so a changed script means a fresh server.

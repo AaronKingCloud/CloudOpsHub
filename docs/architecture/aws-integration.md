@@ -83,7 +83,16 @@ aws configure set region us-east-2 --profile cloudopshub   # Console Dot Dream =
 - Each monitored account may have a different home Region, so the multi-account design (below)
   must store a **Region per account**.
 
-## Team decision needed: which accounts do we monitor, and how?
+## Connecting more AWS accounts (accounts list)
+
+The **Accounts** list shows every connected account's status and firing CloudWatch alarms. Each other account has a
+`CloudOpsHubReadOnly` role (only `ec2:DescribeInstances` and `cloudwatch:DescribeAlarms`) that trusts our server's role
+`cloudopshub-dev-instance` and requires that account's own **external ID**. The backend calls `sts:AssumeRole` and uses
+short-lived credentials; no keys are stored. To add one, put its name, account ID, region and external ID in
+`monitored_accounts` (gitignored `terraform.tfvars`) and run `terraform apply`. Not built yet: choosing an account on the
+AWS Cloud page, and billing per account (rest of A7).
+
+## Original proposal: which accounts do we monitor, and how?
 
 The dashboard is meant to show multiple accounts. Proposed approach, the same pattern
 commercial monitoring tools use:

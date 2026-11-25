@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.auth.dependencies import get_current_user
 from app.auth.schemas import UserResponse
 from app.main import app
+from app.schemas import Account
 
 client = TestClient(app)
 
@@ -85,7 +86,12 @@ def test_alerts_shape(logged_in):
     }
 
 
-def test_accounts_use_camel_case(logged_in):
+def test_accounts_use_camel_case(logged_in, monkeypatch):
+    # No AWS calls in tests; the real data is covered in test_cloud_accounts.py
+    sample = Account(
+        id=1, provider="AWS", account_name="Main", status="Healthy", alert_count=0, last_updated="now"
+    )
+    monkeypatch.setattr("app.routers.resources.get_accounts", lambda: [sample])
     accounts = client.get("/api/accounts").json()
     assert accounts
     assert set(accounts[0]) == {

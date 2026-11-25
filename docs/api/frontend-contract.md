@@ -76,18 +76,18 @@ The agreed shapes of data exchanged between `frontend/` and `backend/`.
 
 `GET /accounts`
 
-Cloud accounts / subscriptions being monitored (see `docs/architecture/account-model.md`).
-`status` is `"Healthy"`, `"Warning"`, or `"Critical"`.
+Connected AWS accounts, read live (cached 60 s). `status` is `"Healthy"`, `"Warning"` (a CloudWatch alarm is firing) or
+`"Critical"` (the account can't be read; its name ends in "(can't connect)"). `alertCount` is the number of firing alarms.
 
 ```json
 [
   {
     "id": 1,
     "provider": "AWS",
-    "accountName": "AWS Production",
-    "status": "Critical",
-    "alertCount": 2,
-    "lastUpdated": "2026-10-15 13:00"
+    "accountName": "Console Dot Dream",
+    "status": "Healthy",
+    "alertCount": 0,
+    "lastUpdated": "2026-11-25 02:10 UTC"
   }
 ]
 ```

@@ -32,6 +32,17 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-24 — Accounts list shows real AWS accounts (`fix/real-cloud-accounts`) — Aaron
+
+- The live Accounts list was still **hard-coded sample data** (`mock_data.py`: 2 AWS and 2 Azure accounts). Removed
+- `backend/app/cloud_accounts.py` (pshrestha49's backend, agreed with them): the app's own account plus other AWS accounts through
+  a read-only role in each (`sts:AssumeRole` + external ID, no stored keys). Status and alert count come from CloudWatch
+  alarms; an account that can't be read is shown as Critical, never hidden. Cached 60 s. No frontend change
+- `infra/terraform/envs/dev/accounts.tf`: account list in SSM, permission for exactly those roles
+- After the Nov 23 code freeze: replacing the sample data is a bug fix; connecting other accounts is the small part of **A7**
+  needed for it. Choosing an account on the AWS Cloud page and billing per account stay deferred
+- Checked: 108 backend tests (9 new, no AWS calls). **Not yet checked live**
+
 ### 2026-11-24 — C7 cloud restore drill passed (`docs/c7-cloud-drill`) — Aaron
 
 - Ran Tirth's cloud drill: newest daily snapshot restored to a temporary disk, private backend on it, both databases intact,
