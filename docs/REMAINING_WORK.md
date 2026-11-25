@@ -20,7 +20,7 @@ Last updated: 2026-11-23
 | Live AWS: account, EC2, CloudWatch CPU, cost | ✅ Done |
 | CI, security scans, SonarCloud, frontend tests (70) | ✅ Done |
 | Docker, Terraform, deployment, CD, HTTPS, monitoring | ✅ Done, live on AWS |
-| Disaster recovery | 🟡 Local drill passed; cloud drill ready to run (C7) |
+| Disaster recovery | ✅ Local and cloud drills passed (C7) |
 | End-to-end demo, final report, slides, video | ⬜ Not started (F1, F2) |
 
 ---
@@ -76,7 +76,7 @@ These block almost everything else. Do them first.
 | C4 | ✅ **Done 2026-11-22**: real agent reported using the key and command from the device page (B3). Agent setup page in the UI + install guide (copy device key, run command) | S | B3 | A teammate adds a device by following it |
 | C5 | ✅ **Done 2026-11-20** (`test/frontend-tests`). Frontend tests: Vitest + React Testing Library for key screens; run in CI | M | – | CI fails when a tested screen breaks |
 | C6 | ✅ **Done 2026-11-20** (`security/hardening`), see `docs/security/SECURITY_CHECKLIST.md`. Security validation: Dependabot, `npm audit` + `pip-audit` in CI, login rate limiting (with B), secrets scan, OWASP checklist written up | M | – | Checklist in `docs/`, scans green in CI |
-| C7 | 🟡 **Local part done 2026-11-22**: backup/restore tool covers both databases + passed drill with both lost (`docs/operations/DISASTER_RECOVERY.md`); A3 is done, so the **cloud drill is ready to run** (steps in the same doc, with Aaron). Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
+| C7 | ✅ **Done 2026-11-24**: cloud drill passed (RTO 55 s, RPO 17 h 55 min, `docs/operations/DISASTER_RECOVERY.md`). **Local part done 2026-11-22**: backup/restore tool covers both databases + passed drill with both lost (`docs/operations/DISASTER_RECOVERY.md`); A3 is done, so the **cloud drill is ready to run** (steps in the same doc, with Aaron). Disaster recovery: database backup, restore drill, RTO/RPO written down (with Aaron) | M | A3, B1 | Data restored from backup in a timed test |
 | C8 | ✅ **Done 2026-11-22**: guide updated to real data + AWS deployment diagram (Figure 11, redrawn 2026-11-23 for A3–A6). Final architecture docs: add the architecture guide to `docs/`, deployment diagram after A3 | S | A3 | Docs match what is deployed |
 | C9 | ✅ **Done 2026-11-22**: workflow, config and coverage (`ci/sonarcloud`); Aaron imported the repo in SonarCloud and added the `SONAR_TOKEN` secret. The 39 issues from the first run on `main` go to each file's owner. SonarQube / SonarCloud code-quality scan on every PR (NFR-M5, professor requirement): scanner config + CI job + coverage; needs a SonarCloud project and `SONAR_TOKEN` secret | S | – | Every PR shows a SonarCloud quality-gate check |
 

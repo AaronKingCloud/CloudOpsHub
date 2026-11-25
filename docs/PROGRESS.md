@@ -32,6 +32,15 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-24 — C7 cloud restore drill passed (`docs/c7-cloud-drill`) — Aaron
+
+- Ran Tirth's cloud drill: newest daily snapshot restored to a temporary disk, private backend on it, both databases intact,
+  admin sign-in 200. **RTO 55 s, RPO 17 h 55 min.** Live site stayed up; everything temporary deleted. Full log in
+  `docs/operations/DISASTER_RECOVERY.md`
+- C7 marked done; NFR-A1 and NFR-A2 updated with the measured results
+- Demo script: live passwords now come from SSM (rotated 2026-11-23), not `seed.py`
+- Live dashboard now has a real device (`aaron-laptop`, agent on Windows); the 5 sample devices were removed
+
 ### 2026-11-23 — Offline alerts no longer wait for someone to open the app (`fix/offline-alert-check`) — Aaron
 
 - Bug fix in **pshrestha49's backend (B4/B9), for their review**: the offline rule only ran when the dashboard, devices or alerts
