@@ -32,6 +32,18 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-26 — Report matches the Week 12 checklist; repo checklist items (`docs/final-report-v2`) — Tirth
+
+- Report rebuilt in the checklist's order with its part names: title page, abstract, introduction (persona, users,
+  scope, success measure), architecture + data flow, services used, how the solution works (integration, messaging,
+  owner dashboard, screenshot list), security, automation (IaC, pipeline, rebuild log), reliability and recovery,
+  Well-Architected, cost, five questions, contribution statement, generative AI, references (with outside sources)
+- Cut to **20 pages** so screenshots fit inside the 25-page limit: requirements table, project timeline, demo plan,
+  challenges and conclusion removed (still in the repo docs; lessons go in the slides)
+- `README.md`: deploy from scratch, environment variable names, team (names + GitHub usernames), a successful Deploy run,
+  links to the report, diagram and DR log; roadmap updated
+- `docs/report/diagrams/architecture.svg`: editable source of the architecture diagram
+
 ### 2026-11-26 — Final report: Aaron's checklist review applied (`docs/final-report-v2`) — Tirth
 
 - `docs/report/CloudOps_Hub_Final_Report.pdf` re-exported (26 pages) after Aaron checked it against the Week 12 checklist:
