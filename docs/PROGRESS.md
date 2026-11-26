@@ -32,6 +32,14 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-26 — Screenshots in the final report (`docs/final-report-v2`) — Tirth
+
+- 18 screenshots from the live site and the AWS console added to section 4 of the report (now **23 pages**, limit 25):
+  customer and owner views of the core operation (sign in, add device, offline alert, SNS email, acknowledge, auto-resolve),
+  Accounts with both AWS accounts, AWS Cloud page, Users page; console: EC2 (SSM node), S3 state, SNS, CloudWatch logs
+  and alarms, ECR, Budgets. Originals in `docs/report/screenshots/`
+- **Still open:** CloudFront console screenshot, the five questions from the guide, signatures, Pratham's AI-use line
+
 ### 2026-11-26 — Report matches the Week 12 checklist; repo checklist items (`docs/final-report-v2`) — Tirth
 
 - Report rebuilt in the checklist's order with its part names: title page, abstract, introduction (persona, users,
