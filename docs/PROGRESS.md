@@ -38,7 +38,9 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
   customer and owner views of the core operation (sign in, add device, offline alert, SNS email, acknowledge, auto-resolve),
   Accounts with both AWS accounts, AWS Cloud page, Users page; console: EC2 (SSM node), S3 state, SNS, CloudWatch logs
   and alarms, ECR, Budgets. Originals in `docs/report/screenshots/`
-- **Still open:** CloudFront console screenshot, the five questions from the guide, signatures, Pratham's AI-use line
+- Pratham's AI-use line added (planning, building and testing the API, database, agent, alerts, auth, docs)
+- Typed signatures and date on the contribution statement; CloudFront shown through the live URL in the screenshots
+- **Still open:** the five questions from the guide (section 10)
 
 ### 2026-11-26 — Report matches the Week 12 checklist; repo checklist items (`docs/final-report-v2`) — Tirth
 
