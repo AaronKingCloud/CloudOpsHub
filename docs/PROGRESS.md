@@ -32,6 +32,23 @@ Updated 2026-11-23. Full task list with owners: [`docs/REMAINING_WORK.md`](REMAI
 
 ## Log
 
+### 2026-11-26 — Final report: Aaron's checklist review applied (`docs/final-report-v2`) — Tirth
+
+- `docs/report/CloudOps_Hub_Final_Report.pdf` re-exported (26 pages) after Aaron checked it against the Week 12 checklist:
+  - **New:** title page (members + responsibilities, platform, URLs, date), cost (estimate before credits, affordability,
+    how we kept it down), Well-Architected review (6 pillars), services with the alternative rejected for each, data flow
+    of the core operation (agent → API → alert → email), clean-rebuild section, screenshot checklist (customer, owner,
+    AWS console), team contribution statement with signature lines, use of generative AI
+  - **Partly fixed:** introduction has a persona, the owner's pain point and a success measure; security mentions CORS
+  - **Updated:** multiple AWS accounts are live (summary, intro, FR-24, future work); 47 PRs up to #60; Pratham's name;
+    server rebuild 5–8 min
+- `docs/report/diagrams/`: architecture and data-flow diagrams as high-res PNGs for Blackboard
+- Repo docs: FR-24 ✅, A7 🟡 partly done, rebuild time 5–8 min in `DISASTER_RECOVERY.md`
+- `sonar-project.properties`: `infra/` left out of coverage (hand-run scripts), so the coverage condition on `main` can pass;
+  Aaron's two Terraform warnings still need reviewing in SonarCloud
+- **Still open before submission:** the professor's five questions (need the guide), cost figures from the bill and the
+  rebuild log (Aaron), screenshots (team), signatures, Pratham's AI-use line, the demo results table
+
 ### 2026-11-25 — Final group report drafted (`docs/final-report`) — Tirth
 
 - Final report for F2: **`docs/report/CloudOps_Hub_Final_Report.pdf`** (19 pages, exported from the shared draft): summary, introduction, requirements, architecture

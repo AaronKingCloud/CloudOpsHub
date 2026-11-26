@@ -63,7 +63,7 @@ Schedule it daily:
 | --- | --- | --- |
 | Database file deleted or corrupted | Restore the latest backup | < 5 min |
 | Bad change (e.g. users deleted by mistake) | Restore the backup from before the change | < 5 min, lose changes since that backup |
-| Cloud server lost | `terraform apply -replace=aws_instance.app`; the data disk is kept | 2–5 min |
+| Cloud server lost | `terraform apply -replace=aws_instance.app`; the data disk is kept | 5–8 min |
 | Cloud data disk lost or damaged | Volume from the newest snapshot (below) | < 30 min, lose changes since that snapshot |
 | Server / VM lost (not on AWS) | New machine → clone repo → install backend (README) → restore latest off-machine backup | < 30 min |
 | AWS key leaked | IAM → deactivate the `cloudopshub-service` key → create a new one → update `~/.aws` | < 15 min |
@@ -76,7 +76,7 @@ Schedule it daily:
 | --- | --- |
 | **Where the data is** | Both SQLite databases on their own encrypted EBS disk (`cloudopshub-dev-data`), mounted at `/srv/cloudopshub-data` = the backend's `/app/data`. Replacing the server keeps it (tested by Aaron) |
 | **Backups** | Automatic snapshot of that disk every day at 07:00 UTC, newest 7 kept → **RPO ≤ 24 h** |
-| **Server lost** | `terraform apply -replace=aws_instance.app`: a new server attaches the same disk (2–5 min) |
+| **Server lost** | `terraform apply -replace=aws_instance.app`: a new server attaches the same disk (5–8 min) |
 | **Disk lost or data damaged** | Create a volume from a snapshot and make it the live disk (`infra/terraform/README.md` → Restoring from a snapshot) |
 | **Bad deploy** | CD rolls back on its own within 2 minutes |
 | **Not covered yet** | Losing the whole Region (snapshots stay in us-east-2) |
