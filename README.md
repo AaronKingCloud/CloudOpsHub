@@ -82,6 +82,49 @@ so ask the team to add yours. Everything else is automatic:
 
 How to run, change or rebuild it: [`infra/terraform/README.md`](infra/terraform/README.md).
 
+## Deploy from Scratch
+
+Full steps and runbooks: [`infra/terraform/README.md`](infra/terraform/README.md). In short (Terraform >= 1.10, an AWS
+CLI profile that can create the resources, region us-east-2):
+
+```bash
+cd infra/terraform/bootstrap && terraform init && terraform apply     # once: S3 bucket for Terraform state
+cd ../envs/dev
+cp terraform.tfvars.example terraform.tfvars                          # set allowed_cidrs and alert_emails
+terraform init && terraform apply                                     # VPC, EC2, CloudFront, disk, ECR, alarms
+```
+
+The first boot takes about 10 minutes; then open the `app_url` output. After that, every merge to `main` deploys
+automatically ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)), for example
+[this successful Deploy run](https://github.com/AaronKingCloud/CloudOpsHub/actions/runs/45742486054).
+
+## Environment Variables
+
+Names only; values never go in Git. Locally, defaults work for development. In the cloud, Terraform sets them
+and the secrets come from SSM Parameter Store.
+
+| Where | Variables |
+| --- | --- |
+| Backend: core | `APP_ENV`, `JWT_SECRET`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`, `CORS_ORIGINS` |
+| Backend: data | `DATABASE_URL`, `AUTH_DB_PATH` |
+| Backend: sign-in limits | `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_SECONDS` |
+| Backend: alerts | `AGENT_OFFLINE_SECONDS`, `ALERT_CHECK_SECONDS`, `ALERT_SNS_TOPIC_ARN`, `ALERT_WEBHOOK_URL` |
+| Backend: AWS | `AWS_PROFILE` (local only), `AWS_ACCOUNT_NAME`, `AWS_ACCOUNTS_PARAM`, `BILLING_CACHE_SECONDS`, `BILLING_USE_MOCK`, `BILLING_STRICT_AWS` |
+| Frontend (build time) | `VITE_API_URL`, `VITE_USE_MOCK` |
+
+## Team
+
+| Member | GitHub | Track |
+| --- | --- | --- |
+| Aaron King | [@AaronKingCloud](https://github.com/AaronKingCloud) | A: Cloud and DevOps |
+| Pratham Shrestha | [@prathamshrestha](https://github.com/prathamshrestha) | B: Backend and data |
+| Tirth Patel | [@TDPATEL1224](https://github.com/TDPATEL1224) | C: Frontend, quality, security, recovery |
+
+Final report: [`docs/report/CloudOps_Hub_Final_Report.pdf`](docs/report/CloudOps_Hub_Final_Report.pdf) ·
+architecture diagram: [`docs/report/diagrams/architecture.png`](docs/report/diagrams/architecture.png)
+(source: [`architecture.svg`](docs/report/diagrams/architecture.svg)) · DR test log:
+[`docs/operations/DISASTER_RECOVERY.md`](docs/operations/DISASTER_RECOVERY.md#drill-log)
+
 ## Objectives
 
 - Centralize infrastructure monitoring
@@ -222,8 +265,9 @@ GET /api/billing/summary
 - [x] Monitoring and observability
 - [x] Security validation (OWASP checklist, scans, lockout)
 - [x] Disaster recovery testing (local drill passed)
-- [ ] Cloud restore drill
-- [ ] End-to-end demo, final report and video
+- [x] Cloud restore drill (RTO 55 s)
+- [x] Final report (`docs/report/`)
+- [ ] End-to-end demo and presentation
 
 ## Disclaimer
 

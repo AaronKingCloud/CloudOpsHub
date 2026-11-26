@@ -85,7 +85,7 @@ Per risk **R001 (scope creep)**, anything not needed for that story is *Should*,
 | FR-21 | List the account's EC2 instances (name, state, type, AZ, IP, launch time) | MVP | ✅ | AWS integration (done) |
 | FR-22 | Show an EC2 instance's CPU from CloudWatch (last 1–24 h, 5-minute points) | MVP | ✅ | AWS integration (done) |
 | FR-23 | Show month-to-date AWS cost and the month-end forecast | Should | ✅ cached 6 h | Billing (done), B6 |
-| FR-24 | Monitor **several** AWS accounts, each with its own read-only role and home Region | Stretch | ⬜ | A7 (+ backend) |
+| FR-24 | Monitor **several** AWS accounts, each with its own read-only role and home Region | Stretch | ✅ two accounts live (team + a member's), read-only role each; choosing an account on the AWS Cloud page is future work | A7 (+ backend) |
 
 ---
 
